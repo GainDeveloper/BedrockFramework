@@ -6,19 +6,28 @@ using UnityEditor;
 [CustomEditor(typeof(Prototype), true)]
 public class PrototypeEditor : Editor 
 {
+    Prototype prototypeTarget;
 	SerializedProperty prototype;
-	List<SerializedProperty> allOtherProperties = new List<SerializedProperty>();
+    SerializedObject prototypeSerialized;
+    List<string> allOtherProperties;
     
     void OnEnable()
     {
-		SerializedProperty prop = serializedObject.GetIterator();
+        prototypeTarget = (Prototype)target;
+        allOtherProperties = new List<string>();
+
+        SerializedProperty prop = serializedObject.GetIterator();
 		if (prop.NextVisible(true)) {
 			do {
-				if (prop.name == "prototype") {
+				if (prop.name == "prototype")
+                {
 					prototype = prop.Copy();
-				}
-				else if (prop.name != "m_Script") {
-					allOtherProperties.Add(prop.Copy());
+                    if (prototype.objectReferenceValue != null)
+                        prototypeSerialized = new SerializedObject(prototype.objectReferenceValue);
+                }
+                else if (prop.name != "m_Script")
+                {
+					allOtherProperties.Add(prop.name);
 				}
 			}
 			while (prop.NextVisible(false));
@@ -31,17 +40,33 @@ public class PrototypeEditor : Editor
 		prototype.objectReferenceValue = EditorGUILayout.ObjectField(prototype.objectReferenceValue, serializedObject.targetObject.GetType(), false);
 
 		bool prototypeAssigned = prototype.objectReferenceValue != null;
-		
 
-		foreach(SerializedProperty prop in allOtherProperties)
+		foreach(string propName in allOtherProperties)
 		{
 			EditorGUILayout.BeginHorizontal();
-			GUI.enabled = !prototypeAssigned;
-			EditorGUILayout.Toggle(false, GUILayout.Width(16));
-			EditorGUILayout.PropertyField(prop, true);
-			EditorGUILayout.EndHorizontal();
-		}					
 
-		serializedObject.ApplyModifiedProperties();
+            bool isPropertyModified = prototypeTarget.IsPropertyModified(propName);
+            if (!prototypeAssigned) isPropertyModified = true;
+
+            isPropertyModified = EditorGUILayout.Toggle(isPropertyModified, GUILayout.Width(16));
+            prototypeTarget.SetPropertyModified(propName, isPropertyModified);
+
+            GUI.enabled = isPropertyModified;
+
+            if (!isPropertyModified && prototypeSerialized != null)
+            {
+                // Copy value from prototype.
+                serializedObject.Update();
+                serializedObject.CopyFromSerializedProperty(prototypeSerialized.FindProperty(propName));
+            }
+            EditorGUILayout.PropertyField(serializedObject.FindProperty(propName), true);
+
+            serializedObject.ApplyModifiedProperties();
+
+            EditorGUILayout.EndHorizontal();
+            GUI.enabled = true;
+        }
+
+        
 	}
 }

@@ -1,25 +1,32 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 
 public class Prototype : ScriptableObject {
 	public Prototype prototype;
-	[HideInInspector]
-	public List<PrototypeProperty> modifiedValues;
+    [HideInInspector]
+    public List<string> modifiedValues = new List<string>();
 
-	public object GetModifiedValue (string name) 
+	public bool IsPropertyModified (string name) 
 	{
-		for (int i = 0; i < modifiedValues.Count; i++) 
-		{
-			if (modifiedValues[i].name == name)
-				return modifiedValues[i].value;
-		}
-		return null;
+		return modifiedValues.Contains(name);
 	}
-}
 
-[System.Serializable]
-public class PrototypeProperty {
-	public string name;
-	public object value;
+    public void SetPropertyModified(string property, bool modified)
+    {
+        if (modified)
+        {
+            if (!modifiedValues.Contains(property))
+            {
+                modifiedValues.Add(property);
+                EditorUtility.SetDirty(this);
+            }  
+        }
+        else
+        {
+            modifiedValues.Remove(property);
+            EditorUtility.SetDirty(this);
+        }
+    }
 }
