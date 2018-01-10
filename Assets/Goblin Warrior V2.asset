@@ -11,10 +11,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7ce7cbf46d00400988d999eed32e01e, type: 3}
   m_Name: Goblin Warrior V2
   m_EditorClassIdentifier: 
-  prototype: {fileID: 11400000, guid: a9603e6e77f23374da950963678302a5, type: 2}
+  prototype: {fileID: 11400000, guid: 7f2a50e78bef00f4dba42933c6ba0e12, type: 2}
   modifiedValues:
+  - damage
+  - health
   - size
-  - name
-  name: Warrior V2
+  asset: {fileID: 1591399836396938, guid: 6f960d0a91687f24e941b458af2a2645, type: 2}
   health: 125
-  size: 2
+  damage: 50
+  attackSound:
+    clip: {fileID: 0}
+    volume: 25

@@ -9,7 +9,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f7ce7cbf46d00400988d999eed32e01e, type: 3}
-  m_Name: Goblin Warrior
+  m_Name: Goblin Charger
   m_EditorClassIdentifier: 
   prototype: {fileID: 11400000, guid: 7286e90b9d9f4804bad6793e048e9618, type: 2}
   modifiedValues:
@@ -22,4 +22,4 @@ MonoBehaviour:
   damage: 25
   attackSound:
     clip: {fileID: 0}
-    volume: 25
+    volume: 1
