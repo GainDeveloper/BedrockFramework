@@ -8,13 +8,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f7ce7cbf46d00400988d999eed32e01e, type: 3}
-  m_Name: Goblin Warrior
+  m_Script: {fileID: 11500000, guid: a407891048cd5754ab0b72a5a23be6ba, type: 3}
+  m_Name: Goblin Archer Test Config
   m_EditorClassIdentifier: 
   prototype: {fileID: 11400000, guid: 97eb13070ab57354b98ea2364f824f5e, type: 2}
   modifiedValues:
-  - health
-  - name
-  name: Warrior
-  health: 150
+  - range
+  name: Base
+  health: 100
   size: 1
+  range: 0

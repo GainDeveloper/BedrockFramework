@@ -6,67 +6,131 @@ using UnityEditor;
 [CustomEditor(typeof(Prototype), true)]
 public class PrototypeEditor : Editor 
 {
-    Prototype prototypeTarget;
 	SerializedProperty prototype;
     SerializedObject prototypeSerialized;
-    List<string> allOtherProperties;
     
     void OnEnable()
     {
-        prototypeTarget = (Prototype)target;
-        allOtherProperties = new List<string>();
+        prototype = serializedObject.FindProperty("prototype").Copy();
+        UpdateSerializedPrototype();
+    }
 
+    bool PropertyExistsInPrototype(string property)
+    {
+        if (prototypeSerialized == null)
+            return false;
+
+        if (prototypeSerialized.FindProperty(property) == null)
+            return false;
+
+        return true;
+    }
+
+    #region ModfiedProperties
+
+    bool IsPropertyModified(string name)
+    {
+        return PropertyModifiedIndex(name) >= 0;
+    }
+
+    int PropertyModifiedIndex(string name)
+    {
+        SerializedProperty modifiedValues = serializedObject.FindProperty("modifiedValues");
+        for (int i = 0; i < modifiedValues.arraySize; i++)
+        {
+            if (modifiedValues.GetArrayElementAtIndex(i).stringValue == name)
+                return i;
+        }
+        return -1;
+    }
+
+    void SetPropertyModified(string property, bool modified)
+    {
+        SerializedProperty modifiedValues = serializedObject.FindProperty("modifiedValues");
+        int i = PropertyModifiedIndex(property);
+        if (modified)
+        {
+            if (i == -1)
+            {
+                modifiedValues.InsertArrayElementAtIndex(0);
+                modifiedValues.GetArrayElementAtIndex(0).stringValue = property;
+            }
+        }
+        else if (i >= 0)
+        {
+            modifiedValues.DeleteArrayElementAtIndex(i);
+        }
+    }
+
+    #endregion
+
+    void UpdateNonModifiedProperties()
+    {
         SerializedProperty prop = serializedObject.GetIterator();
-		if (prop.NextVisible(true)) {
-			do {
-				if (prop.name == "prototype")
+        if (prop.NextVisible(true))
+        {
+            do
+            {
+                if (prop.name != "m_Script" && prop.name != "prototype" && prop.name != "modifiedValues")
                 {
-					prototype = prop.Copy();
-                    if (prototype.objectReferenceValue != null)
-                        prototypeSerialized = new SerializedObject(prototype.objectReferenceValue);
+                    bool isPropertyModified = IsPropertyModified(prop.name);
+                    if (!PropertyExistsInPrototype(prop.name)) isPropertyModified = true;
+
+                    if (!isPropertyModified && prototypeSerialized != null)
+                    {
+                        serializedObject.CopyFromSerializedProperty(prototypeSerialized.FindProperty(prop.name));
+                    }
                 }
-                else if (prop.name != "m_Script")
-                {
-					allOtherProperties.Add(prop.name);
-				}
-			}
-			while (prop.NextVisible(false));
-		}
+            }
+            while (prop.NextVisible(false));
+        }
+
+        serializedObject.ApplyModifiedProperties();
+    }
+
+    void UpdateSerializedPrototype()
+    {
+        if (prototype.objectReferenceValue != null)
+            prototypeSerialized = new SerializedObject(prototype.objectReferenceValue);
+        else
+            prototypeSerialized = null;
     }
 
 	public override void OnInspectorGUI () 
 	{
 		serializedObject.Update();
-		prototype.objectReferenceValue = EditorGUILayout.ObjectField(prototype.objectReferenceValue, serializedObject.targetObject.GetType(), false);
-
-		bool prototypeAssigned = prototype.objectReferenceValue != null;
-
-		foreach(string propName in allOtherProperties)
-		{
-			EditorGUILayout.BeginHorizontal();
-
-            bool isPropertyModified = prototypeTarget.IsPropertyModified(propName);
-            if (!prototypeAssigned) isPropertyModified = true;
-
-            isPropertyModified = EditorGUILayout.Toggle(isPropertyModified, GUILayout.Width(16));
-            prototypeTarget.SetPropertyModified(propName, isPropertyModified);
-
-            GUI.enabled = isPropertyModified;
-
-            if (!isPropertyModified && prototypeSerialized != null)
-            {
-                // Copy value from prototype.
-                serializedObject.Update();
-                serializedObject.CopyFromSerializedProperty(prototypeSerialized.FindProperty(propName));
-            }
-            EditorGUILayout.PropertyField(serializedObject.FindProperty(propName), true);
-
-            serializedObject.ApplyModifiedProperties();
-
-            EditorGUILayout.EndHorizontal();
-            GUI.enabled = true;
+        Object newPrototypeObject = EditorGUILayout.ObjectField(prototype.objectReferenceValue, typeof(Prototype), false);
+        if (prototype.objectReferenceValue != newPrototypeObject)
+        {
+            prototype.objectReferenceValue = newPrototypeObject;
+            UpdateSerializedPrototype();
         }
 
-        
-	}
+        SerializedProperty prop = serializedObject.GetIterator();
+        if (prop.NextVisible(true))
+        {
+            do
+            {
+                if (prop.name != "m_Script" && prop.name != "prototype" && prop.name != "modifiedValues")
+                {
+                    bool isPropertyModified = IsPropertyModified(prop.name);
+                    if (!PropertyExistsInPrototype(prop.name)) isPropertyModified = true;
+
+                    EditorGUILayout.BeginHorizontal();
+
+                    isPropertyModified = EditorGUILayout.Toggle(isPropertyModified, GUILayout.Width(16));
+                    SetPropertyModified(prop.name, isPropertyModified);
+
+                    GUI.enabled = isPropertyModified;
+                    EditorGUILayout.PropertyField(prop, true);
+                    EditorGUILayout.EndHorizontal();
+                    GUI.enabled = true;
+                }
+            }
+            while (prop.NextVisible(false));
+        }
+
+        serializedObject.ApplyModifiedProperties();
+        UpdateNonModifiedProperties();
+    }
 }

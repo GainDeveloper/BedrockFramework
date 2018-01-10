@@ -9,13 +9,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f7ce7cbf46d00400988d999eed32e01e, type: 3}
-  m_Name: Goblin Test Base
+  m_Name: Goblin Warrior V2
   m_EditorClassIdentifier: 
-  prototype: {fileID: 0}
+  prototype: {fileID: 11400000, guid: a9603e6e77f23374da950963678302a5, type: 2}
   modifiedValues:
-  - name
-  - health
   - size
-  name: A Base Class
-  health: 100
-  size: 900
+  - name
+  name: Warrior V2
+  health: 125
+  size: 2
