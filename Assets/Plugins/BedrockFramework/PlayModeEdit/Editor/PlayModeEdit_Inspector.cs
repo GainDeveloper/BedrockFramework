@@ -17,6 +17,8 @@ namespace BedrockFramework.PlayModeEdit
 
         public override void OnInspectorGUI()
         {
+            GUI.enabled = !Application.isPlaying;
+
             serializedObject.Update();
 
             SerializedProperty recordedComponentsProperty = serializedObject.FindProperty("recordedComponents");

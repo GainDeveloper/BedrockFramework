@@ -12,23 +12,14 @@ namespace BedrockFramework.PlayModeEdit
 
         public static bool IsRecording
         {
-            get
-            {
-                return _isRecording;
-            }
+            get { return _isRecording; }
         }
 
-        private static GUIContent _recordGUIIcon, _recordingGUIIcon;
-
+        private static GUIStyle _recordTextStyle;
 
         static PlayModeEdit_SceneView()
         {
             EditorApplication.playModeStateChanged += LogPlayModeState;
-
-            _recordGUIIcon = EditorGUIUtility.IconContent("TimelineAutokey");
-            _recordGUIIcon.text = "Save Edits";
-            _recordingGUIIcon = EditorGUIUtility.IconContent("TimelineAutokey_active");
-            _recordingGUIIcon.text = "Cancel Edits";
         }
 
         private static void LogPlayModeState(PlayModeStateChange state)
@@ -57,32 +48,36 @@ namespace BedrockFramework.PlayModeEdit
 
         private static void OnScene(SceneView sceneview)
         {
+            if (_recordTextStyle == null)
+            {
+                _recordTextStyle = new GUIStyle(GUI.skin.label);
+                _recordTextStyle.fontSize = 10;
+                _recordTextStyle.normal.textColor = Color.red;
+            }
+
             Handles.BeginGUI();
 
+            GUILayout.BeginArea(new Rect(0, 0, 512, 128));
+            GUILayout.BeginHorizontal();
 
-            if (GUILayout.Button(GetRecordIcon(), GUILayout.Width(100)))
+            if (GUILayout.Toggle(IsRecording, "Save Edits"))
             {
-                ToggleRecording();
+                _isRecording = true;
+            } else
+            {
+                _isRecording = false;
             }
+
+            GameObject selectedObject = Selection.activeGameObject;
+            if (IsRecording && selectedObject != null && selectedObject.GetComponent<PlayModeEdit>() == null)
+            {
+                GUILayout.Label(selectedObject.name + " edits will not be saved.", _recordTextStyle);
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
 
             Handles.EndGUI();
-        }
-
-        private static GUIContent GetRecordIcon()
-        {
-            if (IsRecording)
-            {
-                return _recordingGUIIcon;
-            }
-            else
-            {
-                return _recordGUIIcon;
-            }
-        }
-
-        private static void ToggleRecording()
-        {
-            _isRecording = !_isRecording;
         }
     }
 }
