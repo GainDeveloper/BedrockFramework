@@ -27,7 +27,7 @@ namespace BedrockFramework.PlayModeEdit
                     PlayModeEdit editObject = ((GameObject)obj).GetComponent<PlayModeEdit>();
                     Dictionary<string, string> typeComponentsJSON = new Dictionary<string, string>();
 
-                    foreach (Object component in PlayModeEditComponents(editObject))
+                    foreach (Object component in PlayModeEditComponents(editObject, includePlayModeEdit: true, ignoreRecordedComponents: true))
                     {
                         typeComponentsJSON[component.GetType().Name] = EditorJsonUtility.ToJson(component);
                     }
@@ -72,7 +72,8 @@ namespace BedrockFramework.PlayModeEdit
             // Handle deleted GameObjects.
             foreach (GameObject deletedGameObject in removedGameObjects)
             {
-                Undo.DestroyObjectImmediate(deletedGameObject);
+                if (deletedGameObject.GetComponent<PlayModeEdit>().recordDestruction)
+                    Undo.DestroyObjectImmediate(deletedGameObject);
             }
 
             // Handle new prefab instances.
@@ -119,14 +120,14 @@ namespace BedrockFramework.PlayModeEdit
             }
         }
 
-        public static IEnumerable<Object> PlayModeEditComponents(PlayModeEdit editObject)
+        public static IEnumerable<Object> PlayModeEditComponents(PlayModeEdit editObject, bool includePlayModeEdit = false, bool ignoreRecordedComponents = false)
         {
             foreach (Component obj in editObject.gameObject.GetComponents<Component>())
             {
-                if (obj == editObject)
+                if (obj == editObject && !includePlayModeEdit)
                     continue;
 
-                if (!editObject.recordedComponents.Contains(obj))
+                if (!editObject.recordedComponents.Contains(obj) && !ignoreRecordedComponents)
                     continue;
 
                 yield return obj;

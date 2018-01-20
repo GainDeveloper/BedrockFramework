@@ -12,6 +12,7 @@ namespace BedrockFramework.PlayModeEdit
     {
 #if (UNITY_EDITOR)
         public List<Component> recordedComponents;
+        public bool recordDestruction = true, recordInstantiation = true;
 
         [SerializeField]
         int _cachedInstance = 0;
@@ -39,7 +40,7 @@ namespace BedrockFramework.PlayModeEdit
 
         void NewObjectInstance()
         {
-            if (!EditorApplication.isPlaying)
+            if (!EditorApplication.isPlaying || !recordInstantiation)
                 return;
 
             GameObject prefabSource = PrefabUtility.GetPrefabParent(gameObject) as GameObject;

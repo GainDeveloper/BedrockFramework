@@ -110,4 +110,6 @@ MonoBehaviour:
   recordedComponents:
   - {fileID: 0}
   - {fileID: 4542346262758954}
+  recordDestruction: 1
+  recordInstantiation: 1
   _cachedInstance: 15068
