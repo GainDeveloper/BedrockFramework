@@ -1,9 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using BedrockFramework.Prototype;
 
 [CreateAssetMenu(fileName = "Goblin Test Config", menuName = "Configs/Goblin Test", order = 1)]
-public class GoblinTestData : Prototype {
+public class GoblinTestData : PrototypeObject {
 	public GameObject asset;
 	public float health;
 	public int damage;
