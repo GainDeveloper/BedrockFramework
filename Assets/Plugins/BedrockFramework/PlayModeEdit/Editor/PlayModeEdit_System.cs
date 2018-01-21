@@ -123,6 +123,9 @@ namespace BedrockFramework.PlayModeEdit
             // Do parenting after all edits.
             foreach (KeyValuePair<Transform, int> entry in _cachedObjectsParentTransformsInstanceIDs)
             {
+                if (entry.Key == null)
+                    continue; //Case where an object has been instanced that isn't connected to a prefab.
+
                 if (entry.Value == 0)
                 {
                     entry.Key.SetParent(null, false);
