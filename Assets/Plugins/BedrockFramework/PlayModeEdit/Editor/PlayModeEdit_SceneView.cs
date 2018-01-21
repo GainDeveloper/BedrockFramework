@@ -55,6 +55,8 @@ namespace BedrockFramework.PlayModeEdit
                 _recordTextStyle.normal.textColor = Color.red;
             }
 
+            //TODO: Change selection highlight colour depending on state.
+
             Handles.BeginGUI();
 
             GUILayout.BeginArea(new Rect(0, 0, Screen.width, 128));
@@ -67,8 +69,6 @@ namespace BedrockFramework.PlayModeEdit
             {
                 _isRecording = false;
             }
-
-            Debug.Log(Screen.width);
 
             GameObject selectedObject = Selection.activeGameObject;
             if (selectedObject != null && selectedObject.GetComponent<PlayModeEdit>() == null || selectedObject != null && !IsRecording)

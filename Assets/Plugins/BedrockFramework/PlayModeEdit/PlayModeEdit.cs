@@ -1,4 +1,4 @@
-﻿using System.Collections;
+﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 #if (UNITY_EDITOR)
@@ -23,7 +23,12 @@ namespace BedrockFramework.PlayModeEdit
             get { return _prefabInstance; }
         }
 
-        void Awake()
+        public List<string> RecordedComponentTypes
+        {
+            get { return recordedComponents.Select(w => w.GetType().Name).ToList(); }
+        }
+
+        void Start()
         {
             if (recordedComponents == null)
             {
@@ -33,14 +38,21 @@ namespace BedrockFramework.PlayModeEdit
 
             if (_cachedInstance == 0 || _cachedInstance != GetInstanceID())
             {
-                _cachedInstance = GetInstanceID();
-                NewObjectInstance();
+                if (!EditorApplication.isPlaying)
+                {
+                    SerializedObject so = new SerializedObject(this);
+                    so.FindProperty("_cachedInstance").intValue = GetInstanceID();
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                } else
+                {
+                    NewObjectInstance();
+                }
             }
         }
 
         void NewObjectInstance()
         {
-            if (!EditorApplication.isPlaying || !recordInstantiation)
+            if (!recordInstantiation)
                 return;
 
             GameObject prefabSource = PrefabUtility.GetPrefabParent(gameObject) as GameObject;
