@@ -8,6 +8,7 @@ using UnityEditor;
 namespace BedrockFramework.PlayModeEdit
 {
     [DisallowMultipleComponent, ExecuteInEditMode]
+    [AddComponentMenu("BedrockFramework/PlayModeEdit")]
     public class PlayModeEdit : MonoBehaviour
     {
 #if (UNITY_EDITOR)

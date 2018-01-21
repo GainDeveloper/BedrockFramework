@@ -16,8 +16,8 @@ namespace BedrockFramework.PlayModeEdit
             public GameObject prefab;
             public string prefabGameObjectJSON;
             public int parentInstanceID, transformInstanceID;
-            public Dictionary<string, string> typeComponents;
-            public List<string> recordedComponentsTypes;
+            public Dictionary<string, string> typeComponents; //TODO: Support multiple components of the same type.
+            public List<string> recordedComponentsTypes; //TODO: Support multiple components of the same type.
         }
 
         public static void CacheCurrentState()
