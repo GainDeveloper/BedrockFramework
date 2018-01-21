@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
+using System.Linq;
 
 using UnityEngine;
 using UnityEditor;
@@ -58,6 +59,27 @@ namespace BedrockFramework.FolderImportOverride
 
             foreach (GameObject gameObjectToDestroy in toDestroy)
                 GameObject.DestroyImmediate(gameObjectToDestroy);
+        }
+    }
+
+    //TODO: Add a merge override action.
+
+    public class ImportOverideAction_AddComponents : ImportOverideAction
+    {
+        private static readonly Type BaseType = typeof(MonoBehaviour);
+        private static readonly List<Type> Types =
+            AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => a.GetTypes())
+                .Where(t => BaseType.IsAssignableFrom(t))
+                .ToList();
+
+        [ValueDropdown("Types")]
+        public List<Type> components = new List<Type>();
+
+        public override void InvokePostAction(GameObject gameObject)
+        {
+            foreach (Type componentType in components)
+                gameObject.AddComponent(componentType);
         }
     }
 }

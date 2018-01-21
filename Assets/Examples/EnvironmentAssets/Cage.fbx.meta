@@ -22,6 +22,7 @@ ModelImporter:
     9500000: //RootNode
     10800000: Directional Light
     11100000: //RootNode
+    11400000: //RootNode
   externalObjects:
   - first:
       type: UnityEngine:Material

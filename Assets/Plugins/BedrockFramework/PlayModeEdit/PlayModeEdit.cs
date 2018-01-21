@@ -29,14 +29,17 @@ namespace BedrockFramework.PlayModeEdit
             get { return recordedComponents.Select(w => w.GetType().Name).ToList(); }
         }
 
-        void Start()
+        void Awake()
         {
             if (recordedComponents == null)
             {
                 recordedComponents = new List<Component>();
                 recordedComponents.Add(GetComponent<Transform>());
             }
+        }
 
+        void Start()
+        {
             if (_cachedInstance == 0 || _cachedInstance != GetInstanceID())
             {
                 if (!EditorApplication.isPlaying)

@@ -38,4 +38,5 @@ MonoBehaviour:
   modelPreActions:
   - {fileID: 11400000, guid: 481d5a62df72bfc46bf8773260cdd478, type: 2}
   modelPostActions:
+  - {fileID: 11400000, guid: 5435770072280af46a668db41f551e3b, type: 2}
   - {fileID: 11400000, guid: 5192a1bfd59dcd445b4a3c95be10f447, type: 2}
