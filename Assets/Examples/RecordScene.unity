@@ -122,11 +122,11 @@ Prefab:
     m_Modifications:
     - target: {fileID: 4082458779801894, guid: e3bc7367846a45745b14695c005ed379, type: 2}
       propertyPath: m_LocalPosition.x
-      value: -2.494687
+      value: -1.613
       objectReference: {fileID: 0}
     - target: {fileID: 4082458779801894, guid: e3bc7367846a45745b14695c005ed379, type: 2}
       propertyPath: m_LocalPosition.y
-      value: -1.7916298
+      value: -0.495
       objectReference: {fileID: 0}
     - target: {fileID: 4082458779801894, guid: e3bc7367846a45745b14695c005ed379, type: 2}
       propertyPath: m_LocalPosition.z
@@ -150,12 +150,12 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4082458779801894, guid: e3bc7367846a45745b14695c005ed379, type: 2}
       propertyPath: m_RootOrder
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 114452594714626726, guid: e3bc7367846a45745b14695c005ed379,
         type: 2}
       propertyPath: _cachedInstance
-      value: -103702
+      value: -1128
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: e3bc7367846a45745b14695c005ed379, type: 2}
@@ -218,7 +218,7 @@ Prefab:
     - target: {fileID: 114452594714626726, guid: e3bc7367846a45745b14695c005ed379,
         type: 2}
       propertyPath: _cachedInstance
-      value: -103674
+      value: -1140
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: e3bc7367846a45745b14695c005ed379, type: 2}
@@ -260,7 +260,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4082458779801894, guid: e3bc7367846a45745b14695c005ed379, type: 2}
       propertyPath: m_RootOrder
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1922705568584266, guid: e3bc7367846a45745b14695c005ed379, type: 2}
       propertyPath: m_Name
@@ -273,7 +273,7 @@ Prefab:
     - target: {fileID: 114452594714626726, guid: e3bc7367846a45745b14695c005ed379,
         type: 2}
       propertyPath: _cachedInstance
-      value: -103688
+      value: -1150
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: e3bc7367846a45745b14695c005ed379, type: 2}

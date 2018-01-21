@@ -66,7 +66,6 @@ namespace BedrockFramework.PlayModeEdit
         public static void ApplyCache()
         {
             HashSet<GameObject> removedGameObjects = new HashSet<GameObject>();
-            Dictionary<Transform, int> transformOriginalParents = new Dictionary<Transform, int>();
             Dictionary<int, Transform> transformOriginalToNew = new Dictionary<int, Transform>();
 
             if (_cachedObjects == null)
