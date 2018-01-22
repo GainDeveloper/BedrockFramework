@@ -20,8 +20,10 @@ ModelImporter:
     2100002: Default2
     2300000: Mesh
     2300002: //RootNode
+    2300004: Mesh (2)
     3300000: Mesh
     3300002: //RootNode
+    3300004: Mesh (2)
     4300000: Mesh
     4300002: Mesh (2)
     7400000: Take 001
@@ -35,11 +37,6 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: Default
     second: {fileID: 2100000, guid: c350c39509f202042ae3377d842feb21, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Default2
-    second: {fileID: 2100000, guid: 3b376510d0d07e045af1fea5807a6809, type: 2}
   materials:
     importMaterials: 1
     materialName: 1

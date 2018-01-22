@@ -39,12 +39,20 @@ namespace BedrockFramework.FolderImportOverride
 
     /// <summary>
     /// Tells the importer to search and remap materials.
+    /// Removes any missing material remaps before
     /// </summary>
     public class ImportOverideAction_SearchAndRemap : ImportOverideAction
     {
         public override void InvokePreAction(AssetImporter assetImporter)
         {
             ModelImporter modelImporter = (ModelImporter)assetImporter;
+
+            // Remove any missing remaps.
+            Dictionary<AssetImporter.SourceAssetIdentifier, UnityEngine.Object> remappedMaterials = assetImporter.GetExternalObjectMap();
+            foreach (KeyValuePair<AssetImporter.SourceAssetIdentifier, UnityEngine.Object> entry in remappedMaterials)
+                if (entry.Value == null)
+                    modelImporter.RemoveRemap(new AssetImporter.SourceAssetIdentifier(entry.Key.type, entry.Key.name));
+
             modelImporter.SearchAndRemapMaterials(modelImporter.materialName, modelImporter.materialSearch);
         }
     }
@@ -61,10 +69,8 @@ namespace BedrockFramework.FolderImportOverride
             List<GameObject> toDestroy = new List<GameObject>();
 
             foreach(Transform transform in gameObject.GetComponentsInChildren<Transform>())
-            {
                 if (transform.GetComponents<Component>().Length == 1)
                     toDestroy.Add(transform.gameObject);
-            }
 
             foreach (GameObject gameObjectToDestroy in toDestroy)
                 GameObject.DestroyImmediate(gameObjectToDestroy);
@@ -89,12 +95,9 @@ namespace BedrockFramework.FolderImportOverride
                 meshData.Add(new SmartMeshData(meshFilter.sharedMesh, meshRenderer.sharedMaterials, meshTransform.localToWorldMatrix));
 
                 if (original == null)
-                {
                     original = meshFilter.sharedMesh;
-                } else
-                {
+                else
                     toDestroy.Add(meshFilter.sharedMesh);
-                }
 
                 toDestroy.Add(meshRenderer);
                 toDestroy.Add(meshFilter);
