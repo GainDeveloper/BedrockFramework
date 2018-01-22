@@ -149,7 +149,7 @@ MonoBehaviour:
   - {fileID: 42653163}
   recordDestruction: 1
   recordInstantiation: 1
-  _cachedInstance: -41500
+  _cachedInstance: 10506
 --- !u!23 &42653159
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -270,7 +270,7 @@ Prefab:
     - target: {fileID: 114452594714626726, guid: e3bc7367846a45745b14695c005ed379,
         type: 2}
       propertyPath: _cachedInstance
-      value: -1128
+      value: -1130
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: e3bc7367846a45745b14695c005ed379, type: 2}
@@ -333,7 +333,7 @@ Prefab:
     - target: {fileID: 114452594714626726, guid: e3bc7367846a45745b14695c005ed379,
         type: 2}
       propertyPath: _cachedInstance
-      value: -1140
+      value: -1142
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: e3bc7367846a45745b14695c005ed379, type: 2}
@@ -388,7 +388,7 @@ Prefab:
     - target: {fileID: 114452594714626726, guid: e3bc7367846a45745b14695c005ed379,
         type: 2}
       propertyPath: _cachedInstance
-      value: -1150
+      value: -1152
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: e3bc7367846a45745b14695c005ed379, type: 2}
@@ -445,7 +445,7 @@ MonoBehaviour:
   - {fileID: 1971939968}
   recordDestruction: 1
   recordInstantiation: 1
-  _cachedInstance: -85190
+  _cachedInstance: 10530
 --- !u!23 &1971939970
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -499,3 +499,49 @@ MeshFilter:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1971939967}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1001 &2118642462
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 400000, guid: 8bf1348eb0d871d4a94f16e853c120da, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 8bf1348eb0d871d4a94f16e853c120da, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 8bf1348eb0d871d4a94f16e853c120da, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 8bf1348eb0d871d4a94f16e853c120da, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 8bf1348eb0d871d4a94f16e853c120da, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 8bf1348eb0d871d4a94f16e853c120da, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 8bf1348eb0d871d4a94f16e853c120da, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 400000, guid: 8bf1348eb0d871d4a94f16e853c120da, type: 3}
+      propertyPath: m_RootOrder
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 8bf1348eb0d871d4a94f16e853c120da, type: 3}
+      propertyPath: _cachedInstance
+      value: -14496
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: 8bf1348eb0d871d4a94f16e853c120da, type: 3}
+  m_IsPrefabParent: 0

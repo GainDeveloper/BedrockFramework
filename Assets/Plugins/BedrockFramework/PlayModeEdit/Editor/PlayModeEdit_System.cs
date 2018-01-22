@@ -81,7 +81,6 @@ namespace BedrockFramework.PlayModeEdit
 
                 if (!_cachedObjects.ContainsKey(objInstanceID))
                 {
-                    Debug.Log(obj);
                     GameObject componentGameObject = ((Component)obj).gameObject;
                     removedGameObjects.Add(componentGameObject);
                     continue;

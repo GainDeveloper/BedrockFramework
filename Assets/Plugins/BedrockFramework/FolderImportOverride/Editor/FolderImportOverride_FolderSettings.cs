@@ -28,10 +28,8 @@ namespace BedrockFramework.FolderImportOverride
         [BoxGroup("Model Import Settings Override")]
         public ModelImporterOverrideMaterialName materialName = new ModelImporterOverrideMaterialName(ToModelImport.ModelImporterMaterialName);
         [BoxGroup("Model Import Settings Override")]
-        [ListDrawerSettings(DraggableItems = false)]
         public List<FolderImportOverride_Actions> modelPreActions = new List<FolderImportOverride_Actions>();
         [BoxGroup("Model Import Settings Override")]
-        [ListDrawerSettings(DraggableItems = false)]
         public List<FolderImportOverride_Actions> modelPostActions = new List<FolderImportOverride_Actions>();
 
         public void OverrideModelImporter(ModelImporter importer)
@@ -88,8 +86,10 @@ namespace BedrockFramework.FolderImportOverride
         [System.Serializable]
         public class ModelImporterOverrideGeneric<T>
         {
+#pragma warning disable
             public bool overrideEnabled;
             public T someField;
+#pragma warning restore
             protected ToModelImport toOverride;
 
             public ModelImporterOverrideGeneric(ToModelImport newOverride)
