@@ -9,7 +9,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5c4cf6a4339d5d44aa39c8129dcf3102, type: 3}
-  m_Name: Model_MergeMeshes
+  m_Name: Model_SearchAndRemap
   m_EditorClassIdentifier: 
   serializationData:
     SerializedFormat: 2
@@ -22,8 +22,8 @@ MonoBehaviour:
     SerializationNodes:
     - Name: overrideAction
       Entry: 7
-      Data: 0|BedrockFramework.FolderImportOverride.ImportOverideAction_MergeMeshes,
-        Assembly-CSharp-Editor-firstpass
+      Data: 0|BedrockFramework.FolderImportOverride.ImportOverideAction_SearchAndRemap,
+        BedrockFramework
     - Name: 
       Entry: 8
       Data: 

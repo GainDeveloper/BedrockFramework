@@ -9,8 +9,6 @@ namespace BedrockFramework.FolderImportOverride
 {
     public class FolderImportOverride_PostImport : AssetPostprocessor
     {
-
-
         static FolderImportOverride_FolderSettings GetAssetFolderSettings(string assetPath)
         {
             string assetDirectory = Path.GetDirectoryName(assetPath);
@@ -60,9 +58,28 @@ namespace BedrockFramework.FolderImportOverride
             folderSettings.AssetDeleted(assetPath);
         }
 
+        static void OnPostprocessAssetImported(string assetPath)
+        {
+            FolderImportOverride_FolderSettings folderSettings = GetAssetFolderSettings(assetPath);
+            if (folderSettings == null)
+                return;
+
+            folderSettings.AssetImported(assetPath);
+        }
+
         static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
             foreach (string str in deletedAssets)
+            {
+                OnPostprocessAssetDeleted(str);
+            }
+
+            foreach (string str in importedAssets)
+            {
+                OnPostprocessAssetImported(str);
+            }
+
+            foreach (string str in movedFromAssetPaths)
             {
                 OnPostprocessAssetDeleted(str);
             }

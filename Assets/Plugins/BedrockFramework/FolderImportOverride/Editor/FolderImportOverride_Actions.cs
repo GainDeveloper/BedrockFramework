@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using System.Linq;
 using System.IO;
-
 using UnityEngine;
 using UnityEditor;
 using SmartCombine;
@@ -21,7 +20,7 @@ namespace BedrockFramework.FolderImportOverride
             overrideAction.InvokePreAction(assetImporter);
         }
 
-        public void InvokePostAction(GameObject gameObject)
+        public void InvokePostAction(UnityEngine.Object gameObject)
         {
             overrideAction.InvokePostAction(gameObject);
         }
@@ -29,6 +28,11 @@ namespace BedrockFramework.FolderImportOverride
         public void InvokeDeleteAction(string assetPath)
         {
             overrideAction.InvokeDeleteAction(assetPath);
+        }
+
+        public void InvokeImportAction(string assetPath)
+        {
+            overrideAction.InvokeImportAction(assetPath);
         }
     }
 
@@ -38,11 +42,15 @@ namespace BedrockFramework.FolderImportOverride
         {
         }
 
-        public virtual void InvokePostAction(GameObject gameObject)
+        public virtual void InvokePostAction(UnityEngine.Object gameObject)
         {
         }
 
         public virtual void InvokeDeleteAction(string assetPath)
+        {
+        }
+
+        public virtual void InvokeImportAction(string assetPath)
         {
         }
     }
@@ -60,7 +68,7 @@ namespace BedrockFramework.FolderImportOverride
             // Remove any missing remaps.
             Dictionary<AssetImporter.SourceAssetIdentifier, UnityEngine.Object> remappedMaterials = assetImporter.GetExternalObjectMap();
             foreach (KeyValuePair<AssetImporter.SourceAssetIdentifier, UnityEngine.Object> entry in remappedMaterials)
-                if (entry.Value == null)
+                if (entry.Value == null || entry.Key.name != entry.Value.name)
                     modelImporter.RemoveRemap(new AssetImporter.SourceAssetIdentifier(entry.Key.type, entry.Key.name));
 
             modelImporter.SearchAndRemapMaterials(modelImporter.materialName, modelImporter.materialSearch);
@@ -74,11 +82,11 @@ namespace BedrockFramework.FolderImportOverride
     {
         //TODO: Might need to cover cases where child GameObjects are required.
         //TODO: Might need to add a suffix/prefix that disables this for certain GameObjects.
-        public override void InvokePostAction(GameObject gameObject)
+        public override void InvokePostAction(UnityEngine.Object gameObject)
         {
             List<GameObject> toDestroy = new List<GameObject>();
 
-            foreach(Transform transform in gameObject.GetComponentsInChildren<Transform>())
+            foreach(Transform transform in ((GameObject)gameObject).GetComponentsInChildren<Transform>())
                 if (transform.GetComponents<Component>().Length == 1)
                     toDestroy.Add(transform.gameObject);
 
@@ -92,11 +100,12 @@ namespace BedrockFramework.FolderImportOverride
     /// </summary>
     public class ImportOverideAction_MergeMeshes : ImportOverideAction
     {
-        public override void InvokePostAction(GameObject gameObject)
+        public override void InvokePostAction(UnityEngine.Object importedObject)
         {
             List<UnityEngine.Object> toDestroy = new List<UnityEngine.Object>();
             List<SmartMeshData> meshData = new List<SmartMeshData>();
             Mesh original = null; // We keep one of the original meshes so we can use it to store the combined meshes.
+            GameObject gameObject = (GameObject)importedObject;
 
             foreach (MeshFilter meshFilter in gameObject.GetComponentsInChildren<MeshFilter>())
             {
@@ -143,10 +152,10 @@ namespace BedrockFramework.FolderImportOverride
         [ValueDropdown("Types")]
         public List<Type> components = new List<Type>();
 
-        public override void InvokePostAction(GameObject gameObject)
+        public override void InvokePostAction(UnityEngine.Object gameObject)
         {
             foreach (Type componentType in components)
-                gameObject.AddComponent(componentType);
+                ((GameObject)gameObject).AddComponent(componentType);
         }
     }
 
@@ -161,16 +170,83 @@ namespace BedrockFramework.FolderImportOverride
                 return;
 
             string materialName = Path.GetFileNameWithoutExtension(assetPath);
+
             foreach (string modelAssetGUID in AssetDatabase.FindAssets("t:model"))
             {
                 string modelAssetPath = AssetDatabase.GUIDToAssetPath(modelAssetGUID);
                 ModelImporter modelImporter = (ModelImporter)AssetImporter.GetAtPath(modelAssetPath);
 
-                // Check for any matching missing materials.
+                // Check for any meshes that were referencing this material.
                 Dictionary<AssetImporter.SourceAssetIdentifier, UnityEngine.Object> remappedMaterials = modelImporter.GetExternalObjectMap();
                 foreach (KeyValuePair<AssetImporter.SourceAssetIdentifier, UnityEngine.Object> entry in remappedMaterials)
-                    if (entry.Value == null && entry.Key.name == materialName)
+                {
+                    if (entry.Key.name == materialName)
+                    {
+                        Debug.LogWarning(modelAssetPath);
                         AssetDatabase.ImportAsset(modelAssetPath);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reimports any meshes that hold the same material name internally as the one that has been imported.
+    /// </summary>
+    public class ImportOverideAction_UpdateModelsInternalMaterials : ImportOverideAction
+    {
+        public override void InvokeImportAction(string assetPath)
+        {
+            if (Path.GetExtension(assetPath) != ".mat")
+                return;
+
+            string materialName = Path.GetFileNameWithoutExtension(assetPath);
+
+            AssetDatabase.StartAssetEditing();
+            //TODO: Change this for searching for the name and type directly.
+            // "materialName t:material"
+            foreach (string modelAssetGUID in AssetDatabase.FindAssets("t:material"))
+            {
+                // We search for materials and then narrow it down to GameObjects containing materials (internal assets).
+                // This should be faster than going through all models and loading them to get internal assets.
+                string materialAssetPath = AssetDatabase.GUIDToAssetPath(modelAssetGUID);
+                if (AssetDatabase.GetMainAssetTypeAtPath(materialAssetPath) != typeof(GameObject))
+                    continue;
+
+                foreach (UnityEngine.Object modelAssetObject in AssetDatabase.LoadAllAssetsAtPath(materialAssetPath))
+                    if (modelAssetObject.name == materialName && modelAssetObject.GetType() == typeof(Material))
+                    {
+                        AssetDatabase.ImportAsset(materialAssetPath);
+                        break;
+                    }
+            }
+            AssetDatabase.StopAssetEditing();
+        }
+    }
+
+    /// <summary>
+    /// Reimports any meshes that hold the same material name internally as the one that has been imported.
+    /// </summary>
+    public class ImportOverideAction_EnsureUniqueAssetName : ImportOverideAction
+    {
+        public string extensionMask = ".mat";
+
+        public override void InvokeImportAction(string importedObjectPath)
+        {
+            if (Path.GetExtension(importedObjectPath) != ".mat")
+                return;
+
+            UnityEngine.Object importedObject = AssetDatabase.LoadAssetAtPath(importedObjectPath, typeof(UnityEngine.Object));
+
+            string importedObjectName = importedObject.name;
+            string importedObjectType = importedObject.GetType().Name;
+
+            //TODO This should not include subassets.
+            string[] matchingAssets = AssetDatabase.FindAssets(importedObjectName + " t:" + importedObjectType).Select(x => AssetDatabase.GUIDToAssetPath(x)).ToArray();
+
+            if (matchingAssets.Length > 1)
+            {
+                EditorUtility.DisplayDialog("Material Name Conflict", "Material names must be unique, the following clash:\n"+string.Join("\n", matchingAssets), "Okay");
             }
         }
     }

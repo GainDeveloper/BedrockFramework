@@ -23,7 +23,7 @@ MonoBehaviour:
     - Name: overrideAction
       Entry: 7
       Data: 0|BedrockFramework.FolderImportOverride.ImportOverideAction_UpdateModelsWithDeletedMaterials,
-        Assembly-CSharp-Editor-firstpass
+        BedrockFramework
     - Name: 
       Entry: 8
       Data: 

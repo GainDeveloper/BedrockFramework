@@ -9,8 +9,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c119cd875107e72439f8237ec0c986f2, type: 3}
-  m_Name: FolderSettings
+  m_Name: AssetSettings
   m_EditorClassIdentifier: 
+  prototype: {fileID: 0}
+  modifiedValues:
+  - assetImportedActions
+  - assetDeletedActions
+  - modelPostActions
+  - modelPreActions
+  - materialName
+  - materialSearch
+  - importMaterials
+  - importAnimation
+  - animationType
+  - importLights
+  - importCameras
+  - importVisibility
   importVisibility:
     overrideEnabled: 0
     someField: 0
@@ -37,5 +51,6 @@ MonoBehaviour:
     someField: 1
   modelPreActions: []
   modelPostActions: []
-  assetDeletedActions:
-  - {fileID: 11400000, guid: 86b51eea093bcbb42982569cf2b98a5f, type: 2}
+  assetDeletedActions: []
+  assetImportedActions:
+  - {fileID: 11400000, guid: 3d689b6bc4dc1e94896a0c1ac817295b, type: 2}

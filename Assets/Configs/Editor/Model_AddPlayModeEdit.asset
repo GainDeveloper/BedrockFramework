@@ -9,7 +9,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5c4cf6a4339d5d44aa39c8129dcf3102, type: 3}
-  m_Name: Model_SearchAndRemap
+  m_Name: Model_AddPlayModeEdit
   m_EditorClassIdentifier: 
   serializationData:
     SerializedFormat: 2
@@ -22,8 +22,29 @@ MonoBehaviour:
     SerializationNodes:
     - Name: overrideAction
       Entry: 7
-      Data: 0|BedrockFramework.FolderImportOverride.ImportOverideAction_SearchAndRemap,
-        Assembly-CSharp-Editor-firstpass
+      Data: 0|BedrockFramework.FolderImportOverride.ImportOverideAction_AddComponents,
+        BedrockFramework
+    - Name: components
+      Entry: 7
+      Data: 1|System.Collections.Generic.List`1[[System.Type, mscorlib]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 7
+      Data: 2|System.MonoType, mscorlib
+    - Name: 
+      Entry: 1
+      Data: BedrockFramework.PlayModeEdit.PlayModeEdit, BedrockFramework
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
     - Name: 
       Entry: 8
       Data: 

@@ -7,7 +7,7 @@ using Sirenix.OdinInspector;
 namespace BedrockFramework.FolderImportOverride
 {
     [CreateAssetMenu(fileName = "FolderSettings",menuName = "BedrockFramework/FolderSettings", order = 0)]
-    class FolderImportOverride_FolderSettings : ScriptableObject
+    class FolderImportOverride_FolderSettings : Prototype.PrototypeObject //TODO: Experiment if we can use Odin drawerers with the PrototypeObject
     {
         [BoxGroup("Model Import Settings Override"), SerializeField]
         private ModelImporterOverrideBool importVisibility = new ModelImporterOverrideBool(ToModelImport.ImportVisibility);
@@ -32,8 +32,11 @@ namespace BedrockFramework.FolderImportOverride
         [BoxGroup("Model Import Settings Override"), SerializeField]
         private List<FolderImportOverride_Actions> modelPostActions = new List<FolderImportOverride_Actions>();
 
+        [InfoBox("The are invoked after all assets have finished importing.")]
         [SerializeField]
         private List<FolderImportOverride_Actions> assetDeletedActions = new List<FolderImportOverride_Actions>();
+        [SerializeField]
+        private List<FolderImportOverride_Actions> assetImportedActions = new List<FolderImportOverride_Actions>();
 
         public void OverrideModelImporter(ModelImporter importer)
         {
@@ -62,6 +65,12 @@ namespace BedrockFramework.FolderImportOverride
         {
             foreach (FolderImportOverride_Actions action in assetDeletedActions)
                 action.InvokeDeleteAction(assetPath);
+        }
+
+        public void AssetImported(string assetPath)
+        {
+            foreach (FolderImportOverride_Actions action in assetImportedActions)
+                action.InvokeImportAction(assetPath);
         }
 
         // Specific Override (For Serialization)
