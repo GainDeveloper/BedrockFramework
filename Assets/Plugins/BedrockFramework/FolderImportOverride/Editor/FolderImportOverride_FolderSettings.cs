@@ -9,28 +9,31 @@ namespace BedrockFramework.FolderImportOverride
     [CreateAssetMenu(fileName = "FolderSettings",menuName = "BedrockFramework/FolderSettings", order = 0)]
     class FolderImportOverride_FolderSettings : ScriptableObject
     {
-        [BoxGroup("Model Import Settings Override")]
-        public ModelImporterOverrideBool importVisibility = new ModelImporterOverrideBool(ToModelImport.ImportVisibility);
-        [BoxGroup("Model Import Settings Override")]
-        public ModelImporterOverrideBool importCameras = new ModelImporterOverrideBool(ToModelImport.ImportCameras);
-        [BoxGroup("Model Import Settings Override")]
-        public ModelImporterOverrideBool importLights = new ModelImporterOverrideBool(ToModelImport.ImportLights);
+        [BoxGroup("Model Import Settings Override"), SerializeField]
+        private ModelImporterOverrideBool importVisibility = new ModelImporterOverrideBool(ToModelImport.ImportVisibility);
+        [BoxGroup("Model Import Settings Override"), SerializeField]
+        private ModelImporterOverrideBool importCameras = new ModelImporterOverrideBool(ToModelImport.ImportCameras);
+        [BoxGroup("Model Import Settings Override"), SerializeField]
+        private ModelImporterOverrideBool importLights = new ModelImporterOverrideBool(ToModelImport.ImportLights);
 
-        [BoxGroup("Model Import Settings Override")]
-        public ModelImporterOverrideAnimationType animationType = new ModelImporterOverrideAnimationType(ToModelImport.AnimationType);
-        [BoxGroup("Model Import Settings Override")]
-        public ModelImporterOverrideBool importAnimation = new ModelImporterOverrideBool(ToModelImport.ImportAnimation);
-        [BoxGroup("Model Import Settings Override")]
+        [BoxGroup("Model Import Settings Override"), SerializeField]
+        private ModelImporterOverrideAnimationType animationType = new ModelImporterOverrideAnimationType(ToModelImport.AnimationType);
+        [BoxGroup("Model Import Settings Override"), SerializeField]
+        private ModelImporterOverrideBool importAnimation = new ModelImporterOverrideBool(ToModelImport.ImportAnimation);
 
-        public ModelImporterOverrideBool importMaterials = new ModelImporterOverrideBool(ToModelImport.ImportMaterials);
-        [BoxGroup("Model Import Settings Override")]
-        public ModelImporterOverrideMaterialSearch materialSearch = new ModelImporterOverrideMaterialSearch(ToModelImport.MaterialSearch);
-        [BoxGroup("Model Import Settings Override")]
-        public ModelImporterOverrideMaterialName materialName = new ModelImporterOverrideMaterialName(ToModelImport.ModelImporterMaterialName);
-        [BoxGroup("Model Import Settings Override")]
-        public List<FolderImportOverride_Actions> modelPreActions = new List<FolderImportOverride_Actions>();
-        [BoxGroup("Model Import Settings Override")]
-        public List<FolderImportOverride_Actions> modelPostActions = new List<FolderImportOverride_Actions>();
+        [BoxGroup("Model Import Settings Override"), SerializeField]
+        private ModelImporterOverrideBool importMaterials = new ModelImporterOverrideBool(ToModelImport.ImportMaterials);
+        [BoxGroup("Model Import Settings Override"), SerializeField]
+        private ModelImporterOverrideMaterialSearch materialSearch = new ModelImporterOverrideMaterialSearch(ToModelImport.MaterialSearch);
+        [BoxGroup("Model Import Settings Override"), SerializeField]
+        private ModelImporterOverrideMaterialName materialName = new ModelImporterOverrideMaterialName(ToModelImport.ModelImporterMaterialName);
+        [BoxGroup("Model Import Settings Override"), SerializeField]
+        private List<FolderImportOverride_Actions> modelPreActions = new List<FolderImportOverride_Actions>();
+        [BoxGroup("Model Import Settings Override"), SerializeField]
+        private List<FolderImportOverride_Actions> modelPostActions = new List<FolderImportOverride_Actions>();
+
+        [SerializeField]
+        private List<FolderImportOverride_Actions> assetDeletedActions = new List<FolderImportOverride_Actions>();
 
         public void OverrideModelImporter(ModelImporter importer)
         {
@@ -53,6 +56,12 @@ namespace BedrockFramework.FolderImportOverride
         {
             foreach (FolderImportOverride_Actions action in modelPostActions)
                 action.InvokePostAction(gameObject);
+        }
+
+        public void AssetDeleted(string assetPath)
+        {
+            foreach (FolderImportOverride_Actions action in assetDeletedActions)
+                action.InvokeDeleteAction(assetPath);
         }
 
         // Specific Override (For Serialization)

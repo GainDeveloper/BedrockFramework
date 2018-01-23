@@ -9,11 +9,14 @@ namespace BedrockFramework.FolderImportOverride
 {
     public class FolderImportOverride_PostImport : AssetPostprocessor
     {
-        FolderImportOverride_FolderSettings GetAssetFolderSettings()
+
+
+        static FolderImportOverride_FolderSettings GetAssetFolderSettings(string assetPath)
         {
             string assetDirectory = Path.GetDirectoryName(assetPath);
+            string projectPath = Path.GetDirectoryName(Application.dataPath);
 
-            while (!string.IsNullOrEmpty(assetDirectory))
+            while (!string.IsNullOrEmpty(assetDirectory) && Directory.Exists(Path.Combine(projectPath, assetDirectory).Replace('\\', '/')))
             {
                 List<string> assetPaths = AssetDatabase.FindAssets("t:FolderImportOverride_FolderSettings", new string[] { assetDirectory })
                     .Select(x => AssetDatabase.GUIDToAssetPath(x)).Where(x => !x.Replace(assetDirectory + "/", "").Contains("/")).ToList();
@@ -31,7 +34,7 @@ namespace BedrockFramework.FolderImportOverride
 
         void OnPreprocessModel()
         {
-            FolderImportOverride_FolderSettings folderSettings = GetAssetFolderSettings();
+            FolderImportOverride_FolderSettings folderSettings = GetAssetFolderSettings(assetPath);
             if (folderSettings == null)
                 return;
 
@@ -41,11 +44,28 @@ namespace BedrockFramework.FolderImportOverride
 
         void OnPostprocessModel(GameObject gameObject)
         {
-            FolderImportOverride_FolderSettings folderSettings = GetAssetFolderSettings();
+            FolderImportOverride_FolderSettings folderSettings = GetAssetFolderSettings(assetPath);
             if (folderSettings == null)
                 return;
 
             folderSettings.PostModelImport(gameObject);
+        }
+
+        static void OnPostprocessAssetDeleted(string assetPath)
+        {
+            FolderImportOverride_FolderSettings folderSettings = GetAssetFolderSettings(assetPath);
+            if (folderSettings == null)
+                return;
+
+            folderSettings.AssetDeleted(assetPath);
+        }
+
+        static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+        {
+            foreach (string str in deletedAssets)
+            {
+                OnPostprocessAssetDeleted(str);
+            }
         }
     }
 }

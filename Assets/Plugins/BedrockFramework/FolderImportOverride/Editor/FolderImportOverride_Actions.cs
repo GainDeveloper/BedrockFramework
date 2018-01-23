@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using System.Linq;
+using System.IO;
 
 using UnityEngine;
 using UnityEditor;
@@ -24,6 +25,11 @@ namespace BedrockFramework.FolderImportOverride
         {
             overrideAction.InvokePostAction(gameObject);
         }
+
+        public void InvokeDeleteAction(string assetPath)
+        {
+            overrideAction.InvokeDeleteAction(assetPath);
+        }
     }
 
     public class ImportOverideAction
@@ -33,6 +39,10 @@ namespace BedrockFramework.FolderImportOverride
         }
 
         public virtual void InvokePostAction(GameObject gameObject)
+        {
+        }
+
+        public virtual void InvokeDeleteAction(string assetPath)
         {
         }
     }
@@ -137,6 +147,24 @@ namespace BedrockFramework.FolderImportOverride
         {
             foreach (Type componentType in components)
                 gameObject.AddComponent(componentType);
+        }
+    }
+
+    /// <summary>
+    /// Removes any material remaps to this material and reimports the mesh.
+    /// </summary>
+    public class ImportOverideAction_UpdateModelsWithDeletedMaterials : ImportOverideAction
+    {
+        public override void InvokeDeleteAction(string assetPath)
+        {
+            if (Path.GetExtension(assetPath) != ".mat")
+                return;
+
+            string materialName = Path.GetFileNameWithoutExtension(assetPath);
+            Debug.Log(materialName);
+
+            //TODO: Itterate over all mesh assets, check if any of the source remaps point to a material with this name,
+            // if the remap points to a null object, tell Unity to reimport the mesh asset.
         }
     }
 }
