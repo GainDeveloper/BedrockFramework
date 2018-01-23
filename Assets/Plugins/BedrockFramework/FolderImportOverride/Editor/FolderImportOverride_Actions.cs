@@ -161,10 +161,17 @@ namespace BedrockFramework.FolderImportOverride
                 return;
 
             string materialName = Path.GetFileNameWithoutExtension(assetPath);
-            Debug.Log(materialName);
+            foreach (string modelAssetGUID in AssetDatabase.FindAssets("t:model"))
+            {
+                string modelAssetPath = AssetDatabase.GUIDToAssetPath(modelAssetGUID);
+                ModelImporter modelImporter = (ModelImporter)AssetImporter.GetAtPath(modelAssetPath);
 
-            //TODO: Itterate over all mesh assets, check if any of the source remaps point to a material with this name,
-            // if the remap points to a null object, tell Unity to reimport the mesh asset.
+                // Check for any matching missing materials.
+                Dictionary<AssetImporter.SourceAssetIdentifier, UnityEngine.Object> remappedMaterials = modelImporter.GetExternalObjectMap();
+                foreach (KeyValuePair<AssetImporter.SourceAssetIdentifier, UnityEngine.Object> entry in remappedMaterials)
+                    if (entry.Value == null && entry.Key.name == materialName)
+                        AssetDatabase.ImportAsset(modelAssetPath);
+            }
         }
     }
 }
