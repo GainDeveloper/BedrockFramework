@@ -8,7 +8,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c4cf6a4339d5d44aa39c8129dcf3102, type: 3}
+  m_Script: {fileID: -881464299, guid: 782254f80d401584883c7085b1eed9cb, type: 3}
   m_Name: Model_EnvironmentAsset_Tags
   m_EditorClassIdentifier: 
   serializationData:
@@ -21,5 +21,15 @@ MonoBehaviour:
     PrefabModifications: []
     SerializationNodes:
     - Name: overrideAction
-      Entry: 6
+      Entry: 7
+      Data: 0|BedrockFramework.FolderImportOverride.ImportOverideAction_SetTagLayer,
+        BedrockFramework_Editor
+    - Name: tag
+      Entry: 1
+      Data: Respawn
+    - Name: layer
+      Entry: 1
+      Data: Water
+    - Name: 
+      Entry: 8
       Data: 

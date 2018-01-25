@@ -8,21 +8,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c119cd875107e72439f8237ec0c986f2, type: 3}
-  m_Name: EnvironmentModelSettings
+  m_Script: {fileID: 620168085, guid: 782254f80d401584883c7085b1eed9cb, type: 3}
+  m_Name: _EnvironmentModelSettings
   m_EditorClassIdentifier: 
-  prototype: {fileID: 11400000, guid: c7f01c6e9a6361a468bbfb8fb59a5874, type: 2}
-  modifiedValues:
-  - modelPostActions
-  - modelPreActions
-  - materialName
-  - materialSearch
-  - importMaterials
-  - importAnimation
-  - animationType
-  - importLights
-  - importCameras
-  - importVisibility
   importVisibility:
     overrideEnabled: 1
     someField: 0
@@ -53,6 +41,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5435770072280af46a668db41f551e3b, type: 2}
   - {fileID: 11400000, guid: fff8e036b66ad5641aaee56b4b4d0cc0, type: 2}
   - {fileID: 11400000, guid: 5192a1bfd59dcd445b4a3c95be10f447, type: 2}
+  - {fileID: 11400000, guid: 738a4190933be4b4a893d2b4f0e2ce62, type: 2}
   assetDeletedActions: []
   assetImportedActions:
   - {fileID: 11400000, guid: 3d689b6bc4dc1e94896a0c1ac817295b, type: 2}

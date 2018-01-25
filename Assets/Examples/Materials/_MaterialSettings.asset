@@ -8,13 +8,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c119cd875107e72439f8237ec0c986f2, type: 3}
-  m_Name: MaterialSettings
+  m_Script: {fileID: 620168085, guid: 782254f80d401584883c7085b1eed9cb, type: 3}
+  m_Name: _MaterialSettings
   m_EditorClassIdentifier: 
-  prototype: {fileID: 11400000, guid: c7f01c6e9a6361a468bbfb8fb59a5874, type: 2}
-  modifiedValues:
-  - assetImportedActions
-  - assetDeletedActions
   importVisibility:
     overrideEnabled: 0
     someField: 0
