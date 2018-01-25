@@ -69,6 +69,8 @@ namespace BedrockFramework.FolderImportOverride
 
         static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
         {
+            AssetDatabase.StartAssetEditing();
+
             foreach (string str in deletedAssets)
             {
                 OnPostprocessAssetDeleted(str);
@@ -83,6 +85,8 @@ namespace BedrockFramework.FolderImportOverride
             {
                 OnPostprocessAssetDeleted(str);
             }
+
+            AssetDatabase.StopAssetEditing();
         }
     }
 }

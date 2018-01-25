@@ -7,7 +7,7 @@ using Sirenix.OdinInspector;
 namespace BedrockFramework.FolderImportOverride
 {
     [CreateAssetMenu(fileName = "FolderSettings",menuName = "BedrockFramework/FolderSettings", order = 0)]
-    class FolderImportOverride_FolderSettings : Prototype.PrototypeObject //TODO: Experiment if we can use Odin drawerers with the PrototypeObject
+    class FolderImportOverride_FolderSettings : ScriptableObject
     {
         [BoxGroup("Model Import Settings Override"), SerializeField]
         private ModelImporterOverrideBool importVisibility = new ModelImporterOverrideBool(ToModelImport.ImportVisibility);

@@ -160,6 +160,41 @@ namespace BedrockFramework.FolderImportOverride
     }
 
     /// <summary>
+    /// Creates a new component of the users choice on the root GameObject.
+    /// </summary>
+    public class ImportOverideAction_SetTagLayer : ImportOverideAction
+    {
+#pragma warning disable
+        private static List<string> GetLayers()
+        {
+            return Enumerable.Range(0, 32)
+                .Select(i => LayerMask.LayerToName(i))
+                .Where(s => s.Length > 0)
+                .ToList();
+        }
+
+        private static List<string> GetTags()
+        {
+            return UnityEditorInternal.InternalEditorUtility.tags.ToList();
+        }
+#pragma warning restore
+
+        [ValueDropdown("GetTags")]
+        public string tag;
+
+        [ValueDropdown("GetLayers")]
+        public string layer;
+
+        //TODO: Might need to add a suffix/prefix that disables this for certain GameObjects.
+        public override void InvokePostAction(UnityEngine.Object importedObject)
+        {
+            GameObject gameObject = (GameObject)importedObject;
+            gameObject.tag = tag;
+            gameObject.layer = LayerMask.NameToLayer(layer);
+        }
+    }
+
+    /// <summary>
     /// Removes any material remaps to this material and reimports the mesh.
     /// </summary>
     public class ImportOverideAction_UpdateModelsWithDeletedMaterials : ImportOverideAction
@@ -182,7 +217,6 @@ namespace BedrockFramework.FolderImportOverride
                 {
                     if (entry.Key.name == materialName)
                     {
-                        Debug.LogWarning(modelAssetPath);
                         AssetDatabase.ImportAsset(modelAssetPath);
                     }
                 }
@@ -202,10 +236,7 @@ namespace BedrockFramework.FolderImportOverride
 
             string materialName = Path.GetFileNameWithoutExtension(assetPath);
 
-            AssetDatabase.StartAssetEditing();
-            //TODO: Change this for searching for the name and type directly.
-            // "materialName t:material"
-            foreach (string modelAssetGUID in AssetDatabase.FindAssets("t:material"))
+            foreach (string modelAssetGUID in AssetDatabase.FindAssets(materialName + " t:material"))
             {
                 // We search for materials and then narrow it down to GameObjects containing materials (internal assets).
                 // This should be faster than going through all models and loading them to get internal assets.
@@ -220,7 +251,6 @@ namespace BedrockFramework.FolderImportOverride
                         break;
                     }
             }
-            AssetDatabase.StopAssetEditing();
         }
     }
 
@@ -241,8 +271,8 @@ namespace BedrockFramework.FolderImportOverride
             string importedObjectName = importedObject.name;
             string importedObjectType = importedObject.GetType().Name;
 
-            //TODO This should not include subassets.
-            string[] matchingAssets = AssetDatabase.FindAssets(importedObjectName + " t:" + importedObjectType).Select(x => AssetDatabase.GUIDToAssetPath(x)).ToArray();
+            string[] matchingAssets = AssetDatabase.FindAssets(importedObjectName + " t:" + importedObjectType).Select(x => AssetDatabase.GUIDToAssetPath(x)).
+                Where(x => x.Contains(".mat") && Path.GetFileNameWithoutExtension(x) == importedObjectName).ToArray();
 
             if (matchingAssets.Length > 1)
             {

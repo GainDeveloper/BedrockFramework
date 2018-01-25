@@ -102,7 +102,7 @@ namespace BedrockFramework.Prototype
 
             void UpdateSerializedPrototype()
             {
-                if (prototypeProperty.objectReferenceValue != null)
+                if (prototypeProperty.objectReferenceValue != null && prototypeProperty.objectReferenceValue != serializedObject.context)
                     prototypeSerialized = new SerializedObject(prototypeProperty.objectReferenceValue);
                 else
                     prototypeSerialized = null;
@@ -168,6 +168,10 @@ namespace BedrockFramework.Prototype
                 while (prototype != null)
                 {
                     stack.Push(prototype);
+
+                    if (prototype == prototype.prototype)
+                        break;
+
                     prototype = prototype.prototype;
                 }
 
