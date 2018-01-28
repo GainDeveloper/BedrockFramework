@@ -1,4 +1,4 @@
-using System.Linq;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -41,20 +41,20 @@ namespace BedrockFramework.Logger
 
         public static void Log(object logObject)
         {
-            _Log(LogType.Log, defaultCategory, logObject.ToString(), new object[0]);
+            _Log(LogType.Log, defaultCategory, logObject, null);
         }
 
         public static void Log(string category, object logObject)
         {
-            _Log(LogType.Log, category, logObject.ToString(), new object[0]);
+            _Log(LogType.Log, category, logObject, null);
         }
 
-        public static void Log(string baseString, params object[] list)
+        public static void Log(string baseString, Func<object[]> list)
         {
             _Log(LogType.Log, defaultCategory, baseString, list);
         }
 
-        public static void Log(string category, string baseString, params object[] list)
+        public static void Log(string category, string baseString, Func<object[]> list)
         {
             _Log(LogType.Log, category, baseString, list);
         }
@@ -65,20 +65,20 @@ namespace BedrockFramework.Logger
 
         public static void LogWarning(object logObject)
         {
-            _Log(LogType.Warning, defaultCategory, logObject.ToString(), new object[0]);
+            _Log(LogType.Warning, defaultCategory, logObject.ToString(), null);
         }
 
         public static void LogWarning(string category, object logObject)
         {
-            _Log(LogType.Warning, category, logObject.ToString(), new object[0]);
+            _Log(LogType.Warning, category, logObject, null);
         }
 
-        public static void LogWarning(string baseString, params object[] list)
+        public static void LogWarning(string baseString, Func<object[]> list)
         {
             _Log(LogType.Warning, defaultCategory, baseString, list);
         }
 
-        public static void LogWarning(string category, string baseString, params object[] list)
+        public static void LogWarning(string category, string baseString, Func<object[]> list)
         {
             _Log(LogType.Warning, category, baseString, list);
         }
@@ -89,20 +89,20 @@ namespace BedrockFramework.Logger
 
         public static void LogError(object logObject)
         {
-            _Log(LogType.Error, defaultCategory, logObject.ToString(), new object[0]);
+            _Log(LogType.Error, defaultCategory, logObject.ToString(), null);
         }
 
         public static void LogError(string category, object logObject)
         {
-            _Log(LogType.Error, category, logObject.ToString(), new object[0]);
+            _Log(LogType.Error, category, logObject, null);
         }
 
-        public static void LogError(string baseString, params object[] list)
+        public static void LogError(string baseString, Func<object[]> list)
         {
             _Log(LogType.Error, defaultCategory, baseString, list);
         }
 
-        public static void LogError(string category, string baseString, params object[] list)
+        public static void LogError(string category, string baseString, Func<object[]> list)
         {
             _Log(LogType.Error, category, baseString, list);
         }
@@ -111,19 +111,27 @@ namespace BedrockFramework.Logger
         /// Generics
         /// 
 
-        private static void _Log(LogType logType, string category, string baseString, params object[] list)
+        private static void _Log(LogType logType, string category, object baseString, Func<object[]> listGetter)
         {
+            if (!Debug.isDebugBuild)
+                return;
+
             builder.Length = 0;
             builder.Append(baseString);
 
-            for (int i = 0; i < list.Length; i++)
+            if (listGetter != null)
             {
-                int formatPos = builder.IndexOf(formatString, 0, false);
-                if (formatPos < 0)
-                    break;
+                object[] list = listGetter();
+                for (int i = 0; i < list.Length; i++)
+                {
+                    int formatPos = builder.IndexOf(formatString, 0, false);
+                    if (formatPos < 0)
+                        break;
 
-                builder.Replace(formatString, list[i].ToString(), formatPos, formatStringLength);
+                    builder.Replace(formatString, list[i].ToString(), formatPos, formatStringLength);
+                }
             }
+
 
             AddLog(logType, category, builder.ToString(), UnityEngine.StackTraceUtility.ExtractStackTrace());
         }
@@ -136,7 +144,5 @@ namespace BedrockFramework.Logger
             if (OnLogAdded != null)
                 OnLogAdded(newLog);
         }
-
-
     } 
 }
