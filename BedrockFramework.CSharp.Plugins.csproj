@@ -280,6 +280,9 @@
     <Reference Include="UnityEngine.StandardEvents">
       <HintPath>Library\UnityAssemblies\UnityEngine.StandardEvents.dll</HintPath>
     </Reference>
+    <Reference Include="BedrockFramework_Editor">
+      <HintPath>Assets\Plugins\BedrockFramework\BedrockFramework_Editor.dll</HintPath>
+    </Reference>
     <Reference Include="Sirenix.OdinInspector.Attributes">
       <HintPath>Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Attributes.dll</HintPath>
     </Reference>
@@ -297,9 +300,6 @@
     </Reference>
     <Reference Include="Sirenix.Utilities.Editor">
       <HintPath>Assets\Plugins\Sirenix\Assemblies\Sirenix.Utilities.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="BedrockFramework_Editor">
-      <HintPath>Assets\Plugins\BedrockFramework\BedrockFramework_Editor.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
