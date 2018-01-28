@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using BedrockFramework;
+using Debug = BedrockFramework.Logger.Logger;
 
 public class LogTest : MonoBehaviour {
 
@@ -12,6 +12,6 @@ public class LogTest : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        BedrockFramework.Logger.Logger.Log("TheBest", "A = {}, B = {}, C = {}", 1, 2, Time.realtimeSinceStartup);
+        Debug.Log("TheBest", "A = {}, B = {}, C = {}", 1, 2, Time.realtimeSinceStartup);
     }
 }
