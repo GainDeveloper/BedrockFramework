@@ -13,7 +13,9 @@ namespace BedrockFramework.FolderImportOverride
     class FolderImportOverride_Actions : SerializedScriptableObject
     {
         [SerializeField]
+#pragma warning disable
         private ImportOverideAction overrideAction;
+#pragma warning restore
 
         public void InvokePreAction(AssetImporter assetImporter)
         {

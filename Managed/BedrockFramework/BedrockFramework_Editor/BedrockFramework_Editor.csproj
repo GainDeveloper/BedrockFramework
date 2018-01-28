@@ -14,9 +14,9 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>pdbonly</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\..\Assets\Plugins\BedrockFramework\</OutputPath>
     <DefineConstants>DEBUG;TRACE;UNITY_EDITOR</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -55,17 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\Editor\SerializedPropertyArrayUtility.cs" />
-    <Compile Include="..\FolderImportOverride\Editor\FolderImportOverride_Actions.cs" />
-    <Compile Include="..\FolderImportOverride\Editor\FolderImportOverride_FolderSettings.cs" />
-    <Compile Include="..\FolderImportOverride\Editor\FolderImportOverride_PostImport.cs" />
-    <Compile Include="..\PlayModeEdit\Editor\PlayModeEdit_Inspector.cs" />
-    <Compile Include="..\PlayModeEdit\Editor\PlayModeEdit_SceneView.cs" />
-    <Compile Include="..\PlayModeEdit\Editor\PlayModeEdit_System.cs" />
-    <Compile Include="..\Prototype\Editor\PrototypeEditor.cs" />
-    <Compile Include="..\PlayModeEdit\PlayModeEdit.cs" />
-    <Compile Include="..\Prototype\Prototype.cs" />
-    <Compile Include="..\SmartCombine.cs" />
+    <Compile Include="..\Source\**" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
