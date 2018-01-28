@@ -7,7 +7,7 @@ Features,
 - DebugLog. Supports categories, string formatting (pythonesque), zero GC in release builds.
 
 Planned Features,
-- BuildSteps: 
+- BuildSteps: Configurable builds with different steps to perform on a per asset and scene.
 - DebugLog: Add HTML LogFile for debug builds.
 - InGame Console. Supports calling predefined methods with arguments. Should have auto-complete & history. 
 - PlayMode Editing: Merge Window, shows all changes made to the scene and lets user choose which ones to bring across to the editor scene.
