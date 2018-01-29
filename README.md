@@ -14,7 +14,8 @@ Installing should be rather painless, you can just grab the DLLs in Assets/Plugi
 All the source is kept in Managed/BedrockFramework/Source.
 
 ### Prerequisites
-Odin Inspector is required for it's serialization and polished editor interface.
+Built for Unity 2017.3.0f3. Makes use of some functionality not exposed in previous versions.
+Odin Inspector is required for the BuildSteps & FolderSettings editors. 
 
 ### Feature Breakdown
 - Implementation of prototype data model for Unity's ScriptableObjects. Entirely in editor, no runtime overhead.
@@ -24,7 +25,6 @@ Odin Inspector is required for it's serialization and polished editor interface.
 - BuildSteps. Configurable builds with different steps to perform on a per asset and scene.
 
 ### Future
-
 - DebugLog: Add HTML LogFile for debug builds.
 - InGame Console. Supports calling predefined methods with arguments. Should have auto-complete & history. 
 - PlayMode Editing: Merge Window, shows all changes made to the scene and lets user choose which ones to bring across to the editor scene.
