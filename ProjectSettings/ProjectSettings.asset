@@ -556,6 +556,7 @@ PlayerSettings:
   webGLCompressionFormat: 1
   scriptingDefineSymbols:
     1: ODIN_INSPECTOR
+    21: ODIN_INSPECTOR
   platformArchitecture: {}
   scriptingBackend: {}
   incrementalIl2cppBuild: {}

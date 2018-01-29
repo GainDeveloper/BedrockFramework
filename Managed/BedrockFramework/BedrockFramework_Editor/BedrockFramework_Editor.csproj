@@ -34,8 +34,16 @@
       <HintPath>..\..\..\Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Attributes.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Sirenix.OdinInspector.Editor">
+      <HintPath>..\..\..\Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Sirenix.Serialization">
       <HintPath>..\..\..\Assets\Plugins\Sirenix\Assemblies\Sirenix.Serialization.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Sirenix.Utilities.Editor">
+      <HintPath>..\..\..\Assets\Plugins\Sirenix\Assemblies\Sirenix.Utilities.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
