@@ -39,5 +39,5 @@ MonoBehaviour:
     - Name: 
       Entry: 8
       Data: 
-  name: Debug
-  buildOptions: 0
+  presetName: Debug
+  buildOptions: 777

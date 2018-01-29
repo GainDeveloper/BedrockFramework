@@ -26,10 +26,34 @@ MonoBehaviour:
         BedrockFramework_Editor]], mscorlib
     - Name: 
       Entry: 12
-      Data: 1
+      Data: 2
     - Name: 
       Entry: 7
       Data: 1|BedrockFramework.BuildSteps.BuildSteps_DeleteEditorComponents, BedrockFramework_Editor
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 2|BedrockFramework.BuildSteps.BuildSteps_ChangeMaterialColor, BedrockFramework_Editor
+    - Name: newColor
+      Entry: 7
+      Data: UnityEngine.Color, UnityEngine.CoreModule
+    - Name: 
+      Entry: 4
+      Data: 0.8564015
+    - Name: 
+      Entry: 4
+      Data: 0.142733574
+    - Name: 
+      Entry: 4
+      Data: 0.9705882
+    - Name: 
+      Entry: 4
+      Data: 0
+    - Name: 
+      Entry: 8
+      Data: 
     - Name: 
       Entry: 8
       Data: 
@@ -39,5 +63,5 @@ MonoBehaviour:
     - Name: 
       Entry: 8
       Data: 
-  name: Release
-  buildOptions: 65536
+  presetName: Release
+  buildOptions: 65544

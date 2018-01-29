@@ -11,6 +11,9 @@ namespace BedrockFramework.FolderImportOverride
     {
         static FolderImportOverride_FolderSettings GetAssetFolderSettings(string assetPath)
         {
+            if (!assetPath.Contains("Assets/"))
+                return null;
+
             string assetDirectory = Path.GetDirectoryName(assetPath);
             string projectPath = Path.GetDirectoryName(Application.dataPath);
 

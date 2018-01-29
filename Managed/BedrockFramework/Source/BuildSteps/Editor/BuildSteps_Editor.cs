@@ -38,8 +38,11 @@ namespace BedrockFramework.BuildSteps
     {
         public static bool isBuilding = false;
 
+#pragma warning disable
         [AssetList]
         public BuildSteps_SettingsPreset buildPreset;
+#pragma warning restore
+
 
         [InfoBox("$OutputPath")]
         [BoxGroup("Output Settings")]
@@ -56,26 +59,44 @@ namespace BedrockFramework.BuildSteps
         [BoxGroup("Output Settings")]
         public string appendRemark = "Test";
 
-
+#pragma warning disable
         [AssetList()]
         public List<BuildSteps_Config> buildPlatforms;
-
         [AssetList()]
         public List<SceneAsset> buildScenes;
+#pragma warning restore
+
 
         [Button("Build Selected", ButtonSizes.Medium)]
         public void Build()
         {
             isBuilding = true;
+            EditorApplication.delayCall += () => DelayedBuild();
+        }
+
+        void DelayedBuild()
+        {
+            // Modify Assets
+            foreach (BuildSteps_Steps step in buildPreset.buildSteps)
+            {
+                Object[] toModify = step.AssetsToModify();
+
+                if (toModify.Count() > 0)
+                {
+                    Undo.RecordObjects(toModify, "BuildModifications");
+                    for (int i = 0; i < toModify.Count(); i++)
+                        step.ModifyAsset(toModify[i]);
+                }
+            }
 
             foreach (BuildSteps_Config buildPlatform in buildPlatforms)
             {
-
-
                 BuildPipeline.BuildPlayer(buildScenes.Select(x => AssetDatabase.GetAssetPath(x)).ToArray(),
                     OutputPath() + buildPlatform.executableExtension, buildPlatform.buildTarget, buildPreset.buildOptions);
             }
 
+            // Revert Modified Assets
+            Undo.PerformUndo();
             isBuilding = false;
         }
 
@@ -91,7 +112,7 @@ namespace BedrockFramework.BuildSteps
             if (!string.IsNullOrEmpty(appendRemark))
                 parts.Add(appendRemark);
             if (appendType)
-                parts.Add(buildPreset.name);
+                parts.Add(buildPreset.presetName);
             if (appendRevision)
                 parts.Add("324");
 
@@ -112,8 +133,11 @@ namespace BedrockFramework.BuildSteps
     [CreateAssetMenu(fileName = "BuildPreset", menuName = "BedrockFramework/BuildPreset", order = 0)]
     class BuildSteps_SettingsPreset : Sirenix.OdinInspector.SerializedScriptableObject
     {
-        public string name;
+#pragma warning disable
+        public string presetName;
         public BuildOptions buildOptions;
+#pragma warning restore
+
 
         public List<BuildSteps_Steps> buildSteps = new List<BuildSteps_Steps>();
     }
