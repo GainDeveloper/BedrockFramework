@@ -11,6 +11,18 @@ namespace BedrockFramework.CustomLine
     [AddComponentMenu("BedrockFramework/Curve Decorator")]
     public class CustomCurve_Decorator : MonoBehaviour
     {
+        public struct DecoratorGameObject
+        {
+            public GameObject gameObject;
+            public float xScale;
+
+            public DecoratorGameObject(GameObject newGameObject, float newXScale)
+            {
+                gameObject = newGameObject;
+                xScale = newXScale;
+            }
+        }
+
         CustomCurve curve;
         MeshFilter mf;
         MeshRenderer mr;
@@ -60,20 +72,29 @@ namespace BedrockFramework.CustomLine
 
         private int currentVertexCount, currentTriangleCount;
         private float currentPosition;
+        private DecoratorGameObject[] previousCurveGameObjects;
+        private Dictionary<Material, int> materialTriangleCount;
 
         //TODO: Add option to only update vertices.
         private void RebuildCurveMesh()
         {
-            curveMesh.Clear();
             currentVertexCount = 0;
             currentTriangleCount = 0;
             currentPosition = 0;
 
-            GameObject[] curveGameObjects = GetGameObjectsToAdd();
+            DecoratorGameObject[] curveGameObjects = GetGameObjectsToAdd();
+            bool requiresNewMesh = !MatchingPreviousGameObjects(curveGameObjects);
+
             Vector3[] curveVertices = new Vector3[GetGameObjectsVertexCount(curveGameObjects)];
             Vector3[] curveNormals = new Vector3[GetGameObjectsVertexCount(curveGameObjects)];
-            int[] curveTriangles = new int[GetGameObjectsTriangleCount(curveGameObjects)];
+            int[] curveTriangles = new int[0];
 
+            if (requiresNewMesh)
+            {
+                curveMesh.Clear();
+                curveTriangles = new int[GetGameObjectsTriangleCount(curveGameObjects)];
+            }
+            
 
             for (int i = 0; i < curveGameObjects.Length; i++)
                 PlaceMeshOnCurve(curveGameObjects[i], ref curveVertices, ref curveNormals, ref curveTriangles);
@@ -81,70 +102,119 @@ namespace BedrockFramework.CustomLine
             // Update Mesh
             curveMesh.vertices = curveVertices;
             curveMesh.normals = curveNormals;
-            curveMesh.triangles = curveTriangles;
+
+            if (requiresNewMesh)
+                curveMesh.triangles = curveTriangles;
 
             // TODO: Can this be put off until we save the asset?
             curveMesh.RecalculateBounds();
             curveMesh.RecalculateTangents();
+
+
+            previousCurveGameObjects = curveGameObjects;
         }
 
-        //TODO: This should include some sort of scale required per GameObject
-        private GameObject[] GetGameObjectsToAdd()
+        private bool MatchingPreviousGameObjects(DecoratorGameObject[] gameObjects)
         {
-            List<GameObject> gameObjects = new List<GameObject>();
+            if (previousCurveGameObjects == null)
+                return false;
+
+            if (gameObjects.Length != previousCurveGameObjects.Length)
+                return false;
+
+            for (int i = 0; i < gameObjects.Length; i++)
+            {
+                if (gameObjects[i].gameObject != previousCurveGameObjects[i].gameObject)
+                    return false;
+            }
+
+            return true;
+        }
+
+        private DecoratorGameObject[] GetGameObjectsToAdd()
+        {
+            List<DecoratorGameObject> gameObjects = new List<DecoratorGameObject>();
 
             if (startGameObject != null)
-                gameObjects.Add(startGameObject);
+                gameObjects.Add(new DecoratorGameObject(startGameObject, 1));
 
             if (endGameObject != null)
-                gameObjects.Add(endGameObject);
+                gameObjects.Add(new DecoratorGameObject(endGameObject, 1));
 
-            //float coveredDistance = 
+            float remainingDistance = curve.CurveLength() - GetGameObjectsLength(gameObjects.ToArray());
+            int middleStartIndex = startGameObject != null ? 1 : 0;
+
+            if (middleGameObject != null)
+            {
+                float middleLength = middleGameObject.GetComponent<MeshFilter>().sharedMesh.bounds.size.x;
+                float middleCount = remainingDistance / middleLength;
+                int fullMiddleCount = Mathf.FloorToInt(middleCount);
+
+                float middleScale = 1 + (middleCount % 1) / fullMiddleCount;
+
+                for (int i = 0; i < fullMiddleCount; i++)
+                {
+                    gameObjects.Insert(middleStartIndex, new DecoratorGameObject(middleGameObject, middleScale));
+                }
+            }
+                
 
             return gameObjects.ToArray();
         }
 
-        private int GetGameObjectsVertexCount(GameObject[] gameobjects)
+        private int GetGameObjectsVertexCount(DecoratorGameObject[] gameobjects)
         {
             int vertexCount = 0;
             for (int i = 0; i < gameobjects.Length; i++)
-                vertexCount += gameobjects[i].GetComponent<MeshFilter>().sharedMesh.vertexCount;
+                vertexCount += gameobjects[i].gameObject.GetComponent<MeshFilter>().sharedMesh.vertexCount;
             return vertexCount;
         }
 
-        private int GetGameObjectsTriangleCount(GameObject[] gameobjects)
+        private int GetGameObjectsTriangleCount(DecoratorGameObject[] gameobjects)
         {
             int triangleCount = 0;
             for (int i = 0; i < gameobjects.Length; i++)
-                triangleCount += gameobjects[i].GetComponent<MeshFilter>().sharedMesh.triangles.Length;
+                triangleCount += gameobjects[i].gameObject.GetComponent<MeshFilter>().sharedMesh.triangles.Length;
             return triangleCount;
         }
 
-        private void PlaceMeshOnCurve(GameObject meshGameObject, ref Vector3[] vertices, ref Vector3[] normals, ref int[] triangles)
+        private float GetGameObjectsLength(DecoratorGameObject[] gameobjects)
         {
-            Mesh placedGameObjectMesh = meshGameObject.GetComponent<MeshFilter>().sharedMesh;
+            float length = 0;
+            for (int i = 0; i < gameobjects.Length; i++)
+                length += gameobjects[i].gameObject.GetComponent<MeshFilter>().sharedMesh.bounds.size.x;
+            return length;
+        }
+
+        private void PlaceMeshOnCurve(DecoratorGameObject meshGameObject, ref Vector3[] vertices, ref Vector3[] normals, ref int[] triangles)
+        {
+            Mesh placedGameObjectMesh = meshGameObject.gameObject.GetComponent<MeshFilter>().sharedMesh;
 
             for (int i = 0; i < placedGameObjectMesh.vertexCount; i++)
             {
                 float t;
-                vertices[currentVertexCount + i] = MapMeshPositionToCurve(placedGameObjectMesh.vertices[i], out t);
+                vertices[currentVertexCount + i] = MapMeshPositionToCurve(placedGameObjectMesh.vertices[i], meshGameObject.xScale, out t);
                 normals[currentVertexCount + i] = TransformNormalToCurve(placedGameObjectMesh.normals[i], t);
             }
 
-            for (int i = 0; i < placedGameObjectMesh.triangles.Length; i++)
+            if (triangles.Length > 0)
             {
-                triangles[currentTriangleCount + i] = currentVertexCount + placedGameObjectMesh.triangles[i];
+                for (int i = 0; i < placedGameObjectMesh.triangles.Length; i++)
+                {
+                    triangles[currentTriangleCount + i] = currentVertexCount + placedGameObjectMesh.triangles[i];
+                }
             }
+
 
             currentVertexCount += placedGameObjectMesh.vertexCount;
             currentTriangleCount += placedGameObjectMesh.triangles.Length;
 
-            currentPosition += placedGameObjectMesh.bounds.size.x;
+            currentPosition += placedGameObjectMesh.bounds.size.x * meshGameObject.xScale;
         }
 
-        private Vector3 MapMeshPositionToCurve(Vector3 meshPosition, out float t)
+        private Vector3 MapMeshPositionToCurve(Vector3 meshPosition, float xScale, out float t)
         {
-            t = curve.DistanceToT(currentPosition + meshPosition.x);
+            t = curve.DistanceToT(currentPosition + meshPosition.x * xScale);
 
             Vector3 toReturn = curve.GetPoint(t, false);
             toReturn += curve.GetNormal(t, false) * meshPosition.y;
@@ -155,8 +225,6 @@ namespace BedrockFramework.CustomLine
 
         private Vector3 TransformNormalToCurve(Vector3 normal, float t)
         {
-            //return Quaternion.LookRotation(Vector3.forward, Vector3.up) * normal;
-
             return Quaternion.LookRotation(curve.GetBiNormal(t, false), curve.GetNormal(t, false)) * normal;
         }
     }

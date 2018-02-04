@@ -77,8 +77,6 @@ namespace BedrockFramework.CustomLine
 
             linePoints = serializedObject.FindProperty("points");
 
-            EditorGUI.BeginChangeCheck();
-
             CustomCurve.CurvePoint p0 = ShowPoint(0);
             for (int i = 1; i < line.points.Length; i += 1)
             {
@@ -99,7 +97,9 @@ namespace BedrockFramework.CustomLine
                 p0 = p1;
             }
 
-            if (EditorGUI.EndChangeCheck() || line.transform.hasChanged)
+            if (serializedObject.ApplyModifiedProperties() || 
+                line.transform.hasChanged ||
+                (Event.current.type == EventType.ValidateCommand && Event.current.commandName == "UndoRedoPerformed"))
             {
                 line.CurveModified();
                 line.transform.hasChanged = false;
@@ -107,8 +107,6 @@ namespace BedrockFramework.CustomLine
 
             DrawRuler();
             //ShowDirections();
-
-            serializedObject.ApplyModifiedProperties();
         }
 
         void DrawRuler()
