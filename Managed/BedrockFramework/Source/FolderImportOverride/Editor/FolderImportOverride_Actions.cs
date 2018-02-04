@@ -111,6 +111,9 @@ namespace BedrockFramework.FolderImportOverride
 
             foreach (MeshFilter meshFilter in gameObject.GetComponentsInChildren<MeshFilter>())
             {
+                if (meshFilter.gameObject == gameObject)
+                    continue;
+
                 MeshRenderer meshRenderer = meshFilter.GetComponent<MeshRenderer>();
                 Transform meshTransform = meshFilter.GetComponent<Transform>();
                 meshData.Add(new SmartMeshData(meshFilter.sharedMesh, meshRenderer.sharedMaterials, meshTransform.localToWorldMatrix));
@@ -123,6 +126,9 @@ namespace BedrockFramework.FolderImportOverride
                 toDestroy.Add(meshRenderer);
                 toDestroy.Add(meshFilter);
             }
+
+            if (toDestroy.Count == 0)
+                return;
 
             Mesh combinedMesh = new Mesh();
             Material[] combinedMaterials;

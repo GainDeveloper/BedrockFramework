@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using BedrockFramework.Utilities;
 
 namespace BedrockFramework.CustomLine
 {
@@ -11,10 +12,15 @@ namespace BedrockFramework.CustomLine
         private const int stepsPerCurve = 10;
         private const float handleSize = 0.04f;
         private const float pickSize = 0.06f;
+        private const float rulerMarkerDistance = 1;
+        private const float rulerMarkerLength = 0.1f;
+        private const float curveLineWidth = 2f;
+        private const float tangentHandleSize = 0.1f;
+
+
 
         private CustomCurve line;
         private Transform handleTransform;
-        private Quaternion handleRotation;
         private SerializedProperty linePoints;
         private int selectedIndex = -1;
 
@@ -27,8 +33,11 @@ namespace BedrockFramework.CustomLine
 
         public override void OnInspectorGUI()
         {
+            EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Length: " + line.CurveLength().ToString());
             EditorGUILayout.LabelField("Segments: " + line.CurveCount.ToString());
+            EditorGUILayout.EndHorizontal();
+
         }
 
         private void AddCurvePoint()
@@ -63,7 +72,6 @@ namespace BedrockFramework.CustomLine
 
             serializedObject.Update();
             handleTransform = line.transform;
-            handleRotation = Tools.pivotRotation == PivotRotation.Local ? handleTransform.rotation : Quaternion.identity;
 
             Handles.color = Color.white;
 
@@ -78,10 +86,12 @@ namespace BedrockFramework.CustomLine
                 CustomCurve.CurvePoint p1 = ShowPoint(i);
 
                 Handles.zTest = UnityEngine.Rendering.CompareFunction.LessEqual;
-                Handles.DrawBezier(p0.curvePoint, p1.curvePoint, p0.curvePoint + p0.curveTangent, p1.curvePoint - p1.curveTangent, Color.white, null, 2f);
+                Handles.DrawBezier(p0.curvePoint, p1.curvePoint, p0.curvePoint + p0.curveTangent, p1.curvePoint - p1.curveTangent, Color.white, null, curveLineWidth);
 
                 Handles.zTest = UnityEngine.Rendering.CompareFunction.Greater;
-                Handles.DrawBezier(p0.curvePoint, p1.curvePoint, p0.curvePoint + p0.curveTangent, p1.curvePoint - p1.curveTangent, Color.grey, null, 2f);
+                Handles.DrawBezier(p0.curvePoint, p1.curvePoint, p0.curvePoint + p0.curveTangent, p1.curvePoint - p1.curveTangent, Color.grey, null, curveLineWidth);
+
+                Handles.zTest = UnityEngine.Rendering.CompareFunction.Always;
 
                 if (i == linePoints.arraySize - 1)
                     DrawAddButton(p1);
@@ -91,12 +101,38 @@ namespace BedrockFramework.CustomLine
 
             if (EditorGUI.EndChangeCheck() || line.transform.hasChanged)
             {
-                line.CacheDistanceToT();
+                line.CurveModified();
+                line.transform.hasChanged = false;
             }
 
+            DrawRuler();
             //ShowDirections();
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        void DrawRuler()
+        {
+            float coveredDistance = rulerMarkerDistance;
+
+            while (coveredDistance < line.CurveLength())
+            {
+                float t = line.DistanceToT(coveredDistance);
+
+                Vector3 lineMiddle = line.GetPoint(t);
+                Vector3 biNormal = line.GetBiNormal(t);
+
+                Handles.zTest = UnityEngine.Rendering.CompareFunction.LessEqual;
+                Handles.color = Color.white;
+                Handles.DrawLine(lineMiddle - biNormal * rulerMarkerLength, lineMiddle + biNormal * rulerMarkerLength);
+
+                Handles.zTest = UnityEngine.Rendering.CompareFunction.Greater;
+                Handles.color = Color.grey;
+                Handles.DrawLine(lineMiddle - biNormal * rulerMarkerLength, lineMiddle + biNormal * rulerMarkerLength);
+
+                coveredDistance += rulerMarkerDistance;
+                Handles.zTest = UnityEngine.Rendering.CompareFunction.Always;
+            }
         }
 
         void ShowDirections()
@@ -129,18 +165,22 @@ namespace BedrockFramework.CustomLine
 
             Handles.color = Color.white;
             if (selected)
+            {
+                float tValue = line.IndexToT(index);
+                Quaternion handleRotation = Tools.pivotRotation == PivotRotation.Local ? Quaternion.LookRotation(line.GetDirection(tValue), line.GetNormal(tValue)) : Quaternion.identity;
                 point = Handles.DoPositionHandle(point, handleRotation);
-            else if (Handles.Button(point, handleRotation, size * handleSize, size * pickSize, Handles.DotHandleCap))
+            }
+            else if (Handles.Button(point, Quaternion.identity, size * handleSize, size * pickSize, Handles.DotHandleCap))
                 selectedIndex = index;
 
-            curvePos.vector3Value = handleTransform.InverseTransformPoint(point);
+            curvePos.vector3Value = handleTransform.InverseTransformPoint(point).Round(1000);
 
             // Tangent Drawer
             Vector3 tangent = handleTransform.TransformVector(curveTangent.vector3Value) + point;
             if (selected)
-                tangent = Handles.FreeMoveHandle(tangent, handleRotation, 0.5f, Vector3.one, Handles.CircleHandleCap);
+                tangent = Handles.FreeMoveHandle(tangent, Quaternion.identity, tangentHandleSize, Vector3.one, Handles.CircleHandleCap);
             tangent -= point;
-            curveTangent.vector3Value = handleTransform.InverseTransformVector(tangent);
+            curveTangent.vector3Value = handleTransform.InverseTransformVector(tangent).Round(1000);
 
             Handles.color = Color.grey;
             if (selected)

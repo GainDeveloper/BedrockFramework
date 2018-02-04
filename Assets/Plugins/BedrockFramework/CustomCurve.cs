@@ -6,8 +6,16 @@ using System.Linq;
 
 namespace BedrockFramework.CustomLine
 {
+    [EditorOnlyComponent, DisallowMultipleComponent]
+    [AddComponentMenu("BedrockFramework/Curve")]
     public class CustomCurve : MonoBehaviour
     {
+        public CurvePoint[] points;
+        private DistaceT[] cachedDistanceToT;
+
+        public delegate void CurveWasModified();
+        public event CurveWasModified OnCurveModified;
+
         [Serializable]
         public struct CurvePoint
         {
@@ -21,7 +29,16 @@ namespace BedrockFramework.CustomLine
             }
         }
 
-        public CurvePoint[] points;
+        struct DistaceT
+        {
+            public float distance, t;
+
+            public DistaceT(float newDistance, float newT)
+            {
+                distance = newDistance;
+                t = newT;
+            }
+        }
 
         public void Reset()
         {
@@ -30,8 +47,12 @@ namespace BedrockFramework.CustomLine
             new CurvePoint(new Vector3(5f, 0f, 0f), new Vector3(1f, 0f, 0f)),
             };
 
-            cachedDistanceToT = null;
+            CurveModified();
         }
+
+        /// 
+        /// 
+        /// 
 
         public int CurveCount
         {
@@ -41,13 +62,31 @@ namespace BedrockFramework.CustomLine
             }
         }
 
+        public float IndexToT(int index)
+        {
+            if (index == 0)
+                return 0;
 
-        private SortedList<float, float> cachedDistanceToT;
+            return (float)index / (points.Length - 1);
+        }
+
+
+        public void CurveModified()
+        {
+            CacheDistanceToT();
+
+            if (OnCurveModified != null)
+                OnCurveModified();
+        }
+
+        /// 
+        /// 
+        /// 
+
         public void CacheDistanceToT(int stepsPerCurve = 10)
         {
-            cachedDistanceToT = new SortedList<float, float>();
-
             int numSteps = (stepsPerCurve * CurveCount);
+            cachedDistanceToT = new DistaceT[numSteps + 1];
 
             float tStepSize = 1f / numSteps;
             float length = 0;
@@ -63,28 +102,45 @@ namespace BedrockFramework.CustomLine
                     length += Vector3.Distance(lastPos, iPos);
                 lastPos = iPos;
 
-                cachedDistanceToT[length] = t;
+                cachedDistanceToT[i] = new DistaceT(length, t);
             }
         }
 
-        public float DistanceToT(float distace)
+        /// 
+        /// 
+        /// 
+
+        public float DistanceToT(float distance)
         {
             if (cachedDistanceToT == null)
                 CacheDistanceToT();
 
-            //TODO: Maybe don't need a sorted list. Use a tuple in a list and find any value above distance. Use this and find the previous then lerp between them.
+            int startIndex = cachedDistanceToT.Length - 2;
 
-            return 0;
+            for (int i = 1; i < cachedDistanceToT.Length-1; i++)
+            {
+                if (cachedDistanceToT[i].distance > distance)
+                {
+                    startIndex = i - 1;
+                    break;
+                }
+                    
+            }
+
+            float distanceDiff = cachedDistanceToT[startIndex + 1].distance - cachedDistanceToT[startIndex].distance;
+            float tLerpValue = (distance - cachedDistanceToT[startIndex].distance) / distanceDiff;
+
+            return Mathf.Lerp(cachedDistanceToT[startIndex].t, cachedDistanceToT[startIndex + 1].t, tLerpValue);
         }
 
         public float CurveLength()
         {
             if (cachedDistanceToT == null)
                 CacheDistanceToT();
-            return cachedDistanceToT.Keys.Last();
+            return cachedDistanceToT[cachedDistanceToT.Length - 1].distance;
         }
 
-        public Vector3 GetPoint(float t)
+        public Vector3 GetPoint(float t, bool worldSpace = true)
         {
             int i;
             if (t >= 1f)
@@ -97,10 +153,16 @@ namespace BedrockFramework.CustomLine
                 i = (int)t;
                 t -= i;
             }
-            return transform.TransformPoint(Bezier.GetPoint(points[i].curvePoint, points[i].curvePoint + points[i].curveTangent, points[i+1].curvePoint - points[i+1].curveTangent, points[i+1].curvePoint, t));
+
+            Vector3 pos = Bezier.GetPoint(points[i].curvePoint, points[i].curvePoint + points[i].curveTangent, points[i + 1].curvePoint - points[i + 1].curveTangent, points[i + 1].curvePoint, t);
+
+            if (!worldSpace)
+                return pos;
+
+            return transform.TransformPoint(pos);
         }
 
-        public Vector3 GetVelocity(float t)
+        public Vector3 GetVelocity(float t, bool worldSpace = true)
         {
             int i;
             if (t >= 1f)
@@ -113,20 +175,32 @@ namespace BedrockFramework.CustomLine
                 i = (int)t;
                 t -= i;
             }
-            return transform.TransformPoint(Bezier.GetFirstDerivative(points[i].curvePoint, points[i].curvePoint + points[i].curveTangent, points[i+1].curvePoint - points[i+1].curveTangent, points[i+1].curvePoint, t)) -
+
+            Vector3 velocity = Bezier.GetFirstDerivative(points[i].curvePoint, points[i].curvePoint + points[i].curveTangent, points[i + 1].curvePoint - points[i + 1].curveTangent, points[i + 1].curvePoint, t);
+
+            if (!worldSpace)
+                return velocity;
+
+            return transform.TransformPoint(velocity) -
                 transform.position;
         }
 
-        public Vector3 GetDirection(float t)
+        public Vector3 GetDirection(float t, bool worldSpace = true)
         {
-            return GetVelocity(t).normalized;
+            return GetVelocity(t, worldSpace).normalized;
         }
 
-        public Vector3 GetNormal(float t)
+        public Vector3 GetNormal(float t, bool worldSpace = true)
         {
-            Vector3 tangent = GetDirection(t);
+            Vector3 tangent = GetDirection(t, worldSpace);
             Vector3 biNormal = Vector3.Cross(Vector3.up, tangent).normalized;
             return Vector3.Cross(tangent, biNormal);
+        }
+
+        public Vector3 GetBiNormal(float t, bool worldSpace = true)
+        {
+            Vector3 tangent = GetDirection(t, worldSpace);
+            return Vector3.Cross(Vector3.up, tangent).normalized;
         }
 
         public CurvePoint NewCurvePoint()
