@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using System;
+﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
@@ -70,41 +70,45 @@ namespace BedrockFramework.CustomLine
             return mf.sharedMesh;
         }
 
-        private int currentVertexCount, currentTriangleCount;
+        private int currentVertexCount;
         private float currentPosition;
         private DecoratorGameObject[] previousCurveGameObjects;
-        private Dictionary<Material, int> materialTriangleCount;
+        private Dictionary<Material, int> currentMaterialTriangleCount;
 
-        //TODO: Add option to only update vertices.
         private void RebuildCurveMesh()
         {
             currentVertexCount = 0;
-            currentTriangleCount = 0;
             currentPosition = 0;
 
             DecoratorGameObject[] curveGameObjects = GetGameObjectsToAdd();
             bool requiresNewMesh = !MatchingPreviousGameObjects(curveGameObjects);
 
+            currentMaterialTriangleCount = BuildGameObjectsMaterials(curveGameObjects);
             Vector3[] curveVertices = new Vector3[GetGameObjectsVertexCount(curveGameObjects)];
             Vector3[] curveNormals = new Vector3[GetGameObjectsVertexCount(curveGameObjects)];
-            int[] curveTriangles = new int[0];
+            Dictionary<Material, int[]> curveMaterialTrianges = new Dictionary<Material, int[]>();
 
             if (requiresNewMesh)
             {
                 curveMesh.Clear();
-                curveTriangles = new int[GetGameObjectsTriangleCount(curveGameObjects)];
+                BuildGameObjectsMaterialsTriangleCount(curveGameObjects, ref curveMaterialTrianges);
             }
             
 
             for (int i = 0; i < curveGameObjects.Length; i++)
-                PlaceMeshOnCurve(curveGameObjects[i], ref curveVertices, ref curveNormals, ref curveTriangles);
+                PlaceMeshOnCurve(curveGameObjects[i], ref curveVertices, ref curveNormals, ref curveMaterialTrianges, requiresNewMesh);
 
             // Update Mesh
             curveMesh.vertices = curveVertices;
             curveMesh.normals = curveNormals;
+            gameObject.GetComponent<MeshRenderer>().sharedMaterials = currentMaterialTriangleCount.Keys.ToArray();
 
             if (requiresNewMesh)
-                curveMesh.triangles = curveTriangles;
+            {
+                curveMesh.subMeshCount = curveMaterialTrianges.Count;
+                for (int i = 0; i < curveMaterialTrianges.Count; i++)
+                    curveMesh.SetTriangles(curveMaterialTrianges.Values.ElementAt(i), i);
+            }
 
             // TODO: Can this be put off until we save the asset?
             curveMesh.RecalculateBounds();
@@ -170,6 +174,37 @@ namespace BedrockFramework.CustomLine
             return vertexCount;
         }
 
+        private Dictionary<Material, int> BuildGameObjectsMaterials(DecoratorGameObject[] gameobjects)
+        {
+            Dictionary<Material, int> newMaterialToTriangles = new Dictionary<Material, int>();
+
+            for (int i = 0; i < gameobjects.Length; i++)
+            {
+                foreach (Material material in gameobjects[i].gameObject.GetComponent<MeshRenderer>().sharedMaterials)
+                    newMaterialToTriangles[material] = 0;
+            }
+            return newMaterialToTriangles;
+        }
+
+        private void BuildGameObjectsMaterialsTriangleCount(DecoratorGameObject[] gameobjects, ref Dictionary<Material, int[]> newMaterialToTriangles)
+        {
+            for (int i = 0; i < gameobjects.Length; i++)
+            {
+                Material[] gameObjectsMaterials = gameobjects[i].gameObject.GetComponent<MeshRenderer>().sharedMaterials;
+
+                for (int x = 0; x < gameObjectsMaterials.Length; x++)
+                {
+                    int existingCount = 0;
+                    if (newMaterialToTriangles.ContainsKey(gameObjectsMaterials[x]))
+                        existingCount = newMaterialToTriangles[gameObjectsMaterials[x]].Length;
+
+                    int numTriangles = gameobjects[i].gameObject.GetComponent<MeshFilter>().sharedMesh.GetTriangles(x).Length;
+
+                    newMaterialToTriangles[gameObjectsMaterials[x]] = new int[existingCount + numTriangles];
+                }
+            }
+        }
+
         private int GetGameObjectsTriangleCount(DecoratorGameObject[] gameobjects)
         {
             int triangleCount = 0;
@@ -186,9 +221,10 @@ namespace BedrockFramework.CustomLine
             return length;
         }
 
-        private void PlaceMeshOnCurve(DecoratorGameObject meshGameObject, ref Vector3[] vertices, ref Vector3[] normals, ref int[] triangles)
+        private void PlaceMeshOnCurve(DecoratorGameObject meshGameObject, ref Vector3[] vertices, ref Vector3[] normals, ref Dictionary<Material, int[]> triangles, bool updateTriangles)
         {
             Mesh placedGameObjectMesh = meshGameObject.gameObject.GetComponent<MeshFilter>().sharedMesh;
+            Material[] gameObjectsMaterials = meshGameObject.gameObject.GetComponent<MeshRenderer>().sharedMaterials;
 
             for (int i = 0; i < placedGameObjectMesh.vertexCount; i++)
             {
@@ -197,17 +233,26 @@ namespace BedrockFramework.CustomLine
                 normals[currentVertexCount + i] = TransformNormalToCurve(placedGameObjectMesh.normals[i], t);
             }
 
-            if (triangles.Length > 0)
+            if (updateTriangles)
             {
-                for (int i = 0; i < placedGameObjectMesh.triangles.Length; i++)
+                for (int x = 0; x < gameObjectsMaterials.Length; x++)
                 {
-                    triangles[currentTriangleCount + i] = currentVertexCount + placedGameObjectMesh.triangles[i];
+                    int materialTriangleCount = currentMaterialTriangleCount[gameObjectsMaterials[x]];
+                    int[] materialTriangles = placedGameObjectMesh.GetTriangles(x);
+
+                    for (int i = 0; i < materialTriangles.Length; i++)
+                    {
+                        triangles[gameObjectsMaterials[x]][materialTriangleCount + i] = currentVertexCount + materialTriangles[i];
+                    }
                 }
             }
 
 
             currentVertexCount += placedGameObjectMesh.vertexCount;
-            currentTriangleCount += placedGameObjectMesh.triangles.Length;
+
+            // Increment triangle count.
+            for (int x = 0; x < gameObjectsMaterials.Length; x++)
+                currentMaterialTriangleCount[gameObjectsMaterials[x]] += placedGameObjectMesh.GetTriangles(x).Length;
 
             currentPosition += placedGameObjectMesh.bounds.size.x * meshGameObject.xScale;
         }

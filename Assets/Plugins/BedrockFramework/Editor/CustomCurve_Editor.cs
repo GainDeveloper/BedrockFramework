@@ -54,6 +54,12 @@ namespace BedrockFramework.CustomLine
             selectedIndex = linePoints.arraySize - 1;
         }
 
+        private void DeleteSelectedCurvePoint()
+        {
+            linePoints.DeleteArrayElementAtIndex(selectedIndex);
+            selectedIndex = -1;
+        }
+
         private void OnSceneGUI()
         {
             // Disable selecting under mouse if we have a selected index.
@@ -95,6 +101,15 @@ namespace BedrockFramework.CustomLine
                     DrawAddButton(p1);
 
                 p0 = p1;
+            }
+
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Delete)
+            {
+                if (selectedIndex != -1)
+                {
+                    Event.current.Use();
+                    DeleteSelectedCurvePoint();
+                }
             }
 
             if (serializedObject.ApplyModifiedProperties() || 
