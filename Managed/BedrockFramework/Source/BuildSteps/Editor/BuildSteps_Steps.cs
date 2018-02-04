@@ -31,12 +31,25 @@ namespace BedrockFramework.BuildSteps
         {
             MonoBehaviour[] sceneActive = GameObject.FindObjectsOfType<MonoBehaviour>();
 
+            List<MonoBehaviour> failedComponents = new List<MonoBehaviour>();
             foreach (MonoBehaviour mono in sceneActive)
             {
                 EditorOnlyComponent attribute = mono.GetType().GetCustomAttributes(typeof(EditorOnlyComponent), true).FirstOrDefault() as EditorOnlyComponent;
 
                 if (attribute != null)
+                {
                     GameObject.DestroyImmediate(mono);
+                    if (mono != null)
+                    {
+                        failedComponents.Add(mono);
+                    }
+                }
+                    
+            }
+
+            foreach(MonoBehaviour mono in failedComponents)
+            {
+                GameObject.DestroyImmediate(mono);
             }
         }
     }

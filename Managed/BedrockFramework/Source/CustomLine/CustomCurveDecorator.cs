@@ -1,16 +1,19 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
+
+#if UNITY_EDITOR
 using BedrockFramework.FolderImportOverride;
+#endif
 
 namespace BedrockFramework.CustomLine
 {
     [EditorOnlyComponent, ExecuteInEditMode, DisallowMultipleComponent]
     [RequireComponent(typeof(CustomCurve)), RequireComponent(typeof(MeshFilter)), RequireComponent(typeof(MeshRenderer))]
     [AddComponentMenu("BedrockFramework/Curve Decorator")]
-    public class CustomCurve_Decorator : MonoBehaviour
+    [HideMonoScript]
+    public class CustomCurveDecorator : MonoBehaviour
     {
         public struct DecoratorGameObject
         {
@@ -29,22 +32,24 @@ namespace BedrockFramework.CustomLine
         MeshRenderer mr;
         Mesh curveMesh;
 
-        [OnValueChanged("Curve_OnCurveModified")]
+        [TitleGroup("Curve Pieces")]
+        [OnValueChanged("Curve_OnCurveModified"), HideLabel, PreviewField(75, ObjectFieldAlignment.Left), HorizontalGroup("Curve Pieces/Split"), AssetsOnly]
         public GameObject startGameObject;
 
-        [OnValueChanged("Curve_OnCurveModified")]
+        [OnValueChanged("Curve_OnCurveModified"), HideLabel, PreviewField(75, ObjectFieldAlignment.Left), HorizontalGroup("Curve Pieces/Split"), AssetsOnly]
         public GameObject middleGameObject;
 
-        [OnValueChanged("Curve_OnCurveModified")]
+        [OnValueChanged("Curve_OnCurveModified"), HideLabel, PreviewField(75, ObjectFieldAlignment.Left), HorizontalGroup("Curve Pieces/Split"), AssetsOnly]
         public GameObject endGameObject;
 
+#if UNITY_EDITOR
         void OnEnable()
         {
             curve = GetComponent<CustomCurve>();
             mf = GetComponent<MeshFilter>();
             mr = GetComponent<MeshRenderer>();
 
-            curveMesh = GetCurveMesh();
+            GetCurveMesh();
 
             curve.OnCurveModified += Curve_OnCurveModified;
             FolderImportOverride_PostImport.OnAssetImported += AssetImported;
@@ -60,25 +65,31 @@ namespace BedrockFramework.CustomLine
 
         void OnDisable()
         {
-            //TODO: Should probably remove any generated meshes for this component.
             curve.OnCurveModified -= Curve_OnCurveModified;
             FolderImportOverride_PostImport.OnAssetImported -= AssetImported;
         }
+#endif
+
 
         private void Curve_OnCurveModified()
         {
             RebuildCurveMesh();
         }
 
-        private Mesh GetCurveMesh()
+        private void GetCurveMesh()
         {
-            if (mf.sharedMesh == null)
+            string expectedName = gameObject.name + "_CurveMesh_" + GetInstanceID();
+
+            if (mf.sharedMesh == null || mf.sharedMesh.name != expectedName)
             {
                 mf.sharedMesh = new Mesh();
-                mf.sharedMesh.name = gameObject.name + "_CurveMesh";
+                mf.sharedMesh.name = expectedName;
+                curveMesh = mf.sharedMesh;
+
+                RebuildCurveMesh();
             }
-                
-            return mf.sharedMesh;
+
+            curveMesh = mf.sharedMesh;
         }
 
         private int currentVertexCount;
@@ -96,7 +107,8 @@ namespace BedrockFramework.CustomLine
 
             currentMaterialTriangleCount = BuildGameObjectsMaterials(curveGameObjects);
             Vector3[] curveVertices = new Vector3[GetGameObjectsVertexCount(curveGameObjects)];
-            Vector3[] curveNormals = new Vector3[GetGameObjectsVertexCount(curveGameObjects)];
+            Vector3[] curveNormals = new Vector3[curveVertices.Length];
+            Vector2[] curveUVs0 = new Vector2[curveVertices.Length];
             Dictionary<Material, int[]> curveMaterialTrianges = new Dictionary<Material, int[]>();
 
             if (requiresNewMesh)
@@ -107,7 +119,7 @@ namespace BedrockFramework.CustomLine
             
 
             for (int i = 0; i < curveGameObjects.Length; i++)
-                PlaceMeshOnCurve(curveGameObjects[i], ref curveVertices, ref curveNormals, ref curveMaterialTrianges, requiresNewMesh);
+                PlaceMeshOnCurve(curveGameObjects[i], ref curveVertices, ref curveNormals, ref curveMaterialTrianges, ref curveUVs0, requiresNewMesh);
 
             // Update Mesh
             curveMesh.vertices = curveVertices;
@@ -116,16 +128,14 @@ namespace BedrockFramework.CustomLine
 
             if (requiresNewMesh)
             {
+                curveMesh.uv = curveUVs0;
                 curveMesh.subMeshCount = curveMaterialTrianges.Count;
                 for (int i = 0; i < curveMaterialTrianges.Count; i++)
                     curveMesh.SetTriangles(curveMaterialTrianges.Values.ElementAt(i), i);
             }
 
-            // TODO: Can this be put off until we save the asset?
             curveMesh.RecalculateBounds();
             curveMesh.RecalculateTangents();
-
-
             previousCurveGameObjects = curveGameObjects;
         }
 
@@ -232,7 +242,8 @@ namespace BedrockFramework.CustomLine
             return length;
         }
 
-        private void PlaceMeshOnCurve(DecoratorGameObject meshGameObject, ref Vector3[] vertices, ref Vector3[] normals, ref Dictionary<Material, int[]> triangles, bool updateTriangles)
+        private void PlaceMeshOnCurve(DecoratorGameObject meshGameObject, ref Vector3[] vertices, ref Vector3[] normals, ref Dictionary<Material, int[]> triangles, ref Vector2[] curveUVs0, 
+            bool updateTriangles)
         {
             Mesh placedGameObjectMesh = meshGameObject.gameObject.GetComponent<MeshFilter>().sharedMesh;
             Material[] gameObjectsMaterials = meshGameObject.gameObject.GetComponent<MeshRenderer>().sharedMaterials;
@@ -242,6 +253,9 @@ namespace BedrockFramework.CustomLine
                 float t;
                 vertices[currentVertexCount + i] = MapMeshPositionToCurve(placedGameObjectMesh.vertices[i], meshGameObject.xScale, out t);
                 normals[currentVertexCount + i] = TransformNormalToCurve(placedGameObjectMesh.normals[i], t);
+
+                if (updateTriangles)
+                    curveUVs0[currentVertexCount + i] = placedGameObjectMesh.uv[i];
             }
 
             if (updateTriangles)
