@@ -15,7 +15,7 @@ namespace BedrockFramework.CustomLine
         private const float rulerMarkerDistance = 1;
         private const float rulerMarkerLength = 0.1f;
         private const float curveLineWidth = 2f;
-        private const float tangentHandleSize = 0.1f;
+        private const float tangentHandleSize = 0.2f;
 
 
 
@@ -29,6 +29,11 @@ namespace BedrockFramework.CustomLine
         private void OnEnable()
         {
             line = target as CustomCurve;
+        }
+
+        void OnDisable()
+        {
+            Tools.hidden = false;
         }
 
         public override void OnInspectorGUI()
@@ -80,6 +85,8 @@ namespace BedrockFramework.CustomLine
             handleTransform = line.transform;
 
             Handles.color = Color.white;
+
+            Tools.hidden = selectedIndex != -1;
 
             linePoints = serializedObject.FindProperty("points");
 
@@ -195,7 +202,6 @@ namespace BedrockFramework.CustomLine
             tangent -= point;
             curveTangent.vector3Value = handleTransform.InverseTransformVector(tangent).Round(1000);
 
-            Handles.color = Color.grey;
             if (selected)
                 Handles.DrawLine(point, point + tangent);
 

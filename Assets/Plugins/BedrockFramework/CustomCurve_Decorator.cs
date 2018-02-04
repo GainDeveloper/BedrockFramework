@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
+using BedrockFramework.FolderImportOverride;
 
 namespace BedrockFramework.CustomLine
 {
@@ -46,12 +47,22 @@ namespace BedrockFramework.CustomLine
             curveMesh = GetCurveMesh();
 
             curve.OnCurveModified += Curve_OnCurveModified;
+            FolderImportOverride_PostImport.OnAssetImported += AssetImported;
+        }
+
+        private void AssetImported(UnityEngine.Object importedAsset)
+        {
+            if (importedAsset == startGameObject ||
+                importedAsset == endGameObject ||
+                importedAsset == middleGameObject)
+                RebuildCurveMesh(true);
         }
 
         void OnDisable()
         {
             //TODO: Should probably remove any generated meshes for this component.
             curve.OnCurveModified -= Curve_OnCurveModified;
+            FolderImportOverride_PostImport.OnAssetImported -= AssetImported;
         }
 
         private void Curve_OnCurveModified()
@@ -75,13 +86,13 @@ namespace BedrockFramework.CustomLine
         private DecoratorGameObject[] previousCurveGameObjects;
         private Dictionary<Material, int> currentMaterialTriangleCount;
 
-        private void RebuildCurveMesh()
+        private void RebuildCurveMesh(bool forceNewMesh = false)
         {
             currentVertexCount = 0;
             currentPosition = 0;
 
             DecoratorGameObject[] curveGameObjects = GetGameObjectsToAdd();
-            bool requiresNewMesh = !MatchingPreviousGameObjects(curveGameObjects);
+            bool requiresNewMesh = !MatchingPreviousGameObjects(curveGameObjects) || forceNewMesh;
 
             currentMaterialTriangleCount = BuildGameObjectsMaterials(curveGameObjects);
             Vector3[] curveVertices = new Vector3[GetGameObjectsVertexCount(curveGameObjects)];
@@ -101,7 +112,7 @@ namespace BedrockFramework.CustomLine
             // Update Mesh
             curveMesh.vertices = curveVertices;
             curveMesh.normals = curveNormals;
-            gameObject.GetComponent<MeshRenderer>().sharedMaterials = currentMaterialTriangleCount.Keys.ToArray();
+            mr.sharedMaterials = currentMaterialTriangleCount.Keys.ToArray();
 
             if (requiresNewMesh)
             {

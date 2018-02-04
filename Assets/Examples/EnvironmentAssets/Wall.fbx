@@ -12,9 +12,9 @@ FBXHeaderExtension:  {
 		Month: 2
 		Day: 4
 		Hour: 15
-		Minute: 3
-		Second: 31
-		Millisecond: 772
+		Minute: 48
+		Second: 10
+		Millisecond: 913
 	}
 	Creator: "FBX SDK/FBX Plugins version 2015.1"
 	SceneInfo: "SceneInfo::GlobalInfo", "UserData" {
@@ -36,13 +36,13 @@ FBXHeaderExtension:  {
 			P: "Original|ApplicationVendor", "KString", "", "", "The Foundry"
 			P: "Original|ApplicationName", "KString", "", "", "MODO"
 			P: "Original|ApplicationVersion", "KString", "", "", ""
-			P: "Original|DateTime_GMT", "DateTime", "", "", "04/02/2018 14:03:31.772"
+			P: "Original|DateTime_GMT", "DateTime", "", "", "04/02/2018 14:48:10.912"
 			P: "Original|FileName", "KString", "", "", "E:\BedrockFramework\Assets\Examples\EnvironmentAssets\Wall.fbx"
 			P: "LastSaved", "Compound", "", ""
 			P: "LastSaved|ApplicationVendor", "KString", "", "", "The Foundry"
 			P: "LastSaved|ApplicationName", "KString", "", "", "MODO"
 			P: "LastSaved|ApplicationVersion", "KString", "", "", ""
-			P: "LastSaved|DateTime_GMT", "DateTime", "", "", "04/02/2018 14:03:31.772"
+			P: "LastSaved|DateTime_GMT", "DateTime", "", "", "04/02/2018 14:48:10.912"
 		}
 	}
 }
@@ -77,7 +77,7 @@ GlobalSettings:  {
 
 Documents:  {
 	Count: 1
-	Document: 332388112, "", "Scene" {
+	Document: 332391184, "", "Scene" {
 		Properties70:  {
 			P: "SourceObject", "object", "", ""
 			P: "ActiveAnimStackName", "KString", "", "", ""
@@ -266,7 +266,7 @@ Definitions:  {
 ;------------------------------------------------------------------
 
 Objects:  {
-	Geometry: 563773072, "Geometry::", "Mesh" {
+	Geometry: 563774096, "Geometry::", "Mesh" {
 		Properties70:  {
 			P: "PolygonPartNames", "stringlist", "", "U",0, "Default"
 		}
@@ -334,7 +334,7 @@ Objects:  {
 			}
 		}
 	}
-	Model: 522264640, "Model::Mesh", "Mesh" {
+	Model: 523856528, "Model::Mesh", "Mesh" {
 		Version: 232
 		Properties70:  {
 			P: "RotationActive", "bool", "", "",1
@@ -344,7 +344,7 @@ Objects:  {
 		Shading: Y
 		Culling: "CullingOff"
 	}
-	Material: 406566112, "Material::Default", "" {
+	Material: 406564672, "Material::Default", "" {
 		Version: 102
 		ShadingModel: "phong"
 		MultiLayer: 0
@@ -359,7 +359,7 @@ Objects:  {
 			P: "Reflectivity", "double", "Number", "",0
 		}
 	}
-	Material: 406566592, "Material::Default2", "" {
+	Material: 406557952, "Material::Default2", "" {
 		Version: 102
 		ShadingModel: "phong"
 		MultiLayer: 0
@@ -379,35 +379,35 @@ Objects:  {
 			P: "Reflectivity", "double", "Number", "",0
 		}
 	}
-	AnimationStack: 521740160, "AnimStack::Take 001", "" {
+	AnimationStack: 524847040, "AnimStack::Take 001", "" {
 		Properties70:  {
 			P: "LocalStop", "KTime", "Time", "",230930790000
 		}
 	}
-	AnimationLayer: 522846768, "AnimLayer::Layer 001", "" {
+	AnimationLayer: 525182208, "AnimLayer::Layer 001", "" {
 	}
-	AnimationCurveNode: 521736416, "AnimCurveNode::T", "" {
+	AnimationCurveNode: 524846000, "AnimCurveNode::T", "" {
 		Properties70:  {
 			P: "d|X", "Number", "", "A",0
 			P: "d|Y", "Number", "", "A",0
 			P: "d|Z", "Number", "", "A",0
 		}
 	}
-	AnimationCurveNode: 560698352, "AnimCurveNode::R", "" {
+	AnimationCurveNode: 524847248, "AnimCurveNode::R", "" {
 		Properties70:  {
 			P: "d|X", "Number", "", "A",0
 			P: "d|Y", "Number", "", "A",0
 			P: "d|Z", "Number", "", "A",0
 		}
 	}
-	AnimationCurveNode: 563116192, "AnimCurveNode::S", "" {
+	AnimationCurveNode: 524847456, "AnimCurveNode::S", "" {
 		Properties70:  {
 			P: "d|X", "Number", "", "A",1
 			P: "d|Y", "Number", "", "A",1
 			P: "d|Z", "Number", "", "A",1
 		}
 	}
-	AnimationCurve: 563482368, "AnimCurve::", "" {
+	AnimationCurve: 522305712, "AnimCurve::", "" {
 		Default: 0
 		KeyVer: 4008
 		KeyTime: *121 {
@@ -428,7 +428,7 @@ Objects:  {
 			a: 121
 		} 
 	}
-	AnimationCurve: 563489568, "AnimCurve::", "" {
+	AnimationCurve: 522301072, "AnimCurve::", "" {
 		Default: 0
 		KeyVer: 4008
 		KeyTime: *121 {
@@ -449,7 +449,7 @@ Objects:  {
 			a: 121
 		} 
 	}
-	AnimationCurve: 563497728, "AnimCurve::", "" {
+	AnimationCurve: 522311312, "AnimCurve::", "" {
 		Default: 0
 		KeyVer: 4008
 		KeyTime: *121 {
@@ -470,7 +470,7 @@ Objects:  {
 			a: 121
 		} 
 	}
-	AnimationCurve: 563491968, "AnimCurve::", "" {
+	AnimationCurve: 522311472, "AnimCurve::", "" {
 		Default: 0
 		KeyVer: 4008
 		KeyTime: *121 {
@@ -491,7 +491,7 @@ Objects:  {
 			a: 121
 		} 
 	}
-	AnimationCurve: 563497248, "AnimCurve::", "" {
+	AnimationCurve: 522312592, "AnimCurve::", "" {
 		Default: 0
 		KeyVer: 4008
 		KeyTime: *121 {
@@ -512,7 +512,7 @@ Objects:  {
 			a: 121
 		} 
 	}
-	AnimationCurve: 563498048, "AnimCurve::", "" {
+	AnimationCurve: 522313232, "AnimCurve::", "" {
 		Default: 0
 		KeyVer: 4008
 		KeyTime: *121 {
@@ -533,7 +533,7 @@ Objects:  {
 			a: 121
 		} 
 	}
-	AnimationCurve: 563509088, "AnimCurve::", "" {
+	AnimationCurve: 522326512, "AnimCurve::", "" {
 		Default: 1
 		KeyVer: 4008
 		KeyTime: *121 {
@@ -554,7 +554,7 @@ Objects:  {
 			a: 121
 		} 
 	}
-	AnimationCurve: 563499008, "AnimCurve::", "" {
+	AnimationCurve: 522327312, "AnimCurve::", "" {
 		Default: 1
 		KeyVer: 4008
 		KeyTime: *121 {
@@ -575,7 +575,7 @@ Objects:  {
 			a: 121
 		} 
 	}
-	AnimationCurve: 563502528, "AnimCurve::", "" {
+	AnimationCurve: 522319792, "AnimCurve::", "" {
 		Default: 1
 		KeyVer: 4008
 		KeyTime: *121 {
@@ -604,64 +604,64 @@ Objects:  {
 Connections:  {
 	
 	;Model::Mesh, Model::RootNode
-	C: "OO",522264640,0
+	C: "OO",523856528,0
 	
 	;Geometry::, Model::Mesh
-	C: "OO",563773072,522264640
+	C: "OO",563774096,523856528
 	
 	;Material::Default, Model::Mesh
-	C: "OO",406566112,522264640
+	C: "OO",406564672,523856528
 	
 	;Material::Default2, Model::Mesh
-	C: "OO",406566592,522264640
+	C: "OO",406557952,523856528
 	
 	;AnimCurveNode::T, Model::Mesh
-	C: "OP",521736416,522264640, "Lcl Translation"
+	C: "OP",524846000,523856528, "Lcl Translation"
 	
 	;AnimCurveNode::R, Model::Mesh
-	C: "OP",560698352,522264640, "Lcl Rotation"
+	C: "OP",524847248,523856528, "Lcl Rotation"
 	
 	;AnimCurveNode::S, Model::Mesh
-	C: "OP",563116192,522264640, "Lcl Scaling"
+	C: "OP",524847456,523856528, "Lcl Scaling"
 	
 	;AnimLayer::Layer 001, AnimStack::Take 001
-	C: "OO",522846768,521740160
+	C: "OO",525182208,524847040
 	
 	;AnimCurveNode::T, AnimLayer::Layer 001
-	C: "OO",521736416,522846768
+	C: "OO",524846000,525182208
 	
 	;AnimCurveNode::R, AnimLayer::Layer 001
-	C: "OO",560698352,522846768
+	C: "OO",524847248,525182208
 	
 	;AnimCurveNode::S, AnimLayer::Layer 001
-	C: "OO",563116192,522846768
+	C: "OO",524847456,525182208
 	
 	;AnimCurve::, AnimCurveNode::T
-	C: "OP",563482368,521736416, "d|X"
+	C: "OP",522305712,524846000, "d|X"
 	
 	;AnimCurve::, AnimCurveNode::T
-	C: "OP",563489568,521736416, "d|Y"
+	C: "OP",522301072,524846000, "d|Y"
 	
 	;AnimCurve::, AnimCurveNode::T
-	C: "OP",563497728,521736416, "d|Z"
+	C: "OP",522311312,524846000, "d|Z"
 	
 	;AnimCurve::, AnimCurveNode::R
-	C: "OP",563491968,560698352, "d|X"
+	C: "OP",522311472,524847248, "d|X"
 	
 	;AnimCurve::, AnimCurveNode::R
-	C: "OP",563497248,560698352, "d|Y"
+	C: "OP",522312592,524847248, "d|Y"
 	
 	;AnimCurve::, AnimCurveNode::R
-	C: "OP",563498048,560698352, "d|Z"
+	C: "OP",522313232,524847248, "d|Z"
 	
 	;AnimCurve::, AnimCurveNode::S
-	C: "OP",563509088,563116192, "d|X"
+	C: "OP",522326512,524847456, "d|X"
 	
 	;AnimCurve::, AnimCurveNode::S
-	C: "OP",563499008,563116192, "d|Y"
+	C: "OP",522327312,524847456, "d|Y"
 	
 	;AnimCurve::, AnimCurveNode::S
-	C: "OP",563502528,563116192, "d|Z"
+	C: "OP",522319792,524847456, "d|Z"
 }
 ;Takes section
 ;----------------------------------------------------

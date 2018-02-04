@@ -9,6 +9,9 @@ namespace BedrockFramework.FolderImportOverride
 {
     public class FolderImportOverride_PostImport : AssetPostprocessor
     {
+        public delegate void AssetImported(Object importedAsset);
+        public static event AssetImported OnAssetImported;
+
         static FolderImportOverride_FolderSettings GetAssetFolderSettings(string assetPath)
         {
             if (!assetPath.Contains("Assets/"))
@@ -90,6 +93,12 @@ namespace BedrockFramework.FolderImportOverride
             }
 
             AssetDatabase.StopAssetEditing();
+
+            if (OnAssetImported != null)
+            {
+                foreach (string str in importedAssets)
+                    OnAssetImported(AssetDatabase.LoadAssetAtPath<Object>(str));
+            }
         }
     }
 }
