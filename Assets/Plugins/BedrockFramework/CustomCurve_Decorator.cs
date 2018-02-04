@@ -148,7 +148,7 @@ namespace BedrockFramework.CustomLine
 
             Vector3 toReturn = curve.GetPoint(t, false);
             toReturn += curve.GetNormal(t, false) * meshPosition.y;
-            toReturn += curve.GetBiNormal(t, false) * -1 * meshPosition.z;
+            toReturn += curve.GetBiNormal(t, false) * meshPosition.z;
 
             return toReturn;
         }
@@ -157,7 +157,7 @@ namespace BedrockFramework.CustomLine
         {
             //return Quaternion.LookRotation(Vector3.forward, Vector3.up) * normal;
 
-            return Quaternion.LookRotation(curve.GetDirection(t, false), curve.GetNormal(t, false)) * normal;
+            return Quaternion.LookRotation(curve.GetBiNormal(t, false), curve.GetNormal(t, false)) * normal;
         }
     }
 }

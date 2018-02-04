@@ -200,7 +200,7 @@ namespace BedrockFramework.CustomLine
         public Vector3 GetBiNormal(float t, bool worldSpace = true)
         {
             Vector3 tangent = GetDirection(t, worldSpace);
-            return Vector3.Cross(Vector3.up, tangent).normalized;
+            return Vector3.Cross(tangent, Vector3.up).normalized;
         }
 
         public CurvePoint NewCurvePoint()
