@@ -7,6 +7,11 @@ public class PoolTestScene : MonoBehaviour {
     public GameObject toSpawn;
     public List<GameObject> spawnedGameObjects = new List<GameObject>();
 
+    public void Awake()
+    {
+        BedrockFramework.Pool.PoolManager.PrePool();
+    }
+
     public void Spawn()
     {
         spawnedGameObjects.Add(BedrockFramework.Pool.PoolManager.SpawnPrefab(toSpawn, Random.insideUnitSphere, Quaternion.identity));

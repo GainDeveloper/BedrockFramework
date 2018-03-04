@@ -57,6 +57,7 @@
     <Compile Include="..\Source\Logger\Logger.cs" />
     <Compile Include="..\Source\Pool\Pool.cs" />
 	<Compile Include="..\Source\Pool\PoolManager.cs" />
+	<Compile Include="..\Source\Pool\PrePool.cs" />
     <Compile Include="..\Source\SmartCombine.cs" />
     <Compile Include="..\Source\Utilities\StringExtensions.cs" />
 	<Compile Include="..\Source\Utilities\VectorExtensions.cs" />

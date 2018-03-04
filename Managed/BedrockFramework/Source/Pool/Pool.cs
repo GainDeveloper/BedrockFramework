@@ -19,7 +19,16 @@ namespace BedrockFramework.Pool
             this.prefab = prefab;
         }
 
-        public GameObject SpawnPrefab(Vector3 position, Quaternion rotation, Transform parent, bool subSpawn)
+        public void PrePool(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                GameObject instance = InstantiateGameObject();
+                DeSpawnGameObject(instance);
+            }
+        }
+
+        public GameObject SpawnPrefab(Vector3 position, Quaternion rotation, Transform parent, bool callOnSpawn)
         {
             // Get GameObject
             GameObject clone = null;
@@ -35,7 +44,7 @@ namespace BedrockFramework.Pool
             }
 
             if (clone == null)
-                clone = InstantiateGameObject(prefab);
+                clone = InstantiateGameObject();
 
             // Setup Transform
             Transform tr = clone.transform;
@@ -55,7 +64,7 @@ namespace BedrockFramework.Pool
             if (OnPrefabSpawned != null)
                 OnPrefabSpawned(clone);
 
-            if (!subSpawn)
+            if (!callOnSpawn)
             {
                 IPool[] pItems = clone.GetComponentsInChildren<IPool>();
                 for (int i = 0; i < pItems.Length; i++)
@@ -87,7 +96,7 @@ namespace BedrockFramework.Pool
             toDespawn.SetActive(false);
         }
 
-        private GameObject InstantiateGameObject(GameObject prefab)
+        private GameObject InstantiateGameObject()
         {
             GameObject instantiatedPrefab = GameObject.Instantiate(prefab);
             GameObject.DontDestroyOnLoad(instantiatedPrefab);

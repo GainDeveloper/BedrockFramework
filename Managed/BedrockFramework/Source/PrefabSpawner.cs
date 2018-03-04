@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace BedrockFramework
 {
+    [AddComponentMenu("BedrockFramework/PrefabSpawner")]
     public class PrefabSpawner: MonoBehaviour
     {
         public GameObject prefab;

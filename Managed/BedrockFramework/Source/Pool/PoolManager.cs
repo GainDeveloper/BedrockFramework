@@ -4,13 +4,23 @@ using UnityEngine;
 
 namespace BedrockFramework.Pool
 {
-    public class PoolManager
+    public static class PoolManager
     {
         private static Dictionary<int, Pool> activePools = new Dictionary<int, Pool>();
         private static Dictionary<int, Pool> activePooledGameObjects = new Dictionary<int, Pool>();
 
         public delegate void PoolCreated(Pool newPool);
         public static event PoolCreated OnPoolCreated;
+
+        public static void PrePool() {
+            foreach (PrePool prePoolObject in Resources.LoadAll<PrePool>(""))
+            {
+                foreach(PrePool.PrePoolObject poolObject in prePoolObject.prePooledObjects)
+                {
+                    GetPrefabsPool(poolObject.prefab).PrePool(poolObject.prePoolCount);
+                }
+            }
+        }
 
         public static GameObject SpawnPrefab(GameObject prefab, Transform parent = null, bool subSpawn = false)
         {
@@ -33,15 +43,7 @@ namespace BedrockFramework.Pool
 
         public static GameObject SpawnPrefab(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false)
         {
-            Pool prefabPool;
-
-            if (activePools.ContainsKey(prefab.GetInstanceID()))
-            {
-                prefabPool = activePools[prefab.GetInstanceID()];
-            } else
-            {
-                prefabPool = CreatePrefabPool(prefab);
-            }
+            Pool prefabPool = GetPrefabsPool(prefab);
 
             GameObject spawnedPrefab = prefabPool.SpawnPrefab(position, rotation, parent, subSpawn);
             activePooledGameObjects[spawnedPrefab.GetInstanceID()] = prefabPool;
@@ -60,6 +62,22 @@ namespace BedrockFramework.Pool
             {
                 Logger.Logger.LogError(Pool.logCategory, "{} is not a pooled GameObject and can not be despawned.", () => new object[] { gameObject.name });
             }
+        }
+
+        private static Pool GetPrefabsPool(GameObject prefab)
+        {
+            Pool prefabPool;
+
+            if (activePools.ContainsKey(prefab.GetInstanceID()))
+            {
+                prefabPool = activePools[prefab.GetInstanceID()];
+            }
+            else
+            {
+                prefabPool = CreatePrefabPool(prefab);
+            }
+
+            return prefabPool;
         }
 
         private static Pool CreatePrefabPool(GameObject prefab)
