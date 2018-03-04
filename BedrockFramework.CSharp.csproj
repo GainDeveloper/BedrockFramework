@@ -311,6 +311,7 @@
   <ItemGroup>
     <Compile Include="Assets\Examples\GoblinTestData.cs" />
     <Compile Include="Assets\Examples\LogTest.cs" />
+    <Compile Include="Assets\Examples\PoolTestScene.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Attributes.xml" />
