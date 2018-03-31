@@ -168,7 +168,7 @@ namespace BedrockFramework.FolderImportOverride
     }
 
     /// <summary>
-    /// Creates a new component of the users choice on the root GameObject.
+    /// Assigns the specified layer and tag to the root GameObject.
     /// </summary>
     public class ImportOverideAction_SetTagLayer : ImportOverideAction
     {

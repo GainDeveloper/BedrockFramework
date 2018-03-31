@@ -63,6 +63,7 @@
 	<Compile Include="..\Source\Utilities\VectorExtensions.cs" />
     <Compile Include="..\Source\Attributes.cs" />
     <Compile Include="..\Source\PrefabSpawner.cs" />
+	<Compile Include="..\Source\VertexPaint\VertexPaint.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

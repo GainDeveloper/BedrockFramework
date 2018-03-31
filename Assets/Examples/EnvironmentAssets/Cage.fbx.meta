@@ -31,6 +31,7 @@ ModelImporter:
     10800000: Directional Light
     11100000: //RootNode
     11400000: //RootNode
+    11400002: //RootNode
   externalObjects:
   - first:
       type: UnityEngine:Material
@@ -41,7 +42,7 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: Default2
-    second: {fileID: 2100000, guid: 7d50de3d399f8a148b5929d2f2a24891, type: 2}
+    second: {fileID: 2100000, guid: 42e92d018273f4244b5abc3ec5d56bb1, type: 2}
   materials:
     importMaterials: 1
     materialName: 1
