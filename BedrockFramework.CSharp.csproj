@@ -314,6 +314,7 @@
     <Compile Include="Assets\Examples\PoolTestScene.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-RGB.shader" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Attributes.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Editor.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.Serialization.Config.xml" />

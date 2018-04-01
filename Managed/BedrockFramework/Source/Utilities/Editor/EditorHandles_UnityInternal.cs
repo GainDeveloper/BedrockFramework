@@ -9,7 +9,6 @@ using System.Reflection;
 public static class EditorHandles_UnityInternal {
     static Type type_HandleUtility;
     static MethodInfo meth_IntersectRayMesh;
-    static MethodInfo meth_PickObjectMeth;
  
     static EditorHandles_UnityInternal() {
         var editorTypes = typeof(Editor).Assembly.GetTypes();

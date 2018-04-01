@@ -35,6 +35,8 @@ namespace BedrockFramework.VertexPaint
             }
         }
 
+        private const float raduisDragSpeed = 0.25f;
+        private const float falloffDragSpeed = 0.01f;
         private const float vertexDisplaySize = 0.025f;
         private const float sceneViewWindowWidth = 300;
         private const float sceneViewWindowHeight = 150;
@@ -48,6 +50,8 @@ namespace BedrockFramework.VertexPaint
         Vector3 m_BrushNorm;
         int m_BrushFace = -1;
         Plane mousePlane;
+
+        Shader shader_rgb, shader_r, shader_g, shader_b;
 
         struct VertexPaint_EditorInstance
         {
@@ -66,13 +70,34 @@ namespace BedrockFramework.VertexPaint
             for (int i = 0; i < targets.Length; i++)
             {
                 VertexPaint vertexPaint = (VertexPaint)targets[i];
-                activeInstances[i] = new VertexPaint_EditorInstance { vertexPaint = vertexPaint, transform = vertexPaint.transform, localMesh = vertexPaint.GetComponent<MeshFilter>().sharedMesh };
+                Mesh localMesh = vertexPaint.GetComponent<MeshFilter>().sharedMesh;
+
+                Mesh additionalMeshStream = vertexPaint.additionalVertexStreamMesh;
+                if (additionalMeshStream == null)
+                {
+                    Debug.LogError("Vertex Stream NoneExistant!");
+                } else
+                {
+                    if (additionalMeshStream.colors.Length != localMesh.vertexCount)
+                    {
+                        Debug.LogError("Vertex Stream Source Mismatch!");
+                        additionalMeshStream = vertexPaint.CreateAdditonalVertexStreamMesh(localMesh);
+                    }
+                }
+                    
+                activeInstances[i] = new VertexPaint_EditorInstance { vertexPaint = vertexPaint, transform = vertexPaint.transform, localMesh = localMesh };
             }
+
+            shader_rgb = Shader.Find("Unlit/Vertex/RGB");
+            SceneView.lastActiveSceneView.SetSceneViewShaderReplace(shader_rgb, null);
         }
 
         void OnDisable()
         {
             vertexPaintSettings.SaveSettings();
+
+            if (SceneView.lastActiveSceneView != null)
+                SceneView.lastActiveSceneView.SetSceneViewShaderReplace(null, null);
         }
 
         void OnSceneGUI()
@@ -112,22 +137,21 @@ namespace BedrockFramework.VertexPaint
             {
                 if (e.button == 0)
                 {
-                    // Paint stuff
+                    PaintVertices();
                 }
                 else if (e.button == 1)
                 {
-                    vertexPaintSettings.brushSize += e.delta.x * Time.deltaTime;
+                    vertexPaintSettings.brushSize += e.delta.x * raduisDragSpeed;
                 }
                 else if (e.button == 2)
                 {
-                    vertexPaintSettings.brushFalloff += e.delta.x * Time.deltaTime;
+                    vertexPaintSettings.brushFalloff += e.delta.x * falloffDragSpeed;
                 }
 
                 e.Use();
-            }
-            else if (type == EventType.ScrollWheel)
+            } else if (type == EventType.ScrollWheel)
             {
-                vertexPaintSettings.brushDepth += e.delta.y * 0.1f;
+                vertexPaintSettings.brushDepth += Mathf.Clamp(e.delta.y, -1, 1) * 0.1f;
                 e.Use();
             }
         }
@@ -135,7 +159,6 @@ namespace BedrockFramework.VertexPaint
         void PaintingWindow(int windowID)
         {
             EditorGUIUtility.labelWidth = 80;
-
 
             EditorGUILayout.LabelField("Brush Settings", EditorStyles.boldLabel, GUILayout.Width(sceneViewWindowWidth - sceneViewWindowPadding));
             vertexPaintSettings.brushSize = EditorGUILayout.Slider("Radius", vertexPaintSettings.brushSize, 0.1f, 50, GUILayout.Width(sceneViewWindowWidth - sceneViewWindowPadding));
@@ -214,12 +237,34 @@ namespace BedrockFramework.VertexPaint
                     Vector3 normal = activeInstances[i].transform.TransformVector(normals[x]);
                     Vector3 position = activeInstances[i].transform.TransformPoint(vertices[x]);
 
-                    float vertexStrenth = GetVertexStrength(position, normal);
+                    float vertexStrength = GetVertexStrength(position, normal);
 
-                    Handles.color = Color.Lerp(outerBrushColour, innerBrushColour, vertexStrenth);
-                    if (vertexStrenth > 0)
+                    Handles.color = Color.Lerp(outerBrushColour, innerBrushColour, vertexStrength);
+                    if (vertexStrength > 0)
                         Handles.DotHandleCap(0, position, Quaternion.identity, vertexDisplaySize * HandleUtility.GetHandleSize(position), EventType.Repaint);
                 }
+            }
+        }
+
+        void PaintVertices()
+        {
+            for (int i = 0; i < activeInstances.Length; i++)
+            {
+                Vector3[] normals = activeInstances[i].localMesh.normals;
+                Vector3[] vertices = activeInstances[i].localMesh.vertices;
+                Color[] colors = activeInstances[i].vertexPaint.additionalVertexStreamMesh.colors;
+
+                for (int x = 0; x < normals.Length; x++)
+                {
+                    Vector3 normal = activeInstances[i].transform.TransformVector(normals[x]);
+                    Vector3 position = activeInstances[i].transform.TransformPoint(vertices[x]);
+
+                    float vertexStrength = GetVertexStrength(position, normal);
+
+                    colors[x] = Color.Lerp(colors[x], Color.white, vertexStrength);
+                }
+
+                activeInstances[i].vertexPaint.UpdateMeshVertexColours(colors);
             }
         }
 
