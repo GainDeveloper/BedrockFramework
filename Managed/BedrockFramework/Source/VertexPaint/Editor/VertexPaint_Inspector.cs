@@ -144,6 +144,8 @@ namespace BedrockFramework.VertexPaint
 
             if (SceneView.lastActiveSceneView != null)
                 SceneView.lastActiveSceneView.SetSceneViewShaderReplace(null, null);
+
+            Tools.hidden = false;
         }
 
         void UndoCallback()
@@ -160,13 +162,15 @@ namespace BedrockFramework.VertexPaint
         {
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            SetPaintMode(GUILayout.Toggle(vertexPaintSettings.paintingActive, new GUIContent(paintBrushIcon), EditorStyles.miniButton, GUILayout.Width(Screen.width-32)));
+            SetPaintMode(GUILayout.Toggle(vertexPaintSettings.paintingActive, new GUIContent(paintBrushIcon), EditorStyles.miniButton, GUILayout.Width(Screen.width-20)));
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
 
+            Tools.hidden = vertexPaintSettings.paintingActive;
+
             if (vertexPaintSettings.paintingActive)
             {
-                GUILayout.BeginHorizontal();
+                EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("Fill Vertex Colours"))
                 {
                     for (int i = 0; i < activeInstances.Length; i++)
@@ -185,21 +189,22 @@ namespace BedrockFramework.VertexPaint
                     UpdateSharedMeshes();
                 }
                 GUI.enabled = true;
-                GUILayout.EndHorizontal();
+                EditorGUILayout.EndHorizontal();
 
                 vertexPaintSettings.paintColour = EditorGUILayout.ColorField("Paint Colour", vertexPaintSettings.paintColour);
                 vertexPaintSettings.eraseColour = EditorGUILayout.ColorField("Erase Colour", vertexPaintSettings.eraseColour);
+                EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
             }
 
             // CopyPaste
             GUILayout.BeginHorizontal();
-            GUI.enabled = activeInstances.Length == 1;
-            if (GUILayout.Button("Copy"))
+            GUI.enabled = activeInstances.Length == 1 && SelectedHasVertexColours();
+            if (GUILayout.Button("Copy", GUILayout.Width(64)))
             {
                 copiedMesh = activeInstances[0].vertexPaint.additionalVertexStreamMesh;
             }
             GUI.enabled = copiedMesh != null;
-            if (GUILayout.Button("Paste"))
+            if (GUILayout.Button("Paste", GUILayout.Width(64)))
             {
                 for (int i = 0; i < activeInstances.Length; i++)
                 {
@@ -208,8 +213,7 @@ namespace BedrockFramework.VertexPaint
                 UpdateSharedMeshes();
             }
             GUI.enabled = true;
-            GUILayout.EndHorizontal();
-
+            
 
             // Removing VC
             GUI.enabled = SelectedHasVertexColours();
@@ -222,6 +226,7 @@ namespace BedrockFramework.VertexPaint
                 UpdateSharedMeshes();
             }
             GUI.enabled = true;
+            GUILayout.EndHorizontal();
         }
 
         bool SelectedHasVertexColours()
@@ -349,6 +354,9 @@ namespace BedrockFramework.VertexPaint
 
         void UpdateViewMode()
         {
+            if (SceneView.lastActiveSceneView == null)
+                return;
+
             switch (vertexPaintSettings.vertexPaintViewMode)
             {
                 case VertexPaint_ViewMode.Off:
@@ -498,12 +506,12 @@ namespace BedrockFramework.VertexPaint
 
         float GetVertexStrength(Vector3 position, Vector3 normal)
         {
-            bool forwardFacing = Vector3.Dot(normal, Camera.current.transform.forward) <= 0;
-            if (!forwardFacing)
-                return 0;
-
             if (vertexPaintSettings.ignoreBackfacing)
             {
+                bool forwardFacing = Vector3.Dot(normal, Camera.current.transform.forward) <= 0;
+                if (!forwardFacing)
+                    return 0;
+
                 bool alignsWithBrush = Vector3.Dot(normal, m_BrushNorm) > vertexPaintSettings.brushNormalBias;
                 if (!alignsWithBrush)
                     return 0;

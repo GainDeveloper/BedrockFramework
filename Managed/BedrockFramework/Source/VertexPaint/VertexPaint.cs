@@ -91,8 +91,7 @@ namespace BedrockFramework.VertexPaint
 
         public Mesh CreateAdditonalVertexStreamMesh()
         {
-            Debug.LogWarning("Generating new Vertex Stream Mesh");
-
+            //Debug.LogWarning("Generating new Vertex Stream Mesh");
             additionalVertexStreamMesh = new Mesh();
             additionalVertexStreamMesh.name = gameObject.name + " VPStream";
             additionalVertexStreamMesh.vertices = mf.sharedMesh.vertices;
