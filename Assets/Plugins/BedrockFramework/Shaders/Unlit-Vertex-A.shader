@@ -24,7 +24,7 @@ SubShader {
             return o;
         }
         
-        fixed4 frag (v2f i) : SV_Target { return float4(0, 0,0,i.color.a); }
+        fixed4 frag (v2f i) : SV_Target { return float4(i.color.a, i.color.a,i.color.a,0); }
         ENDCG
     }
 }

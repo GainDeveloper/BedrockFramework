@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using BedrockFramework.Utilities;
+using System.Linq;
+
 
 namespace BedrockFramework.VertexPaint
 {
@@ -15,6 +17,7 @@ namespace BedrockFramework.VertexPaint
         {
             private const string editorPrefsKey = "VertexPaintSettings";
 
+            public bool paintingActive = false;
             public float brushSize = 1;
             public float brushFalloff = 0.5f;
             public float brushDepth = 0.25f;
@@ -49,6 +52,11 @@ namespace BedrockFramework.VertexPaint
             B,
             A
         }
+
+        private static Mesh copiedMesh = null;
+        private Texture2D paintBrushIcon;
+        private Dictionary<Mesh, List<VertexPaint>> sharedVertexPaintMeshes;
+        bool hasSharedInstances;
 
         private const float raduisDragSpeed = 0.25f;
         private const float falloffDragSpeed = 0.01f;
@@ -87,13 +95,7 @@ namespace BedrockFramework.VertexPaint
                 VertexPaint vertexPaint = (VertexPaint)targets[i];
                 Mesh localMesh = vertexPaint.GetComponent<MeshFilter>().sharedMesh;
 
-                Mesh additionalMeshStream = vertexPaint.additionalVertexStreamMesh;
-                if (additionalMeshStream != null && additionalMeshStream.colors.Length != localMesh.vertexCount)
-                {
-                    Debug.LogError("Vertex Stream Source Mismatch!");
-                    additionalMeshStream = vertexPaint.CreateAdditonalVertexStreamMesh(localMesh);
-                }
-                    
+                vertexPaint.CheckValidWithLocalMesh(localMesh);
                 activeInstances[i] = new VertexPaint_EditorInstance { vertexPaint = vertexPaint, transform = vertexPaint.transform, localMesh = localMesh };
             }
 
@@ -103,8 +105,36 @@ namespace BedrockFramework.VertexPaint
             shader_b = Shader.Find("Unlit/Vertex/B");
             shader_a = Shader.Find("Unlit/Vertex/A");
 
+            paintBrushIcon = EditorGUIUtility.Load("icons/ClothInspector.PaintTool.png") as Texture2D;
+            SetPaintMode(vertexPaintSettings.paintingActive, true);
+
+            UpdateSharedMeshes();
             Undo.undoRedoPerformed += UndoCallback;
-            UpdateViewMode();
+        }
+
+        void UpdateSharedMeshes()
+        {
+            sharedVertexPaintMeshes = new Dictionary<Mesh, List<VertexPaint>>();
+            foreach (VertexPaint vp in FindObjectsOfType<VertexPaint>())
+            {
+                if (vp.HasVertexColours)
+                {
+                    if (!sharedVertexPaintMeshes.ContainsKey(vp.additionalVertexStreamMesh))
+                        sharedVertexPaintMeshes[vp.additionalVertexStreamMesh] = new List<VertexPaint>();
+
+                    sharedVertexPaintMeshes[vp.additionalVertexStreamMesh].Add(vp);
+                }
+            }
+
+            hasSharedInstances = false;
+            foreach (VertexPaint_EditorInstance instance in activeInstances)
+            {
+                if (instance.vertexPaint.HasVertexColours)
+                {
+                    if (sharedVertexPaintMeshes[instance.vertexPaint.additionalVertexStreamMesh].Count > 1)
+                        hasSharedInstances = true;
+                }
+            }
         }
 
         void OnDisable()
@@ -120,12 +150,95 @@ namespace BedrockFramework.VertexPaint
         {
             for (int i = 0; i < activeInstances.Length; i++)
             {
-                activeInstances[i].vertexPaint.UpdateMeshVertexColours(activeInstances[i].vertexPaint.additionalVertexStreamMesh.colors, recordChanges : false);
+                if (activeInstances[i].vertexPaint.HasVertexColours)
+                    activeInstances[i].vertexPaint.UpdateMeshVertexColours(activeInstances[i].vertexPaint.ExistingColours, recordChanges : false);
             }
+            UpdateSharedMeshes();
+        }
+
+        public override void OnInspectorGUI()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            SetPaintMode(GUILayout.Toggle(vertexPaintSettings.paintingActive, new GUIContent(paintBrushIcon), EditorStyles.miniButton, GUILayout.Width(Screen.width-32)));
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            if (vertexPaintSettings.paintingActive)
+            {
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Fill Vertex Colours"))
+                {
+                    for (int i = 0; i < activeInstances.Length; i++)
+                    {
+                        activeInstances[i].vertexPaint.UpdateMeshVertexColours(Enumerable.Repeat<Color>(vertexPaintSettings.paintColour, activeInstances[i].localMesh.vertexCount).ToArray());
+                    }
+                    UpdateSharedMeshes();
+                }
+                GUI.enabled = hasSharedInstances;
+                if (GUILayout.Button("Make Unique"))
+                {
+                    for (int i = 0; i < activeInstances.Length; i++)
+                    {
+                        activeInstances[i].vertexPaint.MakeUnique();
+                    }
+                    UpdateSharedMeshes();
+                }
+                GUI.enabled = true;
+                GUILayout.EndHorizontal();
+
+                vertexPaintSettings.paintColour = EditorGUILayout.ColorField("Paint Colour", vertexPaintSettings.paintColour);
+                vertexPaintSettings.eraseColour = EditorGUILayout.ColorField("Erase Colour", vertexPaintSettings.eraseColour);
+            }
+
+            // CopyPaste
+            GUILayout.BeginHorizontal();
+            GUI.enabled = activeInstances.Length == 1;
+            if (GUILayout.Button("Copy"))
+            {
+                copiedMesh = activeInstances[0].vertexPaint.additionalVertexStreamMesh;
+            }
+            GUI.enabled = copiedMesh != null;
+            if (GUILayout.Button("Paste"))
+            {
+                for (int i = 0; i < activeInstances.Length; i++)
+                {
+                    activeInstances[i].vertexPaint.SetVertexPaintStream(copiedMesh);
+                }
+                UpdateSharedMeshes();
+            }
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+
+
+            // Removing VC
+            GUI.enabled = SelectedHasVertexColours();
+            if (GUILayout.Button("Remove Vertex Colours"))
+            {
+                for (int i = 0; i < activeInstances.Length; i++)
+                {
+                    activeInstances[i].vertexPaint.RemoveVertexColours();
+                }
+                UpdateSharedMeshes();
+            }
+            GUI.enabled = true;
+        }
+
+        bool SelectedHasVertexColours()
+        {
+            for (int i = 0; i < activeInstances.Length; i++)
+            {
+                if (activeInstances[i].vertexPaint.HasVertexColours)
+                    return true;
+            }
+            return false;
         }
 
         void OnSceneGUI()
         {
+            if (!vertexPaintSettings.paintingActive)
+                return;
+
             if (Event.current.type == EventType.Repaint)
             {
                 UpdatePreviewBrush();
@@ -145,6 +258,24 @@ namespace BedrockFramework.VertexPaint
             Handles.BeginGUI();
             GUILayout.Window(0, new Rect(Screen.width - sceneViewWindowWidth - sceneViewWindowPadding, Screen.height - sceneViewWindowHeight - sceneViewWindowPadding - 18, sceneViewWindowWidth, sceneViewWindowHeight), PaintingWindow, "Vertex Painting");
             Handles.EndGUI();
+        }
+
+        void SetPaintMode(bool toSet, bool forceRefresh = false)
+        {
+            if (vertexPaintSettings.paintingActive == toSet && !forceRefresh)
+                return;
+
+            vertexPaintSettings.paintingActive = toSet;
+
+            if (vertexPaintSettings.paintingActive)
+            {
+                UpdateViewMode();
+            }
+            else
+            {
+                if (SceneView.lastActiveSceneView != null)
+                    SceneView.lastActiveSceneView.SetSceneViewShaderReplace(null, null);
+            }
         }
 
         void PaintSceneGUI()
@@ -326,7 +457,8 @@ namespace BedrockFramework.VertexPaint
             {
                 Vector3[] normals = activeInstances[i].localMesh.normals;
                 Vector3[] vertices = activeInstances[i].localMesh.vertices;
-                Color[] colors = activeInstances[i].vertexPaint.additionalVertexStreamMesh.colors;
+
+                Color[] colors = activeInstances[i].vertexPaint.ExistingColours;
 
                 for (int x = 0; x < normals.Length; x++)
                 {
