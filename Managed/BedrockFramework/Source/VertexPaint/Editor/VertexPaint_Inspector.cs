@@ -20,10 +20,15 @@ namespace BedrockFramework.VertexPaint
             public float brushDepth = 0.25f;
             public float brushNormalBias = 0.5f;
             public float brushStrength = 1.0f;
+            public Color paintColour = Color.white;
+            public Color eraseColour = Color.black;
+            public bool ignoreBackfacing = true;
+            public bool channelR = true, channelG = true, channelB = true, channelA = false;
+            public VertexPaint_ViewMode vertexPaintViewMode = VertexPaint_ViewMode.Off;
 
             public void SaveSettings()
             {
-                EditorPrefs.SetString(editorPrefsKey, JsonUtility.ToJson(this));
+                EditorPrefs.SetString(editorPrefsKey, EditorJsonUtility.ToJson(this));
             }
 
             public void LoadSettings()
@@ -31,15 +36,25 @@ namespace BedrockFramework.VertexPaint
                 if (!EditorPrefs.HasKey(editorPrefsKey))
                     return;
 
-                JsonUtility.FromJsonOverwrite(EditorPrefs.GetString(editorPrefsKey), this);
+                EditorJsonUtility.FromJsonOverwrite(EditorPrefs.GetString(editorPrefsKey), this);
             }
+        }
+
+        enum VertexPaint_ViewMode
+        {
+            Off,
+            RGB,
+            R,
+            G,
+            B,
+            A
         }
 
         private const float raduisDragSpeed = 0.25f;
         private const float falloffDragSpeed = 0.01f;
         private const float vertexDisplaySize = 0.025f;
         private const float sceneViewWindowWidth = 300;
-        private const float sceneViewWindowHeight = 150;
+        private const float sceneViewWindowHeight = 200;
         private const float sceneViewWindowPadding = 10;
         private Color outerBrushColour = new Color(0.6f, 0.8f, 0.5f);
         private Color innerBrushColour = new Color(0.8f, 1f, 0.7f);
@@ -51,7 +66,7 @@ namespace BedrockFramework.VertexPaint
         int m_BrushFace = -1;
         Plane mousePlane;
 
-        Shader shader_rgb, shader_r, shader_g, shader_b;
+        Shader shader_rgb, shader_r, shader_g, shader_b, shader_a;
 
         struct VertexPaint_EditorInstance
         {
@@ -73,31 +88,40 @@ namespace BedrockFramework.VertexPaint
                 Mesh localMesh = vertexPaint.GetComponent<MeshFilter>().sharedMesh;
 
                 Mesh additionalMeshStream = vertexPaint.additionalVertexStreamMesh;
-                if (additionalMeshStream == null)
+                if (additionalMeshStream != null && additionalMeshStream.colors.Length != localMesh.vertexCount)
                 {
-                    Debug.LogError("Vertex Stream NoneExistant!");
-                } else
-                {
-                    if (additionalMeshStream.colors.Length != localMesh.vertexCount)
-                    {
-                        Debug.LogError("Vertex Stream Source Mismatch!");
-                        additionalMeshStream = vertexPaint.CreateAdditonalVertexStreamMesh(localMesh);
-                    }
+                    Debug.LogError("Vertex Stream Source Mismatch!");
+                    additionalMeshStream = vertexPaint.CreateAdditonalVertexStreamMesh(localMesh);
                 }
                     
                 activeInstances[i] = new VertexPaint_EditorInstance { vertexPaint = vertexPaint, transform = vertexPaint.transform, localMesh = localMesh };
             }
 
             shader_rgb = Shader.Find("Unlit/Vertex/RGB");
-            SceneView.lastActiveSceneView.SetSceneViewShaderReplace(shader_rgb, null);
+            shader_r = Shader.Find("Unlit/Vertex/R");
+            shader_g = Shader.Find("Unlit/Vertex/G");
+            shader_b = Shader.Find("Unlit/Vertex/B");
+            shader_a = Shader.Find("Unlit/Vertex/A");
+
+            Undo.undoRedoPerformed += UndoCallback;
+            UpdateViewMode();
         }
 
         void OnDisable()
         {
             vertexPaintSettings.SaveSettings();
+            Undo.undoRedoPerformed -= UndoCallback;
 
             if (SceneView.lastActiveSceneView != null)
                 SceneView.lastActiveSceneView.SetSceneViewShaderReplace(null, null);
+        }
+
+        void UndoCallback()
+        {
+            for (int i = 0; i < activeInstances.Length; i++)
+            {
+                activeInstances[i].vertexPaint.UpdateMeshVertexColours(activeInstances[i].vertexPaint.additionalVertexStreamMesh.colors, recordChanges : false);
+            }
         }
 
         void OnSceneGUI()
@@ -130,14 +154,21 @@ namespace BedrockFramework.VertexPaint
             HandleUtility.AddDefaultControl(id);
 
             EventType type = e.type;
-            if (e.control || e.shift || e.alt)
+            if (e.shift || e.alt)
                 return;
 
             if (type == EventType.MouseDown || type == EventType.MouseDrag)
             {
                 if (e.button == 0)
                 {
-                    PaintVertices();
+                    if (e.control)
+                    {
+                        PaintVertices(erase : true);
+                    } else
+                    {
+                        PaintVertices();
+                    }
+                    
                 }
                 else if (e.button == 1)
                 {
@@ -162,9 +193,52 @@ namespace BedrockFramework.VertexPaint
 
             EditorGUILayout.LabelField("Brush Settings", EditorStyles.boldLabel, GUILayout.Width(sceneViewWindowWidth - sceneViewWindowPadding));
             vertexPaintSettings.brushSize = EditorGUILayout.Slider("Radius", vertexPaintSettings.brushSize, 0.1f, 50, GUILayout.Width(sceneViewWindowWidth - sceneViewWindowPadding));
-            vertexPaintSettings.brushStrength = EditorGUILayout.Slider("Strength", vertexPaintSettings.brushStrength, 0, 1, GUILayout.Width(sceneViewWindowWidth - sceneViewWindowPadding));
             vertexPaintSettings.brushFalloff = EditorGUILayout.Slider("Falloff", vertexPaintSettings.brushFalloff, 0f, 1, GUILayout.Width(sceneViewWindowWidth - sceneViewWindowPadding));
             vertexPaintSettings.brushDepth = EditorGUILayout.Slider("Depth", vertexPaintSettings.brushDepth, 0.1f, 1, GUILayout.Width(sceneViewWindowWidth - sceneViewWindowPadding));
+            vertexPaintSettings.ignoreBackfacing = EditorGUILayout.Toggle("Ignore Backfacing", vertexPaintSettings.ignoreBackfacing);
+
+            EditorGUILayout.LabelField("View Settings", EditorStyles.boldLabel, GUILayout.Width(sceneViewWindowWidth - sceneViewWindowPadding));
+            VertexPaint_ViewMode previousViewMode = vertexPaintSettings.vertexPaintViewMode;
+            vertexPaintSettings.vertexPaintViewMode = (VertexPaint_ViewMode)EditorGUILayout.EnumPopup("Colour Mode", vertexPaintSettings.vertexPaintViewMode);
+            if (vertexPaintSettings.vertexPaintViewMode != previousViewMode) UpdateViewMode();
+
+            EditorGUILayout.LabelField("Paint Settings", EditorStyles.boldLabel, GUILayout.Width(sceneViewWindowWidth - sceneViewWindowPadding));
+            vertexPaintSettings.brushStrength = EditorGUILayout.Slider("Strength", vertexPaintSettings.brushStrength, 0, 1, GUILayout.Width(sceneViewWindowWidth - sceneViewWindowPadding));
+            //vertexPaintSettings.paintColour = EditorGUILayout.ColorField(vertexPaintSettings.paintColour);
+            //vertexPaintSettings.eraseColour = EditorGUILayout.ColorField(vertexPaintSettings.eraseColour);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Channels", GUILayout.Width(80));
+            EditorGUIUtility.labelWidth = 20;
+            vertexPaintSettings.channelR = EditorGUILayout.Toggle("R", vertexPaintSettings.channelR);
+            vertexPaintSettings.channelG = EditorGUILayout.Toggle("G", vertexPaintSettings.channelG);
+            vertexPaintSettings.channelB = EditorGUILayout.Toggle("B", vertexPaintSettings.channelB);
+            vertexPaintSettings.channelA = EditorGUILayout.Toggle("A", vertexPaintSettings.channelA);
+            EditorGUILayout.EndHorizontal();
+        }
+
+        void UpdateViewMode()
+        {
+            switch (vertexPaintSettings.vertexPaintViewMode)
+            {
+                case VertexPaint_ViewMode.Off:
+                    SceneView.lastActiveSceneView.SetSceneViewShaderReplace(null, null);
+                    break;
+                case VertexPaint_ViewMode.RGB:
+                    SceneView.lastActiveSceneView.SetSceneViewShaderReplace(shader_rgb, null);
+                    break;
+                case VertexPaint_ViewMode.R:
+                    SceneView.lastActiveSceneView.SetSceneViewShaderReplace(shader_r, null);
+                    break;
+                case VertexPaint_ViewMode.G:
+                    SceneView.lastActiveSceneView.SetSceneViewShaderReplace(shader_g, null);
+                    break;
+                case VertexPaint_ViewMode.B:
+                    SceneView.lastActiveSceneView.SetSceneViewShaderReplace(shader_b, null);
+                    break;
+                case VertexPaint_ViewMode.A:
+                    SceneView.lastActiveSceneView.SetSceneViewShaderReplace(shader_a, null);
+                    break;
+            }
         }
 
         void UpdatePreviewBrush()
@@ -246,7 +320,7 @@ namespace BedrockFramework.VertexPaint
             }
         }
 
-        void PaintVertices()
+        void PaintVertices(bool erase = false)
         {
             for (int i = 0; i < activeInstances.Length; i++)
             {
@@ -259,13 +333,35 @@ namespace BedrockFramework.VertexPaint
                     Vector3 normal = activeInstances[i].transform.TransformVector(normals[x]);
                     Vector3 position = activeInstances[i].transform.TransformPoint(vertices[x]);
 
-                    float vertexStrength = GetVertexStrength(position, normal);
+                    float vertexStrength = GetVertexStrength(position, normal) * vertexPaintSettings.brushStrength;
+                    Color paintColour = vertexPaintSettings.paintColour;
+                    if (erase) paintColour = vertexPaintSettings.eraseColour;
 
-                    colors[x] = Color.Lerp(colors[x], Color.white, vertexStrength);
+
+                    colors[x] = BlendColourByChannel(colors[x], paintColour, vertexStrength);
                 }
 
                 activeInstances[i].vertexPaint.UpdateMeshVertexColours(colors);
             }
+        }
+
+        Color BlendColourByChannel(Color baseColor, Color toColor, float i)
+        {
+            float r = baseColor.r;
+            float g = baseColor.g;
+            float b = baseColor.b;
+            float a = baseColor.a;
+
+            if (vertexPaintSettings.channelR)
+                r = Mathf.Lerp(r, toColor.r, i);
+            if (vertexPaintSettings.channelG)
+                g = Mathf.Lerp(g, toColor.g, i);
+            if (vertexPaintSettings.channelB)
+                b = Mathf.Lerp(b, toColor.b, i);
+            if (vertexPaintSettings.channelA)
+                a = Mathf.Lerp(a, toColor.a, i);
+
+            return new Color(r, g, b, a);
         }
 
         float GetVertexStrength(Vector3 position, Vector3 normal)
@@ -274,10 +370,12 @@ namespace BedrockFramework.VertexPaint
             if (!forwardFacing)
                 return 0;
 
-
-            bool alignsWithBrush = Vector3.Dot(normal, m_BrushNorm) > vertexPaintSettings.brushNormalBias;
-            if (!alignsWithBrush)
-                return 0;
+            if (vertexPaintSettings.ignoreBackfacing)
+            {
+                bool alignsWithBrush = Vector3.Dot(normal, m_BrushNorm) > vertexPaintSettings.brushNormalBias;
+                if (!alignsWithBrush)
+                    return 0;
+            }
 
             float distanceFromBrush = Vector3.Distance(position, m_BrushPos);
             bool withinBrush = distanceFromBrush < vertexPaintSettings.brushSize;

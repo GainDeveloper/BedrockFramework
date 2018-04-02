@@ -324,6 +324,10 @@
     <Compile Include="Assets\Plugins\Sirenix\Odin Inspector\Scripts\Editor\OdinGettingStartedWizard.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-A.shader" />
+    <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-B.shader" />
+    <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-G.shader" />
+    <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-R.shader" />
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-RGB.shader" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Attributes.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Editor.xml" />

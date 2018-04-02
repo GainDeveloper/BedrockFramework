@@ -12,17 +12,17 @@ namespace BedrockFramework.VertexPaint
     public class VertexPaint : MonoBehaviour
     {
         public Mesh additionalVertexStreamMesh;
+        private MeshRenderer mr;
 
         public void Awake()
         {
+#if (UNITY_EDITOR)
             if (additionalVertexStreamMesh == null)
                 CreateAdditonalVertexStreamMesh(GetComponent<MeshFilter>().sharedMesh);
+#endif
 
-            Debug.Log("Assigning Vertex Stream");
-            foreach (Color col in additionalVertexStreamMesh.colors)
-                Debug.Log(col);
-
-            GetComponent<MeshRenderer>().additionalVertexStreams = additionalVertexStreamMesh;
+            mr = GetComponent<MeshRenderer>();
+            AssignVertexStream();
         }
 
         public Mesh CreateAdditonalVertexStreamMesh(Mesh localMesh)
@@ -36,8 +36,20 @@ namespace BedrockFramework.VertexPaint
             return additionalVertexStreamMesh;
         }
 
+        public void AssignVertexStream()
+        {
+            if (additionalVertexStreamMesh != null)
+                mr.additionalVertexStreams = additionalVertexStreamMesh;
+        }
+
 #if (UNITY_EDITOR)
-        public void UpdateMeshVertexColours(Color[] colors)
+
+        public void Update()
+        {
+            AssignVertexStream();
+        }
+
+        public void UpdateMeshVertexColours(Color[] colors, bool recordChanges = true)
         {
             Undo.RecordObject(additionalVertexStreamMesh, "Vertex Painting");
             additionalVertexStreamMesh.colors = colors;
