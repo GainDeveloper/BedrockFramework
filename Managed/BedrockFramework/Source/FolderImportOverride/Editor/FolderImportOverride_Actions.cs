@@ -260,7 +260,7 @@ namespace BedrockFramework.FolderImportOverride
                     continue;
 
                 foreach (UnityEngine.Object modelAssetObject in AssetDatabase.LoadAllAssetsAtPath(materialAssetPath))
-                    if (modelAssetObject.name == materialName && modelAssetObject.GetType() == typeof(Material))
+                    if (modelAssetObject.name.ToLower() == materialName && modelAssetObject.GetType() == typeof(Material))
                     {
                         AssetDatabase.ImportAsset(materialAssetPath);
                         break;
