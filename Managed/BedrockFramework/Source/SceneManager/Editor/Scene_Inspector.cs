@@ -1,8 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+/********************************************************           
+BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
+
+Inspector for Scene assets that displays cached data.
+********************************************************/
 using UnityEditor;
-using BedrockFramework.Utilities;
 
 namespace BedrockFramework
 {

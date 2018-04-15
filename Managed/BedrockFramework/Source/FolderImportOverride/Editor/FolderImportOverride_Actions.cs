@@ -298,13 +298,14 @@ namespace BedrockFramework.FolderImportOverride
 
     /// <summary>
     /// Caches any information we require from the scene.
+    /// Current caches whether the scene is marked as a root game scene.
     /// </summary>
     public class ImportOverideAction_SceneCache : ImportOverideAction
     {
         [System.Serializable]
         public class SceneCache_Data
         {
-            public bool hasWorldInfo = false;
+            public bool isRootGameScene = false;
 
             public string Serialize()
             {
@@ -322,7 +323,7 @@ namespace BedrockFramework.FolderImportOverride
             public void OnInspectorGUI()
             {
                 GUI.enabled = false;
-                EditorGUILayout.Toggle("Has World Info ", hasWorldInfo);
+                EditorGUILayout.Toggle("Has World Info ", isRootGameScene);
                 GUI.enabled = true;
             }
         }
@@ -335,7 +336,7 @@ namespace BedrockFramework.FolderImportOverride
                 return;
 
             SceneCache_Data cacheData = new SceneCache_Data();
-            cacheData.hasWorldInfo = InterfaceHelper.FindObject<IRootGameScene>() != null;
+            cacheData.isRootGameScene = InterfaceHelper.FindObject<IRootGameScene>() != null;
 
             AssetImporter.GetAtPath(importedObjectPath).userData = cacheData.Serialize();
         }

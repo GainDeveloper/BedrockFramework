@@ -1,6 +1,12 @@
+/********************************************************           
+BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
+From : https://gist.github.com/MattRix/9205bc62d558fef98045
+
+Exposes Unity's mesh intersection tests.
+********************************************************/
+
 using UnityEngine;
 using UnityEditor;
-using System.Collections;
 using System;
 using System.Linq;
 using System.Reflection;

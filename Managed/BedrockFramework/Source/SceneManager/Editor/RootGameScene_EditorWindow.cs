@@ -1,4 +1,9 @@
-using System;
+/********************************************************           
+BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
+
+Creates a utility window displaying all scenes marked as a root game scene.
+********************************************************/
+
 using System.Collections.Generic;
 using System.Linq;
 
@@ -25,7 +30,7 @@ namespace BedrockFramework.SceneManager
             foreach (string sceneAssetPath in AssetDatabase.FindAssets("t:scene").Select(s => AssetDatabase.GUIDToAssetPath(s)))
             {
                 FolderImportOverride.ImportOverideAction_SceneCache.SceneCache_Data sceneCacheData = FolderImportOverride.ImportOverideAction_SceneCache.SceneCache_Data.Deserialize(AssetImporter.GetAtPath(sceneAssetPath).userData);
-                if (sceneCacheData != null)
+                if (sceneCacheData != null && sceneCacheData.isRootGameScene)
                     gameScenes.Add(sceneAssetPath);
             }
         }

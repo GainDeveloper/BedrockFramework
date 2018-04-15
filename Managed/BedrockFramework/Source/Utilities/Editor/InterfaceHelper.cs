@@ -1,3 +1,10 @@
+/********************************************************           
+BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
+From: http://wiki.unity3d.com/index.php/Interface_Finder
+
+Used to find components that implement specific interfaces.
+********************************************************/
+
 using System;
 using System.Collections.Generic;
 using UnityEngine;

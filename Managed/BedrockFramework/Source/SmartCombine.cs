@@ -1,4 +1,11 @@
-﻿using UnityEngine;
+﻿/********************************************************           
+BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
+From : https://gist.github.com/Booljayj/9d4f0856aad8843b7a6083efcbaa3351
+
+Merges meshes with multiple materials into submeshes.
+********************************************************/
+
+using UnityEngine;
 using UnityEngine.Assertions;
 using System.Linq;
 using System.Collections.Generic;
