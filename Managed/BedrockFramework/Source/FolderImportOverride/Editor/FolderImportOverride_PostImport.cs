@@ -12,7 +12,7 @@ namespace BedrockFramework.FolderImportOverride
         public delegate void AssetImported(Object importedAsset);
         public static event AssetImported OnAssetImported;
 
-        static FolderImportOverride_FolderSettings GetAssetFolderSettings(string assetPath)
+        public static FolderImportOverride_FolderSettings GetAssetFolderSettings(string assetPath)
         {
             if (!assetPath.Contains("Assets/"))
                 return null;

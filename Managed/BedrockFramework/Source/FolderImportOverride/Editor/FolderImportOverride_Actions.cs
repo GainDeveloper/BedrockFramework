@@ -92,6 +92,13 @@ namespace BedrockFramework.FolderImportOverride
                 if (transform.GetComponents<Component>().Length == 1)
                     toDestroy.Add(transform.gameObject);
 
+            // If we have a skinned mesh renderer then ignore any transforms part of the root hierarchy.
+            SkinnedMeshRenderer smr = ((GameObject)gameObject).GetComponentInChildren<SkinnedMeshRenderer>();
+            if (smr != null && smr.rootBone != null)
+            {
+                toDestroy = toDestroy.Except(smr.rootBone.GetComponentsInChildren<Transform>().Select(x => x.gameObject)).ToList();
+            }
+
             foreach (GameObject gameObjectToDestroy in toDestroy)
                 GameObject.DestroyImmediate(gameObjectToDestroy);
         }
@@ -148,7 +155,7 @@ namespace BedrockFramework.FolderImportOverride
     /// </summary>
     public class ImportOverideAction_AddComponents : ImportOverideAction
     {
-        private static readonly Type BaseType = typeof(MonoBehaviour);
+        private static readonly Type BaseType = typeof(Component);
 #pragma warning disable
         private static readonly List<Type> Types =
             AppDomain.CurrentDomain.GetAssemblies()
@@ -212,7 +219,7 @@ namespace BedrockFramework.FolderImportOverride
             if (Path.GetExtension(assetPath) != ".mat")
                 return;
 
-            string materialName = Path.GetFileNameWithoutExtension(assetPath);
+            string materialName = Path.GetFileNameWithoutExtension(assetPath).ToLower();
 
             foreach (string modelAssetGUID in AssetDatabase.FindAssets("t:model"))
             {
@@ -223,7 +230,7 @@ namespace BedrockFramework.FolderImportOverride
                 Dictionary<AssetImporter.SourceAssetIdentifier, UnityEngine.Object> remappedMaterials = modelImporter.GetExternalObjectMap();
                 foreach (KeyValuePair<AssetImporter.SourceAssetIdentifier, UnityEngine.Object> entry in remappedMaterials)
                 {
-                    if (entry.Key.name == materialName)
+                    if (entry.Key.name.ToLower() == materialName)
                     {
                         AssetDatabase.ImportAsset(modelAssetPath);
                     }
@@ -242,7 +249,7 @@ namespace BedrockFramework.FolderImportOverride
             if (Path.GetExtension(assetPath) != ".mat")
                 return;
 
-            string materialName = Path.GetFileNameWithoutExtension(assetPath);
+            string materialName = Path.GetFileNameWithoutExtension(assetPath).ToLower();
 
             foreach (string modelAssetGUID in AssetDatabase.FindAssets(materialName + " t:material"))
             {
@@ -271,21 +278,66 @@ namespace BedrockFramework.FolderImportOverride
 
         public override void InvokeImportAction(string importedObjectPath)
         {
-            if (Path.GetExtension(importedObjectPath) != ".mat")
+            if (Path.GetExtension(importedObjectPath) != extensionMask)
                 return;
 
             UnityEngine.Object importedObject = AssetDatabase.LoadAssetAtPath(importedObjectPath, typeof(UnityEngine.Object));
 
-            string importedObjectName = importedObject.name;
+            string importedObjectName = importedObject.name.ToLower();
             string importedObjectType = importedObject.GetType().Name;
 
             string[] matchingAssets = AssetDatabase.FindAssets(importedObjectName + " t:" + importedObjectType).Select(x => AssetDatabase.GUIDToAssetPath(x)).
-                Where(x => x.Contains(".mat") && Path.GetFileNameWithoutExtension(x) == importedObjectName).ToArray();
+                Where(x => x.Contains(extensionMask) && Path.GetFileNameWithoutExtension(x) == importedObjectName).ToArray();
 
             if (matchingAssets.Length > 1)
             {
                 EditorUtility.DisplayDialog("Material Name Conflict", "Material names must be unique, the following clash:\n"+string.Join("\n", matchingAssets), "Okay");
             }
+        }
+    }
+
+    /// <summary>
+    /// Caches any information we require from the scene.
+    /// </summary>
+    public class ImportOverideAction_SceneCache : ImportOverideAction
+    {
+        [System.Serializable]
+        public class SceneCache_Data
+        {
+            public bool hasWorldInfo = false;
+
+            public string Serialize()
+            {
+                return JsonUtility.ToJson(this);
+            }
+
+            public static SceneCache_Data Deserialize(string json)
+            {
+                if (json.Length == 0)
+                    return null;
+
+                return JsonUtility.FromJson<SceneCache_Data>(json);
+            }
+
+            public void OnInspectorGUI()
+            {
+                GUI.enabled = false;
+                EditorGUILayout.Toggle("Has World Info ", hasWorldInfo);
+                GUI.enabled = true;
+            }
+        }
+
+        const string extensionMask = ".unity";
+
+        public override void InvokeImportAction(string importedObjectPath)
+        {
+            if (Path.GetExtension(importedObjectPath) != extensionMask)
+                return;
+
+            SceneCache_Data cacheData = new SceneCache_Data();
+            cacheData.hasWorldInfo = InterfaceHelper.FindObject<IRootGameScene>() != null;
+
+            AssetImporter.GetAtPath(importedObjectPath).userData = cacheData.Serialize();
         }
     }
 }

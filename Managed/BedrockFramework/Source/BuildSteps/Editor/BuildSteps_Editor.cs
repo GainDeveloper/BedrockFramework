@@ -14,7 +14,7 @@ namespace BedrockFramework.BuildSteps
 {
     class BuildSteps_Editor : OdinMenuEditorWindow
     {
-        [MenuItem("Tools/BuildSteps")]
+        [MenuItem("Tools/BuildSteps", priority = 51)]
         static void Init()
         {
             BuildSteps_Editor window = (BuildSteps_Editor)EditorWindow.GetWindow(typeof(BuildSteps_Editor), false, "Build Steps");
@@ -25,7 +25,7 @@ namespace BedrockFramework.BuildSteps
         {
             OdinMenuTree tree = new OdinMenuTree(supportsMultiSelect: true) { };
 
-            tree.AddAssetAtPath("Build", "Configs/Editor/Build.asset");
+            tree.AddAssetAtPath("Build", "Configs/Editor/Build/Build.asset");
 
             tree.AddAllAssetsAtPath("", "", typeof(BuildSteps_Config), includeSubDirectories: true, flattenSubDirectories: true)
     .AddThumbnailIcons();

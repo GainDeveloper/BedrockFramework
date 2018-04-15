@@ -312,6 +312,7 @@
     <Compile Include="Assets\Examples\GoblinTestData.cs" />
     <Compile Include="Assets\Examples\LogTest.cs" />
     <Compile Include="Assets\Examples\PoolTestScene.cs" />
+    <Compile Include="Assets\Examples\WorldInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-A.shader" />

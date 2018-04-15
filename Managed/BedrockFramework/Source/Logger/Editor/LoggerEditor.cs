@@ -122,7 +122,7 @@ namespace BedrockFramework.Logger
         }
 
         // Add menu named "My Window" to the Window menu
-        [MenuItem("Tools/Logger")]
+        [MenuItem("Tools/Logger", priority = 50)]
         static void Init()
         {
             LoggerEditor window = (LoggerEditor)EditorWindow.GetWindow(typeof(LoggerEditor));

@@ -40,3 +40,5 @@ MonoBehaviour:
   assetDeletedActions: []
   assetImportedActions:
   - {fileID: 11400000, guid: 3d689b6bc4dc1e94896a0c1ac817295b, type: 2}
+  assetSavedActions:
+  - {fileID: 11400000, guid: c8ac6b77eb8b1da4e917aaeb0766bb0e, type: 2}

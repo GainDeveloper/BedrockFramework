@@ -7,7 +7,7 @@ using Sirenix.OdinInspector;
 namespace BedrockFramework.FolderImportOverride
 {
     [CreateAssetMenu(fileName = "FolderSettings",menuName = "BedrockFramework/FolderSettings", order = 0)]
-    class FolderImportOverride_FolderSettings : ScriptableObject
+    public class FolderImportOverride_FolderSettings : ScriptableObject
     {
         [BoxGroup("Model Import Settings Override"), SerializeField]
         private ModelImporterOverrideBool importVisibility = new ModelImporterOverrideBool(ToModelImport.ImportVisibility);
@@ -37,6 +37,8 @@ namespace BedrockFramework.FolderImportOverride
         private List<FolderImportOverride_Actions> assetDeletedActions = new List<FolderImportOverride_Actions>();
         [SerializeField]
         private List<FolderImportOverride_Actions> assetImportedActions = new List<FolderImportOverride_Actions>();
+        [SerializeField]
+        private List<FolderImportOverride_Actions> assetSavedActions = new List<FolderImportOverride_Actions>();
 
         public void OverrideModelImporter(ModelImporter importer)
         {
@@ -70,6 +72,12 @@ namespace BedrockFramework.FolderImportOverride
         public void AssetImported(string assetPath)
         {
             foreach (FolderImportOverride_Actions action in assetImportedActions)
+                action.InvokeImportAction(assetPath);
+        }
+
+        public void AssetSaved(string assetPath)
+        {
+            foreach (FolderImportOverride_Actions action in assetSavedActions)
                 action.InvokeImportAction(assetPath);
         }
 
