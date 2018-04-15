@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 
-namespace BedrockFramework.SceneManager
+namespace BedrockFramework.Scenes
 {
     public class RootGameScene_EditorWindow : EditorWindow
     {
