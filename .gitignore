@@ -355,3 +355,8 @@ ASALocalRun/
 
 # MSBuild Binary and Structured Log
 *.binlog
+Assets/Tarfmagougou/UnityInternalIcons/Editor/TarfmagougouHelperUII.cs
+Assets/Plugins/IconPreviewer/IconPreviewer.cs
+Assets/Plugins/IconPreviewer/Resources/UnityEditorIcons.txt
+Assets/Tarfmagougou/UnityInternalIcons/Editor/UnityInternalIcons.cs
+Assets/Tarfmagougou/UnityInternalIcons/README.txt

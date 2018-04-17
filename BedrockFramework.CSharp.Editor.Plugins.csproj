@@ -329,6 +329,7 @@
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-G.shader" />
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-R.shader" />
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-RGB.shader" />
+    <None Include="Assets\Plugins\IconPreviewer\Resources\UnityEditorIcons.txt" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Attributes.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Editor.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.Serialization.Config.xml" />
@@ -336,6 +337,7 @@
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.Utilities.Editor.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.Utilities.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\link.xml" />
+    <None Include="Assets\Tarfmagougou\UnityInternalIcons\README.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

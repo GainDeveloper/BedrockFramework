@@ -8,10 +8,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -18838015, guid: 782254f80d401584883c7085b1eed9cb, type: 3}
+  m_Script: {fileID: 1634551349, guid: 782254f80d401584883c7085b1eed9cb, type: 3}
   m_Name: SceneDefinition
   m_EditorClassIdentifier: 
   primaryScene:
-    m_SceneAsset: {fileID: 0}
-    m_SceneName: 
+    m_SceneAsset: {fileID: 102900000, guid: ce097fa38561a334c90d70bcbb216c99, type: 3}
+    m_SceneName: PoolTestScene
   additionalScenes: []

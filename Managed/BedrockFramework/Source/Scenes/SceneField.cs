@@ -5,7 +5,7 @@ Runtime SceneAsset.
 ********************************************************/
 
 using UnityEngine;
-#if UNITY_EDITOR
+#if (UNITY_EDITOR)
 using UnityEditor;
 #endif
 [System.Serializable]
@@ -20,7 +20,13 @@ public class SceneField
 		get { return m_SceneName; }
 	}
 
-#if UNITY_EDITOR
+#if (UNITY_EDITOR)
+    public SceneField(SceneAsset scene)
+    {
+        m_SceneAsset = scene;
+        m_SceneName = scene.name;
+    }
+
     public string SceneFilePath
     {
         get { return AssetDatabase.GetAssetPath(m_SceneAsset); }
@@ -33,7 +39,7 @@ public class SceneField
 		return sceneField.SceneName;
 	}
 }
-#if UNITY_EDITOR
+#if (UNITY_EDITOR)
 [CustomPropertyDrawer(typeof(SceneField))]
 public class SceneFieldPropertyDrawer : PropertyDrawer 
 {
