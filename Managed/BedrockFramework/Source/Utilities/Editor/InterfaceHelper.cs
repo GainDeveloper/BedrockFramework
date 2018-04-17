@@ -37,7 +37,7 @@ using Object = UnityEngine.Object;
  
                 //Skip system interfaces
                 if ( typeName.Contains( "unity" ) || typeName.Contains( "system." )
-                     || typeName.Contains( "mono." ) || typeName.Contains( "mono." ) || typeName.Contains( "icsharpcode." )
+                     || typeName.Contains( "mono." ) || typeName.Contains( "icsharpcode." )
                      || typeName.Contains( "nsubstitute" ) || typeName.Contains( "nunit." ) || typeName.Contains( "microsoft." )
                      || typeName.Contains( "boo." ) || typeName.Contains( "serializ" ) || typeName.Contains( "json" )
                      || typeName.Contains( "log." ) || typeName.Contains( "logging" ) || typeName.Contains( "test" )

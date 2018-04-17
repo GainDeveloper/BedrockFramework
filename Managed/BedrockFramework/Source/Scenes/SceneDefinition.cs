@@ -15,7 +15,7 @@ namespace BedrockFramework.Scenes
     public class SceneDefinition : ScriptableObject
     {
         public SceneField primaryScene;
-        public SceneField[] additionalScenes;
+        public SceneField[] additionalScenes = new SceneField[] { };
 
 #if (UNITY_EDITOR)
         public static SceneDefinition FromPath(string path)

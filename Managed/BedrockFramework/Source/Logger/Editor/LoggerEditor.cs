@@ -241,10 +241,7 @@ namespace BedrockFramework.Logger
 
         private void OnDestroy()
         {
-            Logger.OnLogAdded -= Logger_OnLogAdded;
-            Application.logMessageReceived -= LogMessageReceived;
-            EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
-            SavePrefs();
+            OnDisable();
         }
 
         void SavePrefs()

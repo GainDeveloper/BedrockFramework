@@ -14,4 +14,6 @@ MonoBehaviour:
   primaryScene:
     m_SceneAsset: {fileID: 102900000, guid: ce097fa38561a334c90d70bcbb216c99, type: 3}
     m_SceneName: PoolTestScene
-  additionalScenes: []
+  additionalScenes:
+  - m_SceneAsset: {fileID: 102900000, guid: bdcb284780fcab341944b115a03725de, type: 3}
+    m_SceneName: RecordScene

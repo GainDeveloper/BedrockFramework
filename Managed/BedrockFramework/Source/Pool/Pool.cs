@@ -12,7 +12,7 @@ namespace BedrockFramework.Pool
         private Stack<GameObject> cache = new Stack<GameObject>();
 
         public delegate void PrefabSpawned(GameObject newPrefab);
-        public event PrefabSpawned OnPrefabSpawned;
+        public event PrefabSpawned OnPrefabSpawned = delegate { };
 
         public Pool (GameObject prefab)
         {
@@ -61,8 +61,7 @@ namespace BedrockFramework.Pool
 
             // Spawn Events
             // Used by other systems to spawn any additional gameObjects before OnSpawn is called.
-            if (OnPrefabSpawned != null)
-                OnPrefabSpawned(clone);
+            OnPrefabSpawned(clone);
 
             if (!callOnSpawn)
             {

@@ -28,7 +28,7 @@ namespace BedrockFramework.Logger
         public static readonly string defaultCategory = "Default";
         public static List<LoggerLog> currentLogs = new List<LoggerLog>();
         public delegate void LogAdded(LoggerLog newLog);
-        public static event LogAdded OnLogAdded;
+        public static event LogAdded OnLogAdded = delegate { };
 
         static readonly string formatString = "{}";
         static readonly int formatStringLength = 2;
@@ -140,9 +140,7 @@ namespace BedrockFramework.Logger
         {
             LoggerLog newLog = new LoggerLog(category, log, logType, stackTrace);
             currentLogs.Add(newLog);
-
-            if (OnLogAdded != null)
-                OnLogAdded(newLog);
+            OnLogAdded(newLog);
         }
     } 
 }

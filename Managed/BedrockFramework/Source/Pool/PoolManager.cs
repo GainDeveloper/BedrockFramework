@@ -10,7 +10,7 @@ namespace BedrockFramework.Pool
         private static Dictionary<int, Pool> activePooledGameObjects = new Dictionary<int, Pool>();
 
         public delegate void PoolCreated(Pool newPool);
-        public static event PoolCreated OnPoolCreated;
+        public static event PoolCreated OnPoolCreated = delegate { };
 
         public static void PrePool() {
             foreach (PrePool prePoolObject in Resources.LoadAll<PrePool>(""))
@@ -84,9 +84,7 @@ namespace BedrockFramework.Pool
         {
             Pool newPool = new Pool(prefab);
             activePools[prefab.GetInstanceID()] = newPool;
-
-            if (OnPoolCreated != null)
-                OnPoolCreated(newPool);
+            OnPoolCreated(newPool);
 
             return newPool;
         }

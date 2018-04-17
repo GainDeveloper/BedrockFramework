@@ -13,8 +13,7 @@ namespace BedrockFramework.CustomLine
         public CurvePoint[] points;
         private DistaceT[] cachedDistanceToT;
 
-        public delegate void CurveWasModified();
-        public event CurveWasModified OnCurveModified;
+        public Action OnCurveModified = delegate {};
 
         [Serializable]
         public struct CurvePoint
@@ -74,9 +73,7 @@ namespace BedrockFramework.CustomLine
         public void CurveModified()
         {
             CacheDistanceToT();
-
-            if (OnCurveModified != null)
-                OnCurveModified();
+            OnCurveModified();
         }
 
         /// 
