@@ -335,10 +335,13 @@ namespace BedrockFramework.FolderImportOverride
             if (Path.GetExtension(importedObjectPath) != extensionMask)
                 return;
 
+            AssetImporter sceneImporter = AssetImporter.GetAtPath(importedObjectPath);
+            if (sceneImporter == null)
+                return;
+
             SceneCache_Data cacheData = new SceneCache_Data();
             cacheData.isRootGameScene = InterfaceHelper.FindObject<IRootGameScene>() != null;
-
-            AssetImporter.GetAtPath(importedObjectPath).userData = cacheData.Serialize();
+            sceneImporter.userData = cacheData.Serialize();
         }
     }
 }

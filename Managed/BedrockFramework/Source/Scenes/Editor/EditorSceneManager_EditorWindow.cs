@@ -2,6 +2,7 @@
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 
 Creates a editor window displaying the current scenes definition file.
+Allows user to quickly create and modify additional scenes.
 ********************************************************/
 
 using System.Collections.Generic;
@@ -75,7 +76,7 @@ namespace BedrockFramework.Scenes
         private Texture2D boxBgOdd;
         private Texture2D boxBgEven;
         private Texture2D boxBgSelected;
-        private Texture2D sceneIcon, refreshIcon;
+        private Texture2D sceneIcon, refreshIcon, addIcon;
 
         Vector2 panelScroll;
         GUIStyle boxStyle, infoStyle;
@@ -120,11 +121,12 @@ namespace BedrockFramework.Scenes
 
             sceneIcon = EditorGUIUtility.FindTexture("BuildSettings.SelectedIcon");
             refreshIcon = EditorGUIUtility.FindTexture("d_RotateTool");
+            addIcon = EditorGUIUtility.FindTexture("d_Toolbar Plus");
 
             boxStyle = new GUIStyle();
             boxStyle.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
             boxStyle.alignment = TextAnchor.MiddleLeft;
-            boxStyle.padding = new RectOffset(6, 0, 2, 2);
+            boxStyle.padding = new RectOffset(6, 0, 1, 1);
 
             infoStyle = new GUIStyle();
             infoStyle.normal.textColor = new Color(0.3f, 0.3f, 0.3f);
@@ -171,8 +173,12 @@ namespace BedrockFramework.Scenes
                 }
 
                 GUILayout.FlexibleSpace();
+                if (GUILayout.Button(new GUIContent(addIcon, "Create New Additional Scene"), EditorStyles.toolbarButton, GUILayout.Width(25)))
+                {
+                    CreateNewScene();
+                }
 
-                if (GUILayout.Button(new GUIContent(refreshIcon, "Reload Scenes"), EditorStyles.toolbarButton, GUILayout.Width(30)))
+                if (GUILayout.Button(new GUIContent(refreshIcon, "Reload Scenes"), EditorStyles.toolbarButton, GUILayout.Width(25)))
                 {
                     EditorSceneManager_Loader.RefreshLoadedScenes();
                 }
@@ -252,6 +258,16 @@ namespace BedrockFramework.Scenes
 
             serializedObject.ApplyModifiedProperties();
             requiresRefresh = true;
+        }
+
+        void CreateNewScene()
+        {
+            SceneAsset newScene = EditorSceneManager_Loader.CreateNewScene();
+
+            if (newScene != null)
+            {
+                AddScene(newScene);
+            }
         }
 
         void AddScene(SceneAsset sceneAsset)
