@@ -138,6 +138,12 @@ namespace BedrockFramework.Scenes
 
         void OnGUI()
         {
+            if (EditorApplication.isPlaying)
+            {
+                DrawPlayMode();
+                return;
+            }
+
             DrawHeader();
 
             if (EditorSceneManager_Loader.currentDefinition == null)
@@ -173,6 +179,8 @@ namespace BedrockFramework.Scenes
                 }
 
                 GUILayout.FlexibleSpace();
+                GUI.enabled = EditorSceneManager_Loader.currentDefinition != null;
+
                 if (GUILayout.Button(new GUIContent(addIcon, "Create New Additional Scene"), EditorStyles.toolbarButton, GUILayout.Width(25)))
                 {
                     CreateNewScene();
@@ -182,6 +190,8 @@ namespace BedrockFramework.Scenes
                 {
                     EditorSceneManager_Loader.RefreshLoadedScenes();
                 }
+
+                GUI.enabled = true;
             }
             EditorGUILayout.EndHorizontal();
         }
@@ -201,6 +211,14 @@ namespace BedrockFramework.Scenes
                 EditorGUILayout.HelpBox("No Saved Scene Loaded", MessageType.Warning);
             }
 
+        }
+
+        void DrawPlayMode()
+        {
+            sceneArea = new Rect(0, menuBarHeight, position.width, position.height);
+            GUILayout.BeginArea(sceneArea);
+            EditorGUILayout.LabelField("Disabled During PlayMode", infoStyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+            GUILayout.EndArea();
         }
 
         void DrawScenes()

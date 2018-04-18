@@ -29,8 +29,15 @@ namespace BedrockFramework.Scenes
             EditorSceneManager.sceneOpened += OnSceneLoaded;
             EditorSceneManager.sceneClosed += OnSceneClosed;
             EditorSceneManager.newSceneCreated += OnSceneCreated;
+            EditorApplication.playModeStateChanged += OnPlayModeChanged;
             EditorApplication.delayCall += () => EditorSceneManager.playModeStartScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(entryScene);
             EditorApplication.delayCall += () => RefreshCurrentSceneDefinition(false);
+        }
+
+        private static void OnPlayModeChanged(PlayModeStateChange obj)
+        {
+            if (obj == PlayModeStateChange.EnteredEditMode)
+                RefreshCurrentSceneDefinition();
         }
 
         static void OnSceneCreated(UnityEngine.SceneManagement.Scene scene, NewSceneSetup setup, NewSceneMode mode)
@@ -57,7 +64,7 @@ namespace BedrockFramework.Scenes
 
         public static void RefreshCurrentSceneDefinition(bool refreshScenes = true)
         {
-            if (ignoreSceneEvents)
+            if (ignoreSceneEvents || EditorApplication.isPlaying)
                 return;
 
             currentDefinition = FindSceneDefinition();
