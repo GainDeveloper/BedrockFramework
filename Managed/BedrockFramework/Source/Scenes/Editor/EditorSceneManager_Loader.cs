@@ -18,10 +18,10 @@ namespace BedrockFramework.Scenes
     [InitializeOnLoad]
     public static class EditorSceneManager_Loader
     {
-        public static SceneDefinition currentDefinition, lastValidDefinition;
+        public static SceneDefinition currentDefinition;
         static bool ignoreSceneEvents = false;
-        const string entryScene = "Assets/Entry.unity";
 
+        public const string previousSceneDefinitionKey = "PreviousSceneDefinition";
         public static event Action OnDefinitionChange = delegate { };
 
         static EditorSceneManager_Loader()
@@ -30,7 +30,7 @@ namespace BedrockFramework.Scenes
             EditorSceneManager.sceneClosed += OnSceneClosed;
             EditorSceneManager.newSceneCreated += OnSceneCreated;
             EditorApplication.playModeStateChanged += OnPlayModeChanged;
-            EditorApplication.delayCall += () => EditorSceneManager.playModeStartScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(entryScene);
+            EditorApplication.delayCall += () => EditorSceneManager.playModeStartScene = AssetDatabase.LoadAssetAtPath<SceneAsset>(SceneDefinition.entryScenePath);
             EditorApplication.delayCall += () => RefreshCurrentSceneDefinition(false);
         }
 
@@ -38,6 +38,11 @@ namespace BedrockFramework.Scenes
         {
             if (obj == PlayModeStateChange.EnteredEditMode)
                 RefreshCurrentSceneDefinition();
+            else if (obj == PlayModeStateChange.ExitingEditMode && currentDefinition != null)
+            {
+                // Cache the current scene definition for an entry service to read.
+                EditorPrefs.SetInt(previousSceneDefinitionKey, currentDefinition.GetInstanceID());
+            }
         }
 
         static void OnSceneCreated(UnityEngine.SceneManagement.Scene scene, NewSceneSetup setup, NewSceneMode mode)
@@ -48,10 +53,14 @@ namespace BedrockFramework.Scenes
 
         static void OnSceneClosed(UnityEngine.SceneManagement.Scene scene)
         {
+            EditorApplication.delayCall += () => OnRealSceneClosed(scene);
+        }
+
+        static void OnRealSceneClosed(UnityEngine.SceneManagement.Scene scene)
+        {
             // Check if scene was closed or just unloaded.
             if (EditorSceneManager.GetSceneManagerSetup().Where(x => x.path == scene.path).Count() == 0)
             {
-                //Debug.Log("Scene Closed!");
                 RefreshCurrentSceneDefinition();
             }
         }
@@ -73,8 +82,6 @@ namespace BedrockFramework.Scenes
             if (currentDefinition == null)
                 return;
 
-            lastValidDefinition = currentDefinition;
-
             if (refreshScenes)
                 RefreshLoadedScenes();
         }
@@ -85,15 +92,15 @@ namespace BedrockFramework.Scenes
             ignoreSceneEvents = true;
 
             IEnumerable<UnityEngine.SceneManagement.Scene> currentScenes = Enumerable.Range(0, EditorSceneManager.loadedSceneCount).Select(x => EditorSceneManager.GetSceneAt(x));
-            IEnumerable<string> desiredScenes = currentDefinition.additionalScenes.Select(x => x.SceneFilePath);
-            desiredScenes = desiredScenes.Concat(new[] { rootScene.path, entryScene });
+            IEnumerable<string> desiredScenes = currentDefinition.AllScenePaths();
+            desiredScenes = desiredScenes.Concat(new[] { rootScene.path });
 
             // Unload any scenes no longer part of the additional scenes.
             foreach (UnityEngine.SceneManagement.Scene scene in currentScenes.Where(x => !desiredScenes.Contains(x.path)))
                 EditorSceneManager.CloseScene(scene, true);
 
             // Load remaining.
-            foreach (string scenePath in desiredScenes.Where(x => !currentScenes.Select(y => y.path).Contains(x)))
+            foreach (string scenePath in desiredScenes.Where(x => x != "" && !currentScenes.Select(y => y.path).Contains(x)))
                 EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
 
             EditorSceneManager.SetActiveScene(rootScene);
@@ -143,7 +150,7 @@ namespace BedrockFramework.Scenes
                 if (!sceneSetup.isLoaded)
                     continue;
 
-                SceneDefinition sceneDefintion = SceneDefinition.FromPath(sceneSetup.path);
+                SceneDefinition sceneDefintion = SceneDefinition_Editor.FromPath(sceneSetup.path);
                 if (sceneDefintion != null)
                 {
                     return sceneDefintion;
@@ -158,7 +165,7 @@ namespace BedrockFramework.Scenes
             for (int i = 0; i < EditorSceneManager.loadedSceneCount; i++)
             {
                 UnityEngine.SceneManagement.Scene scene = EditorSceneManager.GetSceneAt(i);
-                SceneDefinition sceneDefintion = SceneDefinition.FromPath(scene.path);
+                SceneDefinition sceneDefintion = SceneDefinition_Editor.FromPath(scene.path);
                 if (sceneDefintion != null)
                 {
                     return scene;

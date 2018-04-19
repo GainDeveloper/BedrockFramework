@@ -125,7 +125,7 @@ namespace BedrockFramework.BuildSteps
             if (!isBuilding)
                 return;
 
-            foreach (BuildSteps_Steps step in AssetDatabase.LoadAssetAtPath<BuildSteps_Settings>("Assets/Configs/Editor/Build.asset").buildPreset.buildSteps)
+            foreach (BuildSteps_Steps step in AssetDatabase.LoadAssetAtPath<BuildSteps_Settings>("Assets/Configs/Editor/Build/Build.asset").buildPreset.buildSteps)
                 step.OnSceneBuild();
         }
     }

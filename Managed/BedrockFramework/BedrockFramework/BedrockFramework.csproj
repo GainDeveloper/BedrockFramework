@@ -52,16 +52,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\Source\PlayModeEdit\PlayModeEdit.cs" />
     <Compile Include="..\Source\Prototype\Prototype.cs" />
     <Compile Include="..\Source\Logger\Logger.cs" />
     <Compile Include="..\Source\Pool\Pool.cs" />
 	<Compile Include="..\Source\Pool\PoolManager.cs" />
 	<Compile Include="..\Source\Pool\PrePool.cs" />
     <Compile Include="..\Source\SmartCombine.cs" />
+    <Compile Include="..\Source\Utilities\FloatExtensions.cs" />
     <Compile Include="..\Source\Utilities\StringExtensions.cs" />
 	<Compile Include="..\Source\Utilities\VectorExtensions.cs" />
-	<Compile Include="..\Source\VertexPaint\VertexPaint.cs" />
 	<Compile Include="..\Source\Scenes\SceneService.cs" />
 	<Compile Include="..\Source\Scenes\SceneDefinition.cs" />
 	<Compile Include="..\Source\Scenes\SceneField.cs" />

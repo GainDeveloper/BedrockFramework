@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
-#if (UNITY_EDITOR)
 using UnityEditor;
 using System.Linq;
 using System.Collections.Generic;
-#endif
 
 namespace BedrockFramework.VertexPaint
 {
@@ -21,10 +19,7 @@ namespace BedrockFramework.VertexPaint
             mf = GetComponent<MeshFilter>();
 
             AssignVertexStream();
-
-#if (UNITY_EDITOR)
             CheckValidWithLocalMesh(GetComponent<MeshFilter>().sharedMesh);
-#endif
         }
 
         public void AssignVertexStream()
@@ -33,7 +28,6 @@ namespace BedrockFramework.VertexPaint
                 mr.additionalVertexStreams = additionalVertexStreamMesh;
         }
 
-#if (UNITY_EDITOR)
         public bool HasVertexColours{
         get { return additionalVertexStreamMesh != null; }
         }
@@ -118,6 +112,5 @@ namespace BedrockFramework.VertexPaint
             additionalVertexStreamMesh = streamMesh;
             AssignVertexStream();
         }
-#endif
     }
 }

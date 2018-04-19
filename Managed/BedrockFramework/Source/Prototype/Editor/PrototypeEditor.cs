@@ -4,7 +4,7 @@ using UnityEditor;
 
 namespace BedrockFramework.Prototype
 {
-    //[CustomEditor(typeof(PrototypeObject), true)]
+    [CustomEditor(typeof(PrototypeObject), true)]
     public class PrototypeEditor : Editor
     {
         SerializedPrototypeEditor serializedPrototypeObject;

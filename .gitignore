@@ -360,3 +360,7 @@ Assets/Plugins/IconPreviewer/IconPreviewer.cs
 Assets/Plugins/IconPreviewer/Resources/UnityEditorIcons.txt
 Assets/Tarfmagougou/UnityInternalIcons/Editor/UnityInternalIcons.cs
 Assets/Tarfmagougou/UnityInternalIcons/README.txt
+Assembly-CSharp.csproj
+Assembly-CSharp-Editor-firstpass.csproj
+Assembly-CSharp-Editor.csproj
+Assembly-CSharp-firstpass.csproj

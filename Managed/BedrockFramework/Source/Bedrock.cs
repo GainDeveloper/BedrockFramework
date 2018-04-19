@@ -7,11 +7,11 @@ using UnityEngine;
 
 namespace BedrockFramework
 {
-    public class Bedrock : MonoBehaviour
+    public static class Bedrock
     {
-        private Scenes.ISceneService sceneService;
-        public Scenes.ISceneService SceneService { get { return sceneService; } }
-        public void RegisterSceneService(Scenes.ISceneService service)
+        private static Scenes.ISceneService sceneService;
+        public static Scenes.ISceneService SceneService { get { return sceneService; } }
+        public static void RegisterSceneService(Scenes.ISceneService service)
         {
             if (service == null)
             {
@@ -23,7 +23,7 @@ namespace BedrockFramework
         }
 
         // Register null services as a fallback.
-        protected virtual void Awake()
+        static Bedrock()
         {
             sceneService = new Scenes.NullSceneService();
         }

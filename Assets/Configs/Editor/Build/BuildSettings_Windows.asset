@@ -8,11 +8,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -1719811131, guid: 782254f80d401584883c7085b1eed9cb, type: 3}
-  m_Name: BuildSettings_OSX
+  m_Script: {fileID: -1719811131, guid: 20cc3d9dd6af618448204145242a0fbf, type: 3}
+  m_Name: BuildSettings_Windows
   m_EditorClassIdentifier: 
   serializationData:
-    SerializedFormat: 2
+    SerializedFormat: 0
     SerializedBytes: 
     ReferencedUnityObjects: []
     SerializedBytesString: 
@@ -20,4 +20,5 @@ MonoBehaviour:
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes: []
-  buildTarget: 2
+  buildTarget: 19
+  executableExtension: .exe

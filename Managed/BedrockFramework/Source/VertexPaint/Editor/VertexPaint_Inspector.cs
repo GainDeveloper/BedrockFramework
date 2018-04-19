@@ -9,7 +9,7 @@ using System.Linq;
 namespace BedrockFramework.VertexPaint
 {
     [CustomEditor(typeof(VertexPaint), true)]
-    [CanEditMultipleObjects]
+    [CanEditMultipleObjects, EditorOnlyComponent]
     public class VertexPaint_Inspector : Editor
     {
         [System.Serializable]

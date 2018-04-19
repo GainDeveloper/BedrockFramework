@@ -1,9 +1,7 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-#if (UNITY_EDITOR)
 using UnityEditor;
-#endif
 
 namespace BedrockFramework.PlayModeEdit
 {
@@ -11,7 +9,6 @@ namespace BedrockFramework.PlayModeEdit
     [AddComponentMenu("BedrockFramework/PlayModeEdit")]
     public class PlayModeEdit : MonoBehaviour
     {
-#if (UNITY_EDITOR)
         public List<Component> recordedComponents;
         public bool recordDestruction = true, recordInstantiation = true;
 
@@ -66,6 +63,5 @@ namespace BedrockFramework.PlayModeEdit
             }
 
         }
-#endif
     }
 }

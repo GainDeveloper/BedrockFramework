@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
-
-#if UNITY_EDITOR
 using BedrockFramework.FolderImportOverride;
-#endif
 
 namespace BedrockFramework.CustomLine
 {
@@ -42,7 +39,6 @@ namespace BedrockFramework.CustomLine
         [OnValueChanged("Curve_OnCurveModified"), HideLabel, PreviewField(75, ObjectFieldAlignment.Left), HorizontalGroup("Curve Pieces/Split"), AssetsOnly]
         public GameObject endGameObject;
 
-#if UNITY_EDITOR
         void OnEnable()
         {
             curve = GetComponent<CustomCurve>();
@@ -68,8 +64,6 @@ namespace BedrockFramework.CustomLine
             curve.OnCurveModified -= Curve_OnCurveModified;
             FolderImportOverride_PostImport.OnAssetImported -= AssetImported;
         }
-#endif
-
 
         private void Curve_OnCurveModified()
         {

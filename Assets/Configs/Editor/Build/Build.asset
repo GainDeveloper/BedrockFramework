@@ -8,11 +8,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 931314894, guid: 782254f80d401584883c7085b1eed9cb, type: 3}
+  m_Script: {fileID: 931314894, guid: 20cc3d9dd6af618448204145242a0fbf, type: 3}
   m_Name: Build
   m_EditorClassIdentifier: 
   serializationData:
-    SerializedFormat: 0
+    SerializedFormat: 2
     SerializedBytes: 
     ReferencedUnityObjects: []
     SerializedBytesString: 
@@ -20,7 +20,7 @@ MonoBehaviour:
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes: []
-  buildPreset: {fileID: 11400000, guid: 30dc5775649c98f4a94335abd45f1750, type: 2}
+  buildPreset: {fileID: 11400000, guid: 32990d4e0094366428a714e47c47cde8, type: 2}
   outputFolder: Builds
   appendType: 1
   appendRevision: 1
@@ -28,4 +28,4 @@ MonoBehaviour:
   buildPlatforms:
   - {fileID: 11400000, guid: c50a7b45b2072294baad9f6bc7101bca, type: 2}
   buildScenes:
-  - {fileID: 102900000, guid: bdcb284780fcab341944b115a03725de, type: 3}
+  - {fileID: 102900000, guid: 557bfbe4b87d958419cddbb9119c3b06, type: 3}

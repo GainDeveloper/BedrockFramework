@@ -40,7 +40,7 @@ namespace BedrockFramework.Scenes
         {
             if (currentlyLoaded == null)
             {
-                owner.StartCoroutine(LoadActiveAsync(currentlyLoaded, LoadSceneMode.Single));
+                owner.StartCoroutine(LoadActiveAsync(sceneToLoad, LoadSceneMode.Single));
             } else
             {
                 owner.StartCoroutine(UnloadAndLoadAsync(currentlyLoaded, sceneToLoad));
@@ -50,29 +50,25 @@ namespace BedrockFramework.Scenes
         // Used for loading next level.
         IEnumerator LoadActiveAsync(SceneDefinition sceneToLoad, LoadSceneMode loadSceneMode)
         {
-            yield return SceneManager.LoadSceneAsync(sceneToLoad.primaryScene, loadSceneMode);
-            Scene primaryScene = SceneManager.GetSceneByName(sceneToLoad.primaryScene);
-            SceneManager.SetActiveScene(primaryScene);
+            List<AsyncOperation> toWaitFor = new List<AsyncOperation>();
 
-            // TODO: Send message that primary scene has finished loading.
-            // Note: This may not be necessary. In Turpedo we established the game mode before loading additional scenes. Not sure why?
-
-            if (sceneToLoad.additionalScenes.Length > 0)
+            foreach (string sceneName in sceneToLoad.AllScenes)
             {
-                List<AsyncOperation> toWaitFor = new List<AsyncOperation>();
-
-                foreach (SceneField sceneField in sceneToLoad.additionalScenes)
+                if (!SceneManager.GetSceneByName(sceneName).isLoaded)
                 {
-                    if (!SceneManager.GetSceneByName(sceneField.SceneName).isLoaded)
-                        toWaitFor.Add(SceneManager.LoadSceneAsync(sceneField.SceneName, LoadSceneMode.Additive));
-                }
-
-                foreach (AsyncOperation asyncLevelUnload in toWaitFor)
-                    yield return asyncLevelUnload;
+                    Logger.Logger.Log(SceneServiceLog, "Loading {}", () => new object[] { sceneName });
+                    toWaitFor.Add(SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive));
+                }  
             }
 
-            // TODO: Send message that additional scenes have finished loading.
-            Logger.Logger.Log(SceneServiceLog, "Finished Loading {0}", () => new object[] { sceneToLoad.primaryScene.SceneName });
+            foreach (AsyncOperation asyncLevelUnload in toWaitFor)
+                yield return asyncLevelUnload;
+
+            Scene primaryScene = SceneManager.GetSceneByName(sceneToLoad.PrimaryScene);
+            SceneManager.SetActiveScene(primaryScene);
+
+            currentlyLoaded = sceneToLoad;
+            Logger.Logger.Log(SceneServiceLog, "Finished Loading");
 
             OnFinishedLoading();
         }
@@ -81,14 +77,14 @@ namespace BedrockFramework.Scenes
         IEnumerator UnloadAndLoadAsync(SceneDefinition sceneToUnload, SceneDefinition sceneToLoad)
         {
             List<AsyncOperation> toWaitFor = new List<AsyncOperation>();
-            toWaitFor.Add(SceneManager.UnloadSceneAsync(sceneToUnload.primaryScene));
 
             // Ensure we only unload scenes that we won't be using in the next scene.
-            foreach (SceneField scene in sceneToUnload.additionalScenes)
+            foreach (string sceneName in sceneToLoad.AllScenes)
             {
-                if (sceneToLoad.additionalScenes.Where(item => item.SceneName == scene.SceneName).Count() == 0)
+                if (sceneToLoad.AllScenes.Where(item => item == sceneName).Count() == 0)
                 {
-                    toWaitFor.Add(SceneManager.UnloadSceneAsync(scene));
+                    Logger.Logger.Log(SceneServiceLog, "Unloading {}", () => new object[] { sceneName });
+                    toWaitFor.Add(SceneManager.UnloadSceneAsync(sceneName));
                 }
             }
 
@@ -98,7 +94,7 @@ namespace BedrockFramework.Scenes
             }
 
             System.GC.Collect();
-            Logger.Logger.Log(SceneServiceLog, "Finished UnLoading {0}", () => new object[] { sceneToUnload.primaryScene.SceneName });
+            Logger.Logger.Log(SceneServiceLog, "Finished Unloading");
 
             yield return LoadActiveAsync(sceneToLoad, LoadSceneMode.Additive);
         }

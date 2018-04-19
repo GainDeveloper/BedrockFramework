@@ -24,9 +24,9 @@ namespace BedrockFramework.Scenes
             int index;
             EditorSceneManager_EditorWindow sceneManager;
 
-            public SceneManager_Scene(SceneField sceneField, EditorSceneManager_EditorWindow sceneManager, int i)
+            public SceneManager_Scene(string sceneName, EditorSceneManager_EditorWindow sceneManager, int i)
             {
-                this.sceneName = sceneField.SceneName;
+                this.sceneName = sceneName;
                 this.logGUI = new GUIContent(" " + sceneName, sceneManager.sceneIcon);
                 this.index = i;
                 this.sceneManager = sceneManager;
@@ -99,9 +99,11 @@ namespace BedrockFramework.Scenes
                 return;
             }
 
-            for (int i = 0; i < EditorSceneManager_Loader.currentDefinition.additionalScenes.Length; i++)
+            int i = 0;
+            foreach (string sceneName in EditorSceneManager_Loader.currentDefinition.AdditionalScenes)
             {
-                currentAdditionalScenes.Add(new SceneManager_Scene(EditorSceneManager_Loader.currentDefinition.additionalScenes[i], this, i));
+                currentAdditionalScenes.Add(new SceneManager_Scene(sceneName, this, i));
+                i++;
             }
 
             Repaint();
@@ -169,7 +171,7 @@ namespace BedrockFramework.Scenes
             {
                 if (EditorSceneManager_Loader.currentDefinition != null)
                 {
-                    GUILayout.Label("Root Scene : " + EditorSceneManager_Loader.currentDefinition.primaryScene.SceneName);
+                    GUILayout.Label("Root Scene : " + EditorSceneManager_Loader.currentDefinition.PrimaryScene);
 
                     GUILayout.FlexibleSpace();
                 }
@@ -198,11 +200,11 @@ namespace BedrockFramework.Scenes
 
         void DrawSceneDefinitionBuilder()
         {
-            if (EditorSceneManager.GetActiveScene().name != "")
+            if (EditorSceneManager.GetActiveScene().name != "" && EditorSceneManager.GetActiveScene().path != SceneDefinition.entryScenePath)
             {
                 if (GUILayout.Button("Create Scene Definition for " + EditorSceneManager.GetActiveScene().name, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true)))
                 {
-                    SceneDefinition.CreateFromScene(EditorSceneManager.GetActiveScene());
+                    SceneDefinition_Editor.CreateFromScene(EditorSceneManager.GetActiveScene());
                     EditorSceneManager_Loader.RefreshCurrentSceneDefinition();
                 }
             }
@@ -215,7 +217,7 @@ namespace BedrockFramework.Scenes
 
         void DrawPlayMode()
         {
-            sceneArea = new Rect(0, menuBarHeight, position.width, position.height);
+            sceneArea = new Rect(0, 0, position.width, position.height);
             GUILayout.BeginArea(sceneArea);
             EditorGUILayout.LabelField("Disabled During PlayMode", infoStyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             GUILayout.EndArea();

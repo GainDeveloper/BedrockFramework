@@ -1,54 +1,53 @@
 /********************************************************           
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 
-Scene Service. Handles loading scenes, subscenes and sending out the correct messaging.
+Scene Definition stores all the scenes required for the primary scene.
+Is used by the SceneService to determine what scenes to unload/ load when moving between levels.
 ********************************************************/
 using UnityEngine;
-#if (UNITY_EDITOR)
-using UnityEditor;
-using System.IO;
-#endif
 
 namespace BedrockFramework.Scenes
 {
     [System.Serializable]
     public class SceneDefinition : ScriptableObject
     {
+        public const string entryScenePath = "Assets/Entry.unity";
+        public const string entryScene = "Entry";
+
         public SceneField primaryScene;
         public SceneField[] additionalScenes = new SceneField[] { };
 
-#if (UNITY_EDITOR)
-        public static SceneDefinition FromPath(string path)
+        public string PrimaryScene
         {
-            if (path == "")
-                return null;
-
-            return AssetDatabase.LoadAssetAtPath<SceneDefinition>(AssetPathFromScenePath(path));
+            get
+            {
+                return primaryScene.SceneName;
+            }
         }
 
-        public static SceneDefinition CreateFromScene(UnityEngine.SceneManagement.Scene scene)
+        public string[] AllScenes
         {
-            SceneDefinition asset = ScriptableObject.CreateInstance<SceneDefinition>();
-            asset.primaryScene = new SceneField(AssetDatabase.LoadAssetAtPath<SceneAsset>(scene.path));
+            get
+            {
+                string[] allScenes = new string[additionalScenes.Length + 2];
 
-            string assetPath = AssetPathFromScenePath(scene.path);
-
-            string projectDirectory = Path.GetDirectoryName(Application.dataPath);
-            string directory = Path.Combine(projectDirectory, Path.GetDirectoryName(assetPath));
-            if (!Directory.Exists(directory))
-                Directory.CreateDirectory(directory);
-
-            AssetDatabase.CreateAsset(asset, assetPath);
-
-            return asset;
+                allScenes[0] = entryScene;
+                allScenes[1] = primaryScene.SceneName;
+                for (int i = 0; i < additionalScenes.Length; i++)
+                    allScenes[2 + i] = additionalScenes[i].SceneName;
+                return allScenes;
+            }
         }
 
-        private static string AssetPathFromScenePath(string path)
+        public string[] AdditionalScenes
         {
-            string filename = Path.GetFileNameWithoutExtension(path);
-            string directory = Path.Combine(Path.GetDirectoryName(path), filename);
-            return Path.Combine(directory, "SceneDefinition" + ".asset");
+            get
+            {
+                string[] finalAdditionalScenes = new string[additionalScenes.Length];
+                for (int i = 0; i < additionalScenes.Length; i++)
+                    finalAdditionalScenes[i] = additionalScenes[i].SceneName;
+                return finalAdditionalScenes;
+            }
         }
-#endif
     }
 }

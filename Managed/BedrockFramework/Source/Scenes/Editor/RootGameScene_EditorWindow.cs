@@ -15,7 +15,19 @@ namespace BedrockFramework.Scenes
 {
     public class RootGameScene_EditorWindow : EditorWindow
     {
-        static List<string> gameScenes = new List<string>();
+        struct GameScenePath
+        {
+            public GameScenePath(string name, string path)
+            {
+                sceneName = name;
+                scenePath = path;
+            }
+
+            public string sceneName;
+            public string scenePath;
+        }
+
+        static List<GameScenePath> gameScenes = new List<GameScenePath>();
 
         [MenuItem("Tools/Open Game Scenes")]
         public static void OpenGameScenes()
@@ -27,22 +39,23 @@ namespace BedrockFramework.Scenes
         {
             gameScenes.Clear();
 
-            foreach (string sceneAssetPath in AssetDatabase.FindAssets("t:scene").Select(s => AssetDatabase.GUIDToAssetPath(s)))
+            foreach (string sceneAssetPath in AssetDatabase.FindAssets("t:sceneDefinition").Select(s => AssetDatabase.GUIDToAssetPath(s)))
             {
-                FolderImportOverride.ImportOverideAction_SceneCache.SceneCache_Data sceneCacheData = FolderImportOverride.ImportOverideAction_SceneCache.SceneCache_Data.Deserialize(AssetImporter.GetAtPath(sceneAssetPath).userData);
-                if (sceneCacheData != null && sceneCacheData.isRootGameScene)
-                    gameScenes.Add(sceneAssetPath);
+                SceneDefinition sceneDefinition = AssetDatabase.LoadAssetAtPath<SceneDefinition>(sceneAssetPath);
+                gameScenes.Add(new GameScenePath(sceneDefinition.PrimaryScene, sceneDefinition.PrimaryScenePath()));
             }
+
+            gameScenes.OrderBy(x => x.sceneName);
         }
 
         void OnGUI()
         {
             for (int i = 0; i < gameScenes.Count; i++)
             {
-                if (GUILayout.Button(gameScenes[i]))
+                if (GUILayout.Button(gameScenes[i].sceneName))
                 {
                     if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
-                        EditorSceneManager.OpenScene(gameScenes[i]);
+                        EditorSceneManager.OpenScene(gameScenes[i].scenePath);
 
                     this.Close();
                 }
