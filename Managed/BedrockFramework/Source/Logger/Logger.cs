@@ -15,6 +15,7 @@ namespace BedrockFramework.Logger
             public string logMessage;
             public LogType logType;
             public string logStackTrace;
+            public float logTime;
 
             public LoggerLog (string category, string message, LogType type, string stackTrace)
             {
@@ -22,6 +23,7 @@ namespace BedrockFramework.Logger
                 logMessage = message;
                 logType = type;
                 logStackTrace = stackTrace;
+                logTime = Time.time;
             }
         }
 

@@ -1,4 +1,10 @@
-using System.Collections;
+/********************************************************           
+BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
+
+Handles instantiating prefabs and activating/ deactiving as required.
+********************************************************/
+
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,20 +12,15 @@ namespace BedrockFramework.Pool
 {
     public class Pool
     {
-        public static readonly string logCategory = "Pool";
-
         private GameObject prefab;
         private Stack<GameObject> cache = new Stack<GameObject>();
-
-        public delegate void PrefabSpawned(GameObject newPrefab);
-        public event PrefabSpawned OnPrefabSpawned = delegate { };
 
         public Pool (GameObject prefab)
         {
             this.prefab = prefab;
         }
 
-        public void PrePool(int count)
+        public void FillPool(int count)
         {
             for (int i = 0; i < count; i++)
             {
@@ -28,7 +29,7 @@ namespace BedrockFramework.Pool
             }
         }
 
-        public GameObject SpawnPrefab(Vector3 position, Quaternion rotation, Transform parent, bool callOnSpawn)
+        public GameObject SpawnPrefab(Vector3 position, Quaternion rotation, Transform parent, bool callOnSpawn, Action<GameObject> OnSpawn)
         {
             // Get GameObject
             GameObject clone = null;
@@ -60,8 +61,8 @@ namespace BedrockFramework.Pool
             }
 
             // Spawn Events
-            // Used by other systems to spawn any additional gameObjects before OnSpawn is called.
-            OnPrefabSpawned(clone);
+            // Used by other systems to do any changes before OnSpawn is called.
+            OnSpawn(clone);
 
             if (!callOnSpawn)
             {
@@ -82,7 +83,7 @@ namespace BedrockFramework.Pool
                 foreach (Transform child in toDespawn.GetComponentsInChildren<Transform>())
                 {
                     if (child != toDespawn.transform)
-                        PoolManager.DeSpawnGameObject(child.gameObject, despawnChildren: false, warnNonePooled: false);
+                        ServiceLocator.PoolService.DeSpawnGameObject(child.gameObject, despawnChildren: false, warnNonePooled: false);
                 }
             }
 

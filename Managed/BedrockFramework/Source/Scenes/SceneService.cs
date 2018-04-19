@@ -15,29 +15,32 @@ namespace BedrockFramework.Scenes
     public interface ISceneService
     {
         void LoadScene(SceneDefinition sceneToLoad);
+        event Action OnPreFinishedLoading;
         event Action OnFinishedLoading;
     }
 
     public class NullSceneService : ISceneService
     {
         public void LoadScene(SceneDefinition sceneToLoad) { }
+        public event Action OnPreFinishedLoading = delegate { };
         public event Action OnFinishedLoading = delegate { };
     }
 
-    public class SceneService : BedrockService, ISceneService
+    public class SceneService : Service, ISceneService
     {
         const string SceneServiceLog = "Scenes";
 
+        public event Action OnPreFinishedLoading = delegate { };
         public event Action OnFinishedLoading = delegate { };
 
         private SceneDefinition currentlyLoaded = null;
 
-        public SceneService(MonoBehaviour owner): base(owner)
-        {
-        }
+        public SceneService(MonoBehaviour owner): base(owner) { }
 
         public void LoadScene(SceneDefinition sceneToLoad)
         {
+            // TODO: Take a SceneLoadInfo class to serialize load data for the scene.
+
             if (currentlyLoaded == null)
             {
                 owner.StartCoroutine(LoadActiveAsync(sceneToLoad, LoadSceneMode.Single));
@@ -68,6 +71,10 @@ namespace BedrockFramework.Scenes
             SceneManager.SetActiveScene(primaryScene);
 
             currentlyLoaded = sceneToLoad;
+
+            // Use to change the state of the active scenes GameObjects before progressing (Loading scene save data ect.)
+            OnPreFinishedLoading();
+
             Logger.Logger.Log(SceneServiceLog, "Finished Loading");
 
             OnFinishedLoading();

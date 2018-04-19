@@ -314,6 +314,10 @@
       <Project>{790B4E6A-6DBF-0EA5-71E1-439529BCC56F}</Project>
       <Name>BedrockFramework.CSharp.Editor.Plugins</Name>
     </ProjectReference>
+    <ProjectReference Include="BedrockFramework.CSharp.csproj">
+      <Project>{E8D93DFB-243C-E7A2-57F5-DEDDBC7E830C}</Project>
+      <Name>BedrockFramework.CSharp</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Tarfmagougou\UnityInternalIcons\Editor\TarfmagougouHelperUII.cs" />

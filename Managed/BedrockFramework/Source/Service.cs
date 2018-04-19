@@ -7,11 +7,11 @@ using UnityEngine;
 
 namespace BedrockFramework
 {
-    public class BedrockService
+    public class Service
     {
         protected MonoBehaviour owner;
 
-        public BedrockService(MonoBehaviour owner)
+        public Service(MonoBehaviour owner)
         {
             this.owner = owner;
         }

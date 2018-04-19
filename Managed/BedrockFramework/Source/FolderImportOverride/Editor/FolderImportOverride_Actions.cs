@@ -305,8 +305,6 @@ namespace BedrockFramework.FolderImportOverride
         [System.Serializable]
         public class SceneCache_Data
         {
-            public bool isRootGameScene = false;
-
             public string Serialize()
             {
                 return JsonUtility.ToJson(this);
@@ -323,7 +321,7 @@ namespace BedrockFramework.FolderImportOverride
             public void OnInspectorGUI()
             {
                 GUI.enabled = false;
-                EditorGUILayout.Toggle("Has World Info ", isRootGameScene);
+                //EditorGUILayout.Toggle("Has World Info ", isRootGameScene);
                 GUI.enabled = true;
             }
         }
@@ -340,7 +338,7 @@ namespace BedrockFramework.FolderImportOverride
                 return;
 
             SceneCache_Data cacheData = new SceneCache_Data();
-            cacheData.isRootGameScene = InterfaceHelper.FindObject<IRootGameScene>() != null;
+            //cacheData.isRootGameScene = InterfaceHelper.FindObject<IRootGameScene>() != null;
             sceneImporter.userData = cacheData.Serialize();
         }
     }

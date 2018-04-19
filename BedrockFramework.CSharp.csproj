@@ -283,6 +283,9 @@
     <Reference Include="BedrockFramework">
       <HintPath>Assets\Plugins\BedrockFramework\BedrockFramework.dll</HintPath>
     </Reference>
+    <Reference Include="BedrockFramework_Editor">
+      <HintPath>Assets\Plugins\BedrockFramework\BedrockFramework_Editor.dll</HintPath>
+    </Reference>
     <Reference Include="Sirenix.OdinInspector.Attributes">
       <HintPath>Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Attributes.dll</HintPath>
     </Reference>
@@ -301,9 +304,6 @@
     <Reference Include="Sirenix.Utilities.Editor">
       <HintPath>Assets\Plugins\Sirenix\Assemblies\Sirenix.Utilities.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="BedrockFramework_Editor">
-      <HintPath>Assets\Plugins\BedrockFramework\BedrockFramework_Editor.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="BedrockFramework.CSharp.Plugins.csproj">
@@ -312,11 +312,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Examples\GoblinTestData.cs" />
-    <Compile Include="Assets\Examples\LogTest.cs" />
-    <Compile Include="Assets\Examples\PoolTestScene.cs" />
-    <Compile Include="Assets\Examples\SceneDefinitionReference.cs" />
-    <Compile Include="Assets\Examples\WorldInfo.cs" />
+    <Compile Include="Assets\Examples\Entry.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-A.shader" />

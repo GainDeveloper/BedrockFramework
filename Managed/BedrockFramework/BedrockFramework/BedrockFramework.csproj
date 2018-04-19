@@ -52,25 +52,60 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\Source\Prototype\Prototype.cs" />
-    <Compile Include="..\Source\Logger\Logger.cs" />
-    <Compile Include="..\Source\Pool\Pool.cs" />
-	<Compile Include="..\Source\Pool\PoolManager.cs" />
-	<Compile Include="..\Source\Pool\PrePool.cs" />
+    <Compile Include="..\Source\Prototype\Prototype.cs">
+      <Link>Prototype\Prototype.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Logger\Logger.cs">
+      <Link>Logger\Logger.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Pool\Pool.cs">
+      <Link>Pool\Pool.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Pool\PoolService.cs">
+      <Link>Pool\PoolService.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Pool\PrePool.cs">
+      <Link>Pool\PrePool.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Pool\PrefabSpawner.cs">
+      <Link>Pool\PrefabSpawner.cs</Link>
+    </Compile>
     <Compile Include="..\Source\SmartCombine.cs" />
-    <Compile Include="..\Source\Utilities\FloatExtensions.cs" />
-    <Compile Include="..\Source\Utilities\StringExtensions.cs" />
-	<Compile Include="..\Source\Utilities\VectorExtensions.cs" />
-	<Compile Include="..\Source\Scenes\SceneService.cs" />
-	<Compile Include="..\Source\Scenes\SceneDefinition.cs" />
-	<Compile Include="..\Source\Scenes\SceneField.cs" />
-    <Compile Include="..\Source\Interfaces.cs" />
-	<Compile Include="..\Source\Bedrock.cs" />
-	<Compile Include="..\Source\BedrockService.cs" />
+    <Compile Include="..\Source\Utilities\FloatExtensions.cs">
+      <Link>Utilities\FloatExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Utilities\StringExtensions.cs">
+      <Link>Utilities\StringExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Utilities\VectorExtensions.cs">
+      <Link>Utilities\VectorExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Scenes\SceneService.cs">
+      <Link>Scenes\SceneService.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Scenes\SceneDefinition.cs">
+      <Link>Scenes\SceneDefinition.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Scenes\SceneField.cs">
+      <Link>Scenes\SceneField.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Scenes\SceneSettings.cs">
+      <Link>Scenes\SceneSettings.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\ServiceLocator.cs" />
+    <Compile Include="..\Source\Service.cs" />
     <Compile Include="..\Source\Attributes.cs" />
-    <Compile Include="..\Source\PrefabSpawner.cs" />
+    <Compile Include="..\Source\GameMode\GameMode.cs">
+      <Link>GameMode\GameMode.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\GameMode\GameModeInfo.cs">
+      <Link>GameMode\GameModeInfo.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy /Y "$(TargetDir)$(TargetName).dll" "E:\EncountersPrototype\Assets\Plugins\BedrockFramework\$(TargetName).dll"</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

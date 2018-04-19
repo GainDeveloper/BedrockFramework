@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 620168085, guid: 20cc3d9dd6af618448204145242a0fbf, type: 3}
+  m_Name: _EnvironmentModelSettings
+  m_EditorClassIdentifier: 
+  importVisibility:
+    overrideEnabled: 1
+    someField: 0
+  importCameras:
+    overrideEnabled: 1
+    someField: 0
+  importLights:
+    overrideEnabled: 1
+    someField: 0
+  animationType:
+    overrideEnabled: 1
+    someField: 0
+  importAnimation:
+    overrideEnabled: 1
+    someField: 0
+  importMaterials:
+    overrideEnabled: 1
+    someField: 1
+  materialSearch:
+    overrideEnabled: 1
+    someField: 2
+  materialName:
+    overrideEnabled: 1
+    someField: 1
+  modelPreActions:
+  - {fileID: 11400000, guid: 481d5a62df72bfc46bf8773260cdd478, type: 2}
+  modelPostActions:
+  - {fileID: 11400000, guid: 5435770072280af46a668db41f551e3b, type: 2}
+  - {fileID: 11400000, guid: fff8e036b66ad5641aaee56b4b4d0cc0, type: 2}
+  - {fileID: 11400000, guid: 5192a1bfd59dcd445b4a3c95be10f447, type: 2}
+  - {fileID: 11400000, guid: 738a4190933be4b4a893d2b4f0e2ce62, type: 2}
+  - {fileID: 11400000, guid: 72fd45a9fceb91f4a999127c3b36ee4d, type: 2}
+  assetDeletedActions: []
+  assetImportedActions:
+  - {fileID: 11400000, guid: 3d689b6bc4dc1e94896a0c1ac817295b, type: 2}

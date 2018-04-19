@@ -3,6 +3,7 @@ using System.Linq;
 
 using UnityEngine;
 using UnityEditor;
+using BedrockFramework.Utilities;
 
 namespace BedrockFramework.Logger
 {
@@ -23,7 +24,7 @@ namespace BedrockFramework.Logger
                 logMessage = newLog.logMessage;
                 logType = newLog.logType;
                 logStackTrace = newLog.logStackTrace;
-                logGUI = new GUIContent(logMessage);
+                logGUI = new GUIContent(newLog.logTime.ToString("F3") + " : " + logMessage);
             }
 
             public void DrawLog(bool isOdd, LoggerEditor logEditor)

@@ -44,6 +44,13 @@ namespace BedrockFramework.PlayModeEdit
                     PlayModeEdit_System.ApplyCache();
                 }
             }
+            else if (state == PlayModeStateChange.ExitingEditMode)
+            {
+                foreach (PlayModeEdit playModeEdit in GameObject.FindObjectsOfType<PlayModeEdit>())
+                {
+                    playModeEdit.CacheRecordedComponents();
+                }
+            }
         }
 
         private static void OnScene(SceneView sceneview)

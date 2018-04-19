@@ -5,10 +5,11 @@ Scene Definition stores all the scenes required for the primary scene.
 Is used by the SceneService to determine what scenes to unload/ load when moving between levels.
 ********************************************************/
 using UnityEngine;
+using Sirenix.OdinInspector;
 
 namespace BedrockFramework.Scenes
 {
-    [System.Serializable]
+    [System.Serializable, HideMonoScript]
     public class SceneDefinition : ScriptableObject
     {
         public const string entryScenePath = "Assets/Entry.unity";
@@ -16,6 +17,9 @@ namespace BedrockFramework.Scenes
 
         public SceneField primaryScene;
         public SceneField[] additionalScenes = new SceneField[] { };
+
+        [HideLabel, InlineProperty, Title("Scene Settings")]
+        public SceneSettings sceneSettings = new SceneSettings();
 
         public string PrimaryScene
         {

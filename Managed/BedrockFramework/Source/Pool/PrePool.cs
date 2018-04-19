@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Sirenix.OdinInspector;
 
 namespace BedrockFramework.Pool
 {
@@ -10,6 +11,7 @@ namespace BedrockFramework.Pool
         [System.Serializable]
         public class PrePoolObject
         {
+            [AssetsOnly]
             public GameObject prefab;
             public int prePoolCount = 1;
         }

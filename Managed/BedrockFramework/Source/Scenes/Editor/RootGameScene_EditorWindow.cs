@@ -45,7 +45,7 @@ namespace BedrockFramework.Scenes
                 gameScenes.Add(new GameScenePath(sceneDefinition.PrimaryScene, sceneDefinition.PrimaryScenePath()));
             }
 
-            gameScenes.OrderBy(x => x.sceneName);
+            gameScenes = gameScenes.OrderBy(x => x.sceneName).ToList();
         }
 
         void OnGUI()
