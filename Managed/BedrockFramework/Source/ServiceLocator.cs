@@ -38,11 +38,27 @@ namespace BedrockFramework
             }
         }
 
+        // Save Service
+        private static Saves.ISaveService saveService;
+        public static Saves.ISaveService SaveService { get { return saveService; } }
+        public static void RegisterSaveService(Saves.ISaveService service)
+        {
+            if (service == null)
+            {
+                saveService = new Saves.NullSaveService();
+            }
+            else
+            {
+                saveService = service;
+            }
+        }
+
         // Register null services as a fallback.
         static ServiceLocator()
         {
             RegisterSceneService(null);
             RegisterPoolService(null);
+            RegisterSaveService(null);
         }
     }
 }

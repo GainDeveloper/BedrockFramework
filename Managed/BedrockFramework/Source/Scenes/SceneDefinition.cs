@@ -10,7 +10,7 @@ using Sirenix.OdinInspector;
 namespace BedrockFramework.Scenes
 {
     [System.Serializable, HideMonoScript]
-    public class SceneDefinition : ScriptableObject
+    public class SceneDefinition : Saves.SaveableScriptableObject
     {
         public const string entryScenePath = "Assets/Entry.unity";
         public const string entryScene = "Entry";

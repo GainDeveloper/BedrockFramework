@@ -101,6 +101,17 @@
     <Compile Include="..\Source\GameMode\GameModeInfo.cs">
       <Link>GameMode\GameModeInfo.cs</Link>
     </Compile>
+	
+    <Compile Include="..\Source\Saves\SaveableScriptableObject.cs">
+      <Link>Saves\SaveableScriptableObject.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Saves\SavedScriptableObjects.cs">
+      <Link>Saves\SavedScriptableObjects.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Saves\SaveService.cs">
+      <Link>Saves\SaveService.cs</Link>
+    </Compile>
+	
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
