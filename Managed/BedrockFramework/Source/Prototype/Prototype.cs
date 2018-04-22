@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace BedrockFramework.Prototype
 {
-    public class PrototypeObject : ScriptableObject
+    public class PrototypeObject : Saves.SaveableScriptableObject
     {
         public PrototypeObject prototype;
         public List<string> modifiedValues = new List<string>();

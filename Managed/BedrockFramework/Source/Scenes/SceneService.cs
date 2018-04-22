@@ -16,14 +16,14 @@ namespace BedrockFramework.Scenes
     {
         void LoadScene(SceneDefinition sceneToLoad);
         event Action OnPreFinishedLoading;
-        event Action OnFinishedLoading;
+        event Action<SceneDefinition> OnFinishedLoading;
     }
 
     public class NullSceneService : ISceneService
     {
         public void LoadScene(SceneDefinition sceneToLoad) { }
         public event Action OnPreFinishedLoading = delegate { };
-        public event Action OnFinishedLoading = delegate { };
+        public event Action<SceneDefinition> OnFinishedLoading = delegate { };
     }
 
     public class SceneService : Service, ISceneService
@@ -31,7 +31,7 @@ namespace BedrockFramework.Scenes
         const string SceneServiceLog = "Scenes";
 
         public event Action OnPreFinishedLoading = delegate { };
-        public event Action OnFinishedLoading = delegate { };
+        public event Action<SceneDefinition> OnFinishedLoading = delegate { };
 
         private SceneDefinition currentlyLoaded = null;
 
@@ -78,7 +78,7 @@ namespace BedrockFramework.Scenes
 
             Logger.Logger.Log(SceneServiceLog, "Finished Loading");
 
-            OnFinishedLoading();
+            OnFinishedLoading(sceneToLoad);
         }
 
         // Used for switching between levels.

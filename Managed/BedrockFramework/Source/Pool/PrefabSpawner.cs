@@ -44,7 +44,7 @@ namespace BedrockFramework.Pool
             ServiceLocator.SceneService.OnFinishedLoading -= SceneService_OnFinishedLoading;
         }
 
-        private void SceneService_OnFinishedLoading()
+        private void SceneService_OnFinishedLoading(Scenes.SceneDefinition loadedScene)
         {
             if (!ServiceLocator.PoolService.IsGameObjectPooled(gameObject))
             {

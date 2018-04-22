@@ -53,12 +53,28 @@ namespace BedrockFramework
             }
         }
 
+        // Game Service
+        private static GameMode.IGameModeService gameModeService;
+        public static GameMode.IGameModeService GameModeService { get { return gameModeService; } }
+        public static void RegisterGameModeService(GameMode.IGameModeService service)
+        {
+            if (service == null)
+            {
+                gameModeService = new GameMode.NullGameModeService();
+            }
+            else
+            {
+                gameModeService = service;
+            }
+        }
+
         // Register null services as a fallback.
         static ServiceLocator()
         {
             RegisterSceneService(null);
             RegisterPoolService(null);
             RegisterSaveService(null);
+            RegisterGameModeService(null);
         }
     }
 }

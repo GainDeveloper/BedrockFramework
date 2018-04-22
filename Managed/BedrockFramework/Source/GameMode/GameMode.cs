@@ -12,6 +12,11 @@ namespace BedrockFramework.GameMode
     [System.Serializable, HideMonoScript]
     public class GameMode : MonoBehaviour
     {
+        private GameModeInfo info;
 
+        public virtual void SetupGameMode(GameModeInfo info)
+        {
+            this.info = info;
+        }
     }
 }

@@ -15,5 +15,7 @@ namespace BedrockFramework.Scenes
         [SerializeField]
         private string sceneTitle = "Default Scene Title";
         public string SceneTitle { get { return sceneTitle; } }
+
+        public GameMode.GameModeInfo defaultGameModeInfo;
     }
 }
