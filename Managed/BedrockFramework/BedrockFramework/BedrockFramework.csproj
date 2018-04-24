@@ -110,7 +110,9 @@
     <Compile Include="..\Source\GameMode\GameModeService.cs">
       <Link>GameMode\GameModeService.cs</Link>
     </Compile>
-	
+    <Compile Include="..\Source\Saves\SaveableGameObject.cs">
+      <Link>Saves\SaveableGameObject.cs</Link>
+    </Compile>
     <Compile Include="..\Source\Saves\SaveableScriptableObject.cs">
       <Link>Saves\SaveableScriptableObject.cs</Link>
     </Compile>
