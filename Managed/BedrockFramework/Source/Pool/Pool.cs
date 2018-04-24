@@ -29,7 +29,8 @@ namespace BedrockFramework.Pool
             }
         }
 
-        public GameObject SpawnPrefab(Vector3 position, Quaternion rotation, Transform parent, bool callOnSpawn, Action<GameObject> OnSpawn)
+        public GameObject SpawnPrefab(PoolDefinition poolDefinition, Vector3 position, Quaternion rotation, Transform parent, 
+            bool callOnSpawn, Action<GameObject> OnSpawn)
         {
             // Get GameObject
             GameObject clone = null;
@@ -60,13 +61,19 @@ namespace BedrockFramework.Pool
                 tr.SetParent(null, false);
             }
 
+            // PoolDefinitions
+            poolDefinition.OverrideGameObjectComponents(clone);
+            IPool[] pItems = clone.GetComponentsInChildren<IPool>();
+            for (int i = 0; i < pItems.Length; i++)
+                pItems[i].PoolDefinition = poolDefinition;
+
             // Spawn Events
             // Used by other systems to do any changes before OnSpawn is called.
             OnSpawn(clone);
 
             if (!callOnSpawn)
             {
-                IPool[] pItems = clone.GetComponentsInChildren<IPool>();
+                pItems = clone.GetComponentsInChildren<IPool>();
                 for (int i = 0; i < pItems.Length; i++)
                     pItems[i].OnSpawn();
             }
@@ -107,6 +114,7 @@ namespace BedrockFramework.Pool
 
     public interface IPool
     {
+        PoolDefinition PoolDefinition { set; }
         void OnSpawn();
         void OnDeSpawn();
     }

@@ -18,10 +18,10 @@ namespace BedrockFramework.Pool
         bool IsGameObjectPooled(GameObject gameObject);
 
         void PrePool();
-        GameObject SpawnPrefab(GameObject prefab, Transform parent = null, bool subSpawn = false);
-        T SpawnPrefab<T>(GameObject prefab, Transform parent = null, bool subSpawn = false) where T : Component;
-        T SpawnPrefab<T>(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) where T : Component;
-        GameObject SpawnPrefab(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false);
+        GameObject SpawnDefinition(PoolDefinition prefab, Transform parent = null, bool subSpawn = false);
+        T SpawnDefinition<T>(PoolDefinition prefab, Transform parent = null, bool subSpawn = false) where T : Component;
+        T SpawnDefinition<T>(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) where T : Component;
+        GameObject SpawnDefinition(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false);
 
         void DeSpawnGameObject(GameObject gameObject, bool despawnChildren = true, bool warnNonePooled = true);
     }
@@ -34,10 +34,10 @@ namespace BedrockFramework.Pool
         public bool IsGameObjectPooled(GameObject gameObject) { return false; }
 
         public void PrePool() { }
-        public GameObject SpawnPrefab(GameObject prefab, Transform parent = null, bool subSpawn = false) { return null; }
-        public T SpawnPrefab<T>(GameObject prefab, Transform parent = null, bool subSpawn = false) where T : Component { return default(T); }
-        public T SpawnPrefab<T>(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) where T : Component { return default(T); }
-        public GameObject SpawnPrefab(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) { return null; }
+        public GameObject SpawnDefinition(PoolDefinition prefab, Transform parent = null, bool subSpawn = false) { return null; }
+        public T SpawnDefinition<T>(PoolDefinition prefab, Transform parent = null, bool subSpawn = false) where T : Component { return default(T); }
+        public T SpawnDefinition<T>(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) where T : Component { return default(T); }
+        public GameObject SpawnDefinition(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) { return null; }
 
         public void DeSpawnGameObject(GameObject gameObject, bool despawnChildren = true, bool warnNonePooled = true) { }
     }
@@ -70,36 +70,36 @@ namespace BedrockFramework.Pool
             }
         }
 
-        public GameObject SpawnPrefab(GameObject prefab, Transform parent = null, bool subSpawn = false)
+        public GameObject SpawnDefinition(PoolDefinition poolDefinition, Transform parent = null, bool subSpawn = false)
         {
-            return SpawnPrefab(prefab, Vector3.zero, Quaternion.identity, parent, subSpawn);
+            return SpawnDefinition(poolDefinition, Vector3.zero, Quaternion.identity, parent, subSpawn);
         }
 
-        public T SpawnPrefab<T>(GameObject prefab, Transform parent = null, bool subSpawn = false)
+        public T SpawnDefinition<T>(PoolDefinition poolDefinition, Transform parent = null, bool subSpawn = false)
             where T : Component
         {
-            GameObject clone = SpawnPrefab(prefab, Vector3.zero, Quaternion.identity, parent, subSpawn);
+            GameObject clone = SpawnDefinition(poolDefinition, Vector3.zero, Quaternion.identity, parent, subSpawn);
             return (clone != null) ? clone.GetComponent<T>() : null;
         }
 
-        public T SpawnPrefab<T>(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false)
+        public T SpawnDefinition<T>(PoolDefinition poolDefinition, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false)
             where T : Component
         {
-            GameObject clone = SpawnPrefab(prefab, position, rotation, parent, subSpawn);
+            GameObject clone = SpawnDefinition(poolDefinition, position, rotation, parent, subSpawn);
             return (clone != null) ? clone.GetComponent<T>() : null;
         }
 
-        public GameObject SpawnPrefab(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false)
+        public GameObject SpawnDefinition(PoolDefinition poolDefinition, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false)
         {
-            if (!IsGameObjectPrefab(prefab))
+            if (!IsGameObjectPrefab(poolDefinition.PooledObject))
             {
-                Logger.Logger.LogError(PoolServiceLog, "Instanced GameObject {} can not be pooled.", () => new object[] { prefab.name });
+                Logger.Logger.LogError(PoolServiceLog, "Instanced GameObject {} can not be pooled.", () => new object[] { poolDefinition.name });
                 return null;
             }
 
-            Pool prefabPool = GetPrefabsPool(prefab);
+            Pool prefabPool = GetPrefabsPool(poolDefinition.PooledObject);
 
-            GameObject spawnedPrefab = prefabPool.SpawnPrefab(position, rotation, parent, subSpawn, (x) => OnPrefabSpawned(x));
+            GameObject spawnedPrefab = prefabPool.SpawnPrefab(poolDefinition, position, rotation, parent, subSpawn, (x) => OnPrefabSpawned(x));
             activePooledGameObjects[spawnedPrefab.GetInstanceID()] = prefabPool;
             return spawnedPrefab;
         }

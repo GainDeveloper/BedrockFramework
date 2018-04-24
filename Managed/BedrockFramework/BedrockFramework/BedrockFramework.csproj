@@ -52,6 +52,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+	<Compile Include="..\Source\ComponentOverride.cs" />
+	<Compile Include="..\Source\AnimationEvent.cs" />
+	<Compile Include="..\Source\AnimationEvent_Receiver.cs" />
     <Compile Include="..\Source\Prototype\Prototype.cs">
       <Link>Prototype\Prototype.cs</Link>
     </Compile>
@@ -60,6 +63,9 @@
     </Compile>
     <Compile Include="..\Source\Pool\Pool.cs">
       <Link>Pool\Pool.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Pool\PoolDefinition.cs">
+      <Link>Pool\PoolDefinition.cs</Link>
     </Compile>
     <Compile Include="..\Source\Pool\PoolService.cs">
       <Link>Pool\PoolService.cs</Link>

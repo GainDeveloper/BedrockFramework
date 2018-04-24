@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1457459995, guid: bd526baba8666a14ea3202b3b683d92f, type: 3}
+  m_Name: AnimatorOverride
+  m_EditorClassIdentifier: 
+  controller: {fileID: 0}
+  applyRootMotion: 0
+  updateMode: 0
+  cullingMode: 0

@@ -9,20 +9,20 @@ using Sirenix.OdinInspector;
 
 namespace BedrockFramework.Pool
 {
-    [AddComponentMenu("BedrockFramework/PrefabSpawner")]
-    public class PrefabSpawner: MonoBehaviour
+    [AddComponentMenu("BedrockFramework/PoolSpawner")]
+    public class PoolSpawner: MonoBehaviour
     {
         [AssetsOnly]
-        public GameObject prefab;
+        public PoolDefinition poolDefinition;
 
-        static PrefabSpawner()
+        static PoolSpawner()
         {
             ServiceLocator.PoolService.OnPrefabSpawned += OnPrefabSpawned;
         }
 
         private static void OnPrefabSpawned(GameObject newPrefab)
         {
-            foreach (PrefabSpawner prefabSpawner in newPrefab.GetComponentsInChildren<PrefabSpawner>())
+            foreach (PoolSpawner prefabSpawner in newPrefab.GetComponentsInChildren<PoolSpawner>())
             {
                 prefabSpawner.SpawnPrefab(true);
             }
@@ -30,7 +30,7 @@ namespace BedrockFramework.Pool
 
         public void SpawnPrefab(bool subSpawn)
         {
-            ServiceLocator.PoolService.SpawnPrefab(prefab, transform, subSpawn);
+            ServiceLocator.PoolService.SpawnDefinition(poolDefinition, transform, subSpawn);
         }
 
         void OnEnable()
