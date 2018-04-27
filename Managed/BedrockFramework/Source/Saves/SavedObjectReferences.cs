@@ -68,26 +68,10 @@ namespace BedrockFramework.Saves
             return savedObjects.Reverse[objectInstance];
         }
 
-        // Editor
-
-        public static void AddObject(UnityEngine.Object so)
+        public void AddObject(UnityEngine.Object so)
         {
-            foreach (SavedObjectReferences saveableSO in Resources.LoadAll<SavedObjectReferences>(""))
-            {
-                saveableSO.savedObjects.Add(UnityEngine.Random.Range(1, int.MaxValue), so);
-                saveableSO.Cleanup();
-            }
-        }
-
-        public static bool IsSaved(UnityEngine.Object so)
-        {
-            foreach (SavedObjectReferences saveableSO in Resources.LoadAll<SavedObjectReferences>(""))
-            {
-                if (saveableSO.GetSavedObjectID(so, logIfNone: false) != 0)
-                    return true;
-            }
-
-            return false;
+            savedObjects.Add(UnityEngine.Random.Range(1, int.MaxValue), so);
+            Cleanup();
         }
 
         private void Cleanup()

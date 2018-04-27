@@ -4,15 +4,15 @@ Class wrapper for saving Object references.
 ********************************************************/
 using UnityEngine;
 using System;
-
+using ProtoBuf;
 
 namespace BedrockFramework.Saves
 {
-    [Serializable]
+    [ProtoContract]
     public class SavedObjectReference<T> where T : UnityEngine.Object
     {
         T objectReference;
-        [SerializeField]
+        [ProtoMember(1)]
         private int objectReferenceID = 0;
 
         public SavedObjectReference() {}

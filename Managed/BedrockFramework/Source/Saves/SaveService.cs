@@ -8,8 +8,10 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System;
+
+using ProtoBuf;
 
 namespace BedrockFramework.Saves
 {
@@ -37,21 +39,31 @@ namespace BedrockFramework.Saves
 
     public class SaveService : Service, ISaveService
     {
+        [ProtoContract]
+        [ProtoInclude(7, typeof(SaveableGameObject.TransformSaveData))]
         public class SavedData { };
 
+        [ProtoContract]
         public class SavedGameObject
         {
+            [ProtoMember(1)]
             public SavedObjectReference<Pool.PoolDefinition> gameObjectPool;
+            [ProtoMember(2)]
             public Dictionary<int, SavedData> savedData = new Dictionary<int, SavedData>();
+
+            public SavedGameObject() { }
 
             public SavedGameObject(Pool.PoolDefinition pool) {
                 gameObjectPool = new SavedObjectReference<Pool.PoolDefinition>(pool);
             }
         };
 
+        [ProtoContract]
         class GameSave
         {
+            [ProtoMember(1)]
             public Dictionary<int, SavedData> savedData = new Dictionary<int, SavedData>();
+            [ProtoMember(2)]
             public List<SavedGameObject> savedPooledObjects = new List<SavedGameObject>();
         }
 
@@ -68,14 +80,21 @@ namespace BedrockFramework.Saves
         }
 
         private GameSave currentGameSave;
+        protected byte[] currentGameSaveBuffer;
 
         public void LoadSavedData()
         {
             // Tell objects we are about to load (so pooled objects can despawn).
             OnPreLoad();
 
-            
+
             // IF LOADING FROM FILE: Load binary from file and convert to save game class.
+            //currentGameSave = (GameSave)BinaryFormatter.DeserializeObject(currentGameSaveBuffer, typeof(GameSave));
+            using (var file = File.OpenRead("E:/GameSave.bin"))
+            {
+                currentGameSave = Serializer.Deserialize<GameSave>(file);
+            }
+
             // Tell objects we have loaded the data. (Used to load the correct scene definition as an example).
 
             // Reinstantiate the SaveableGameObjects
@@ -101,6 +120,10 @@ namespace BedrockFramework.Saves
             }
 
             // IF SAVING TO FILE: Convert same game class to binary and write to a file.
+            using (var file = File.Create("E:/GameSave.bin"))
+            {
+                Serializer.Serialize(file, currentGameSave);
+            }
         }
 
 

@@ -9,18 +9,22 @@ using UnityEngine;
 using BedrockFramework.Pool;
 using BedrockFramework.Utilities;
 using Sirenix.OdinInspector;
+using ProtoBuf;
 
 namespace BedrockFramework.Saves
 {
     [HideMonoScript]
     public class SaveableGameObject : MonoBehaviour, IPool
     {
-        //TODO: Remaining transform values.
-        class TransformSaveData : SaveService.SavedData
+        [ProtoContract]
+        public class TransformSaveData : SaveService.SavedData
         {
-            public static readonly int Key = Animator.StringToHash("");
+            public static readonly int Key = Animator.StringToHash("TransformSaveData");
 
-            public Vector3 position;
+            [ProtoMember(1)]
+            public SaveableVector3 position;
+
+            public TransformSaveData() { }
 
             public TransformSaveData(Transform transform)
             {

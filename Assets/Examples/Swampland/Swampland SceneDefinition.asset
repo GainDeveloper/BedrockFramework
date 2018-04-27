@@ -9,11 +9,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 1634551349, guid: bd526baba8666a14ea3202b3b683d92f, type: 3}
-  m_Name: ExampleScene SceneDefinition
+  m_Name: Swampland SceneDefinition
   m_EditorClassIdentifier: 
   primaryScene:
-    m_SceneAsset: {fileID: 102900000, guid: c1b9c26eab3e5f94db6861daacebdeeb, type: 3}
-    m_SceneName: ExampleScene
+    m_SceneAsset: {fileID: 102900000, guid: ffdd331c47c50f8458407124e9b06d1b, type: 3}
+    m_SceneName: Swampland
   additionalScenes:
   - m_SceneAsset: {fileID: 102900000, guid: ff57e9425f7d3ec4e9807c2f15075843, type: 3}
     m_SceneName: ExampleScene_Geo
