@@ -23,17 +23,72 @@ namespace BedrockFramework.Saves
 
             [ProtoMember(1)]
             public SaveableVector3 position;
+            [ProtoMember(2)]
+            public SaveableQuaternion rotation;
 
             public TransformSaveData() { }
 
             public TransformSaveData(Transform transform)
             {
                 position = transform.position;
+                rotation = transform.rotation;
             }
 
-            public static void ApplyTransformSaveData(GameObject gameObject, TransformSaveData transformData)
+            public static void ApplySaveData(Transform transform, TransformSaveData data)
             {
-                gameObject.transform.position = transformData.position;
+                transform.transform.position = data.position;
+                transform.transform.rotation = data.rotation;
+            }
+        }
+
+        [ProtoContract]
+        public class RigidBodySaveData : SaveService.SavedData
+        {
+            public static readonly int Key = Animator.StringToHash("RigidBodySaveData");
+
+            [ProtoMember(1)]
+            public SaveableVector3 velocity;
+            [ProtoMember(2)]
+            public SaveableVector3 angularVelocity;
+
+            public RigidBodySaveData() { }
+
+            public RigidBodySaveData(Rigidbody rigidbody)
+            {
+                velocity = rigidbody.velocity;
+                angularVelocity = rigidbody.angularVelocity;
+            }
+
+            public static void ApplySaveData(Rigidbody rigidbody, RigidBodySaveData data)
+            {
+                rigidbody.velocity = data.velocity;
+                rigidbody.angularVelocity = data.angularVelocity;
+            }
+        }
+
+        [ProtoContract]
+        public class AnimatorSaveData : SaveService.SavedData
+        {
+            public static readonly int Key = Animator.StringToHash("AnimatorSaveData");
+
+            [ProtoMember(1)]
+            public int currentStateHash;
+            [ProtoMember(2)]
+            public float currentStateTime;
+
+            public AnimatorSaveData() { }
+
+            public AnimatorSaveData(Animator animator)
+            {
+                //TODO: Serialize animation properties.
+                //TODO: Handle multiple animation layers.
+                currentStateHash = animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
+                currentStateTime = animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+            }
+
+            public static void ApplySaveData(Animator animator, AnimatorSaveData data)
+            {
+                animator.Play(data.currentStateHash, 0, data.currentStateTime);
             }
         }
 
@@ -51,8 +106,16 @@ namespace BedrockFramework.Saves
 
             // TODO: Add component data to this object as SaveData objects. Key should be the components type.
 
-            // Will need to do Unity components manually here. (Transform, Rigidbody, Animator ect.)
+            // Do Unity components manually here. (Transform, Rigidbody, Animator ect.)
             savedData.savedData[TransformSaveData.Key] = new TransformSaveData(transform);
+
+            Rigidbody rb = gameObject.GetComponent<Rigidbody>();
+            if (rb != null)
+                savedData.savedData[RigidBodySaveData.Key] = new RigidBodySaveData(rb);
+
+            Animator animator = gameObject.GetComponent<Animator>();
+            if (animator != null)
+                savedData.savedData[AnimatorSaveData.Key] = new AnimatorSaveData(animator);
 
             return savedData;
         }
@@ -60,7 +123,11 @@ namespace BedrockFramework.Saves
         public void ApplySaveData(SaveService.SavedGameObject savedData)
         {
             if (savedData.savedData.ContainsKey(TransformSaveData.Key))
-                TransformSaveData.ApplyTransformSaveData(gameObject, (TransformSaveData)savedData.savedData[TransformSaveData.Key]);
+                TransformSaveData.ApplySaveData(gameObject.transform, (TransformSaveData)savedData.savedData[TransformSaveData.Key]);
+            if (savedData.savedData.ContainsKey(RigidBodySaveData.Key))
+                RigidBodySaveData.ApplySaveData(gameObject.GetComponent<Rigidbody>(), (RigidBodySaveData)savedData.savedData[RigidBodySaveData.Key]);
+            if (savedData.savedData.ContainsKey(AnimatorSaveData.Key))
+                AnimatorSaveData.ApplySaveData(gameObject.GetComponent<Animator>(), (AnimatorSaveData)savedData.savedData[AnimatorSaveData.Key]);
         }
     }
 }

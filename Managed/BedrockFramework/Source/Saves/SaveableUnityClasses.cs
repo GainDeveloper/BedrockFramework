@@ -45,7 +45,7 @@ namespace BedrockFramework.Saves
 	}
 		 
 	[ProtoContract]
-	public class MyQuaternion
+	public class SaveableQuaternion
 	{
 			[ProtoMember(1)]
 			public float x;
@@ -59,7 +59,7 @@ namespace BedrockFramework.Saves
 			[ProtoMember(4)]
 			public float w;
 			
-			public MyQuaternion()
+			public SaveableQuaternion()
 			{
 					this.x = 0.0f;
 					this.y = 0.0f;
@@ -67,7 +67,7 @@ namespace BedrockFramework.Saves
 					this.w = 0.0f;
 			}
 			
-			public MyQuaternion(float x, float y, float z, float w)
+			public SaveableQuaternion(float x, float y, float z, float w)
 			{
 					this.x = x;
 					this.y = y;
@@ -75,14 +75,14 @@ namespace BedrockFramework.Saves
 					this.w = w;
 			}
 			
-			public static implicit operator Quaternion(MyQuaternion v)
+			public static implicit operator Quaternion(SaveableQuaternion v)
 			{
 					return new Quaternion(v.x, v.y, v.z, v.w);
 			}
 			
-			public static implicit operator MyQuaternion(Quaternion v)
+			public static implicit operator SaveableQuaternion(Quaternion v)
 			{
-					return new MyQuaternion(v.x, v.y, v.z, v.w);
+					return new SaveableQuaternion(v.x, v.y, v.z, v.w);
 			}
 	}
 }

@@ -41,6 +41,8 @@ namespace BedrockFramework.Saves
     {
         [ProtoContract]
         [ProtoInclude(7, typeof(SaveableGameObject.TransformSaveData))]
+        [ProtoInclude(8, typeof(SaveableGameObject.RigidBodySaveData))]
+        [ProtoInclude(9, typeof(SaveableGameObject.AnimatorSaveData))]
         public class SavedData { };
 
         [ProtoContract]
@@ -89,7 +91,6 @@ namespace BedrockFramework.Saves
 
 
             // IF LOADING FROM FILE: Load binary from file and convert to save game class.
-            //currentGameSave = (GameSave)BinaryFormatter.DeserializeObject(currentGameSaveBuffer, typeof(GameSave));
             using (var file = File.OpenRead("E:/GameSave.bin"))
             {
                 currentGameSave = Serializer.Deserialize<GameSave>(file);
