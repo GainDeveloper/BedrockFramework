@@ -86,6 +86,9 @@
     <Compile Include="..\Source\Utilities\VectorExtensions.cs">
       <Link>Utilities\VectorExtensions.cs</Link>
     </Compile>
+    <Compile Include="..\Source\Utilities\Map.cs">
+      <Link>Utilities\Map.cs</Link>
+    </Compile>
     <Compile Include="..\Source\Scenes\SceneService.cs">
       <Link>Scenes\SceneService.cs</Link>
     </Compile>
@@ -113,16 +116,15 @@
     <Compile Include="..\Source\Saves\SaveableGameObject.cs">
       <Link>Saves\SaveableGameObject.cs</Link>
     </Compile>
-    <Compile Include="..\Source\Saves\SaveableScriptableObject.cs">
-      <Link>Saves\SaveableScriptableObject.cs</Link>
-    </Compile>
-    <Compile Include="..\Source\Saves\SavedScriptableObjects.cs">
-      <Link>Saves\SavedScriptableObjects.cs</Link>
+    <Compile Include="..\Source\Saves\SavedObjectReferences.cs">
+      <Link>Saves\SavedObjectReferences.cs</Link>
     </Compile>
     <Compile Include="..\Source\Saves\SaveService.cs">
       <Link>Saves\SaveService.cs</Link>
     </Compile>
-	
+    <Compile Include="..\Source\Saves\SavedObjectReference.cs">
+      <Link>Saves\SavedObjectReference.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

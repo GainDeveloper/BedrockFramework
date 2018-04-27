@@ -5,6 +5,7 @@ Handles creating pools and tracking pooled objects.
 ********************************************************/
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -47,16 +48,29 @@ namespace BedrockFramework.Pool
         const string PoolServiceLog = "Pools";
 
         private static Dictionary<int, Pool> activePools = new Dictionary<int, Pool>();
-        private static Dictionary<int, Pool> activePooledGameObjects = new Dictionary<int, Pool>();
+        private static Dictionary<GameObject, Pool> activePooledGameObjects = new Dictionary<GameObject, Pool>();
 
         public event Action<Pool> OnPoolCreated = delegate { };
         public event Action<GameObject> OnPrefabSpawned = delegate { };
 
-        public PoolService(MonoBehaviour owner): base(owner) { }
+        public PoolService(MonoBehaviour owner): base(owner)
+        {
+            ServiceLocator.SaveService.OnPreLoad += SaveService_OnPreLoad;
+        }
+
+        private void SaveService_OnPreLoad()
+        {
+            GameObject[] activePooledGameObjectsCache = activePooledGameObjects.Select(x => x.Key).ToArray();
+
+            for (int i = 0; i < activePooledGameObjectsCache.Length; i++)
+            {
+                DeSpawnGameObject(activePooledGameObjectsCache[i]);
+            }
+        }
 
         public bool IsGameObjectPooled(GameObject gameObject)
         {
-            return activePooledGameObjects.ContainsKey(gameObject.GetInstanceID());
+            return activePooledGameObjects.ContainsKey(gameObject);
         }
 
         public void PrePool() {
@@ -100,18 +114,16 @@ namespace BedrockFramework.Pool
             Pool prefabPool = GetPrefabsPool(poolDefinition.PooledObject);
 
             GameObject spawnedPrefab = prefabPool.SpawnPrefab(poolDefinition, position, rotation, parent, subSpawn, (x) => OnPrefabSpawned(x));
-            activePooledGameObjects[spawnedPrefab.GetInstanceID()] = prefabPool;
+            activePooledGameObjects[spawnedPrefab] = prefabPool;
             return spawnedPrefab;
         }
 
         public void DeSpawnGameObject(GameObject gameObject, bool despawnChildren = true, bool warnNonePooled = true)
         {
-            int gameObjectInstanceID = gameObject.GetInstanceID();
-
-            if (activePooledGameObjects.ContainsKey(gameObjectInstanceID))
+            if (activePooledGameObjects.ContainsKey(gameObject))
             {
-                activePooledGameObjects[gameObjectInstanceID].DeSpawnGameObject(gameObject, despawnChildren);
-                activePooledGameObjects.Remove(gameObjectInstanceID);
+                activePooledGameObjects[gameObject].DeSpawnGameObject(gameObject, despawnChildren);
+                activePooledGameObjects.Remove(gameObject);
             } else if (warnNonePooled)
             {
                 Logger.Logger.LogError(PoolServiceLog, "{} is not a pooled GameObject and can not be despawned.", () => new object[] { gameObject.name });

@@ -10,7 +10,7 @@ using Sirenix.OdinInspector;
 namespace BedrockFramework.GameMode
 {
     [System.Serializable, HideMonoScript]
-    public class GameModeInfo : Saves.SaveableScriptableObject
+    public class GameModeInfo : ScriptableObject
     {
         protected GameMode gameInstance;
         public GameMode GameInstance

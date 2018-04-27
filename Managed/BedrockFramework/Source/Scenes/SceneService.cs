@@ -40,7 +40,7 @@ namespace BedrockFramework.Scenes
         public void LoadScene(SceneDefinition sceneToLoad)
         {
             // TODO: Take a SceneLoadInfo class to serialize load data for the scene.
-            ServiceLocator.SaveService.SaveObjectReference("PreviouslyLoadedScene", sceneToLoad);
+            //ServiceLocator.SaveService.SaveObjectReference("PreviouslyLoadedScene", sceneToLoad);
 
             if (currentlyLoaded == null)
             {

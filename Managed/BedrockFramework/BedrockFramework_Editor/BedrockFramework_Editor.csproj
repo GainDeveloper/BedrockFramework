@@ -78,6 +78,7 @@
     <Compile Include="..\Source\Scenes\Editor\*" />
     <Compile Include="..\Source\Utilities\Editor\*" />
     <Compile Include="..\Source\VertexPaint\Editor\*" />
+    <Compile Include="..\Source\Saves\Editor\*" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
