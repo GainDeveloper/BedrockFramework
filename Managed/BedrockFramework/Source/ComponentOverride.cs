@@ -37,8 +37,6 @@ namespace BedrockFramework.Pool
             animator.applyRootMotion = applyRootMotion;
             animator.updateMode = updateMode;
             animator.cullingMode = cullingMode;
-
-            animator.Update(Time.fixedDeltaTime);
         }
     }
 

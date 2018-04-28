@@ -83,12 +83,19 @@ namespace BedrockFramework.Saves
         private GameSave currentGameSave;
         protected byte[] currentGameSaveBuffer;
 
-        protected void LoadGameSaveFromFile(string filePath)
+        protected bool LoadGameSaveFromFile(string filePath)
         {
-            using (var file = File.OpenRead("E:/GameSave.bin"))
+            if (!File.Exists(filePath))
+            {
+                Logger.Logger.LogError(SaveServiceLog, "Save file {} does not exist", () => new object[] { filePath });
+                return false;
+            }
+
+            using (var file = File.OpenRead(filePath))
             {
                 currentGameSave = Serializer.Deserialize<GameSave>(file);
             }
+            return true;
         }
 
         protected void SaveGameSaveToFile(string filePath)
@@ -108,7 +115,10 @@ namespace BedrockFramework.Saves
         public void LoadSavedData(string filePath)
         {
             if (currentGameSave == null)
-                LoadGameSaveFromFile(filePath);
+            {
+                if (!LoadGameSaveFromFile(filePath))
+                    return;
+            }
 
             // Tell objects we are about to load (so pooled objects can despawn).
             OnPreLoad();
