@@ -4,10 +4,9 @@ Saves how this GameObject was instantiated.
 TODO: Should reach out to other components in this GameObject and ask what they want to save.
 ********************************************************/
 
-using System;
+using System.Linq;
 using UnityEngine;
 using BedrockFramework.Pool;
-using BedrockFramework.Utilities;
 using Sirenix.OdinInspector;
 using ProtoBuf;
 
@@ -16,6 +15,9 @@ namespace BedrockFramework.Saves
     [HideMonoScript]
     public class SaveableGameObject : MonoBehaviour, IPool
     {
+        /// <summary>
+        /// Save class for applying and loading transform data.
+        /// </summary>
         [ProtoContract]
         public class TransformSaveData : SaveService.SavedData
         {
@@ -41,6 +43,9 @@ namespace BedrockFramework.Saves
             }
         }
 
+        /// <summary>
+        /// Save class for applying and loading rigidbody data.
+        /// </summary>
         [ProtoContract]
         public class RigidBodySaveData : SaveService.SavedData
         {
@@ -66,29 +71,120 @@ namespace BedrockFramework.Saves
             }
         }
 
+        /// <summary>
+        /// Save class for applying and loading animator data.
+        /// </summary>
         [ProtoContract]
         public class AnimatorSaveData : SaveService.SavedData
         {
             public static readonly int Key = Animator.StringToHash("AnimatorSaveData");
 
-            [ProtoMember(1)]
-            public int currentStateHash;
-            [ProtoMember(2)]
-            public float currentStateTime;
+            /// <summary>
+            /// Stores and applies state save data.
+            /// </summary>
+            [ProtoContract]
+            class AnimatorLayerSaveData
+            {
+                [ProtoMember(1)]
+                int stateHash;
+                [ProtoMember(2)]
+                float time;
+
+                public AnimatorLayerSaveData() { }
+
+                public AnimatorLayerSaveData(Animator animator, AnimatorStateInfo stateInfo)
+                {
+                    stateHash = stateInfo.fullPathHash;
+                    time = stateInfo.normalizedTime;
+                }
+
+                public void ApplyState(Animator animator, int layer)
+                {
+                    animator.Play(stateHash, layer, time);
+                }
+            }
+
+            /// <summary>
+            /// Stores and applies animator state save data.
+            /// </summary>
+            [ProtoContract]
+            class AnimatorParameterSaveData
+            {
+                [ProtoMember(1)]
+                int id;
+                [ProtoMember(5)]
+                AnimatorControllerParameterType parameterType;
+                [ProtoMember(2)]
+                float floatValue;
+                [ProtoMember(3)]
+                int intValuie;
+                [ProtoMember(4)]
+                bool boolValue;
+
+                public AnimatorParameterSaveData() { }
+
+                public AnimatorParameterSaveData(Animator animator, AnimatorControllerParameter parameter)
+                {
+                    id = parameter.nameHash;
+                    parameterType = parameter.type;
+                    switch (parameterType)
+                    {
+                        case AnimatorControllerParameterType.Bool:
+                            boolValue = animator.GetBool(id);
+                            break;
+                        case AnimatorControllerParameterType.Float:
+                            floatValue = animator.GetFloat(id);
+                            break;
+                        case AnimatorControllerParameterType.Int:
+                            intValuie = animator.GetInteger(id);
+                            break;
+                    }
+                }
+
+                public void ApplyParameter(Animator animator)
+                {
+                    switch (parameterType)
+                    {
+                        case AnimatorControllerParameterType.Bool:
+                            animator.SetBool(id, boolValue);
+                            break;
+                        case AnimatorControllerParameterType.Float:
+                            animator.SetFloat(id, floatValue);
+                            break;
+                        case AnimatorControllerParameterType.Int:
+                            animator.SetInteger(id, intValuie);
+                            break;
+                    }
+                }
+            }
+
+            [ProtoMember(3)]
+            AnimatorParameterSaveData[] savedParams;
+            [ProtoMember(4)]
+            AnimatorLayerSaveData[] savedLayers;
 
             public AnimatorSaveData() { }
 
             public AnimatorSaveData(Animator animator)
             {
-                //TODO: Serialize animation properties.
-                //TODO: Handle multiple animation layers.
-                currentStateHash = animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
-                currentStateTime = animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+                savedParams = animator.parameters.Select(x => new AnimatorParameterSaveData(animator, x)).ToArray();
+
+                savedLayers = new AnimatorLayerSaveData[animator.layerCount];
+                for (int i = 0; i < animator.layerCount; i++)
+                {
+                    savedLayers[i] = new AnimatorLayerSaveData(animator, animator.GetCurrentAnimatorStateInfo(i));
+                }
             }
 
             public static void ApplySaveData(Animator animator, AnimatorSaveData data)
             {
-                animator.Play(data.currentStateHash, 0, data.currentStateTime);
+                for (int i = 0; i < data.savedParams.Length; i++)
+                    data.savedParams[i].ApplyParameter(animator);
+
+                for (int i = 0; i < data.savedLayers.Length; i++)
+                    data.savedLayers[i].ApplyState(animator, i);
+
+                animator.Update(Time.fixedDeltaTime);
             }
         }
 

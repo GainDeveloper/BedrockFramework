@@ -2,7 +2,6 @@
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 
 Save Service. Handles holding data and saving/ loading it. 
-TODO: Need to be able to categorize the data types for different saves. i.e Scene State vs Game State (Character/ Story Progression)
 ********************************************************/
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -17,8 +16,8 @@ namespace BedrockFramework.Saves
 {
     public interface ISaveService
     {
-        void LoadSavedData();
-        void SaveData();
+        void LoadSavedData(string filePath);
+        void SaveData(string filePath);
 
         void SaveObject(string key, object data);
         SavedObjectReferences SavedObjectReferences { get; }
@@ -28,8 +27,8 @@ namespace BedrockFramework.Saves
 
     public class NullSaveService : ISaveService
     {
-        public void LoadSavedData() { }
-        public void SaveData() { }
+        public void LoadSavedData(string filePath) { }
+        public void SaveData(string filePath) { }
 
         public void SaveObject(string key, object data) { }
         public SavedObjectReferences SavedObjectReferences { get { return null; } }
@@ -84,13 +83,32 @@ namespace BedrockFramework.Saves
         private GameSave currentGameSave;
         protected byte[] currentGameSaveBuffer;
 
-        public void LoadSavedData()
+        protected void LoadGameSaveFromFile(string filePath)
         {
-            // IF LOADING FROM FILE: Load binary from file and convert to save game class.
             using (var file = File.OpenRead("E:/GameSave.bin"))
             {
                 currentGameSave = Serializer.Deserialize<GameSave>(file);
             }
+        }
+
+        protected void SaveGameSaveToFile(string filePath)
+        {
+            if (currentGameSave == null)
+            {
+                Logger.Logger.LogError(SaveServiceLog, "No currentGameSave to save to file!");
+                return;
+            }
+
+            using (var file = File.Create(filePath))
+            {
+                Serializer.Serialize(file, currentGameSave);
+            }
+        }
+
+        public void LoadSavedData(string filePath)
+        {
+            if (currentGameSave == null)
+                LoadGameSaveFromFile(filePath);
 
             // Tell objects we are about to load (so pooled objects can despawn).
             OnPreLoad();
@@ -106,12 +124,12 @@ namespace BedrockFramework.Saves
         }
 
 
-        public void SaveData()
+        public void SaveData(string filePath)
         {
             // Define a SaveGame class that we fill with various properties.
             currentGameSave = new GameSave();
 
-            // We could just request an object, along with a key that we retain.
+            // Will need to do some generic key/object saving here.
 
             // SaveableGameObject could be a special case for us to re instantiate.
             foreach (SaveableGameObject saveableGameObject in GameObject.FindObjectsOfType<SaveableGameObject>())
@@ -119,11 +137,7 @@ namespace BedrockFramework.Saves
                 currentGameSave.savedPooledObjects.Add(saveableGameObject.GameObjectSaveData());
             }
 
-            // IF SAVING TO FILE: Convert same game class to binary and write to a file.
-            using (var file = File.Create("E:/GameSave.bin"))
-            {
-                Serializer.Serialize(file, currentGameSave);
-            }
+            SaveGameSaveToFile(filePath);
         }
 
 
