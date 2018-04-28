@@ -12,6 +12,13 @@ using ProtoBuf;
 
 namespace BedrockFramework.Saves
 {
+    public interface ISaveableObject
+    {
+        int SaveDataKey { get; } 
+        object GetSaveData();
+        void ApplySaveData(object data);
+    }
+
     [HideMonoScript]
     public class SaveableGameObject : MonoBehaviour, IPool
     {
@@ -200,7 +207,9 @@ namespace BedrockFramework.Saves
         {
             SaveService.SavedGameObject savedData = new SaveService.SavedGameObject(poolDefinition);
 
-            // TODO: Add component data to this object as SaveData objects. Key should be the components type.
+            // Add component data to this object as SaveData objects.
+            foreach (ISaveableObject saveObject in GetComponents<ISaveableObject>())
+                savedData.savedData[saveObject.SaveDataKey] = saveObject.GetSaveData();
 
             // Do Unity components manually here. (Transform, Rigidbody, Animator ect.)
             savedData.savedData[TransformSaveData.Key] = new TransformSaveData(transform);
@@ -224,6 +233,14 @@ namespace BedrockFramework.Saves
                 RigidBodySaveData.ApplySaveData(gameObject.GetComponent<Rigidbody>(), (RigidBodySaveData)savedData.savedData[RigidBodySaveData.Key]);
             if (savedData.savedData.ContainsKey(AnimatorSaveData.Key))
                 AnimatorSaveData.ApplySaveData(gameObject.GetComponent<Animator>(), (AnimatorSaveData)savedData.savedData[AnimatorSaveData.Key]);
+
+            foreach (ISaveableObject saveObject in GetComponents<ISaveableObject>())
+            {
+                if (!savedData.savedData.ContainsKey(saveObject.SaveDataKey))
+                    continue;
+
+                saveObject.ApplySaveData(savedData.savedData[saveObject.SaveDataKey]);
+            }
         }
     }
 }

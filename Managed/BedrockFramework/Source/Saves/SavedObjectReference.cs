@@ -3,7 +3,7 @@ BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 Class wrapper for saving Object references.
 ********************************************************/
 using UnityEngine;
-using System;
+using Sirenix.OdinInspector;
 using ProtoBuf;
 
 namespace BedrockFramework.Saves
@@ -11,6 +11,7 @@ namespace BedrockFramework.Saves
     [ProtoContract]
     public class SavedObjectReference<T> where T : UnityEngine.Object
     {
+        [ReadOnly, ShowInInspector]
         T objectReference;
         [ProtoMember(1)]
         private int objectReferenceID = 0;
