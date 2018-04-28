@@ -19,10 +19,14 @@ namespace BedrockFramework.Saves
         void LoadSavedData(string filePath);
         void SaveData(string filePath);
 
-        void SaveObject(string key, object data);
         SavedObjectReferences SavedObjectReferences { get; }
 
+        void AppendSaveData(int key, object saveData);
+        T GetSaveData<T>(int key);
+
         event Action OnPreLoad;
+        event Action OnPostLoad;
+        event Action OnPreSave;
     }
 
     public class NullSaveService : ISaveService
@@ -30,10 +34,14 @@ namespace BedrockFramework.Saves
         public void LoadSavedData(string filePath) { }
         public void SaveData(string filePath) { }
 
-        public void SaveObject(string key, object data) { }
         public SavedObjectReferences SavedObjectReferences { get { return null; } }
 
+        public void AppendSaveData(int key, object saveData) { }
+        public T GetSaveData<T>(int key) { return default(T); }
+
         public event Action OnPreLoad = delegate { };
+        public event Action OnPostLoad = delegate { };
+        public event Action OnPreSave = delegate { };
     }
 
     public class SaveService : Service, ISaveService
@@ -68,6 +76,8 @@ namespace BedrockFramework.Saves
         public SavedObjectReferences SavedObjectReferences { get { return savedObjectReferences; } }
 
         public event Action OnPreLoad = delegate { };
+        public event Action OnPostLoad = delegate { };
+        public event Action OnPreSave = delegate { };
 
         public SaveService(MonoBehaviour owner) : base(owner)
         {
@@ -75,7 +85,34 @@ namespace BedrockFramework.Saves
         }
 
         private GameSave currentGameSave;
-        protected byte[] currentGameSaveBuffer;
+
+        public void AppendSaveData(int key, object saveData)
+        {
+            if (currentGameSave == null)
+            {
+                Logger.Logger.LogError(SaveServiceLog, "No currentGameSave to save data to!");
+                return;
+            }
+
+            currentGameSave.savedData[key] = saveData;
+        }
+
+        public T GetSaveData<T>(int key)
+        {
+            if (currentGameSave == null)
+            {
+                Logger.Logger.LogError(SaveServiceLog, "No currentGameSave to load data from!");
+                return default(T);
+            }
+
+            if (!currentGameSave.savedData.ContainsKey(key))
+            {
+                Logger.Logger.LogError(SaveServiceLog, "No save data for key {} exists!", () => new object[] { key });
+                return default(T);
+            }
+
+            return (T)currentGameSave.savedData[key];
+        }
 
         protected bool LoadGameSaveFromFile(string filePath)
         {
@@ -108,16 +145,17 @@ namespace BedrockFramework.Saves
 
         public void LoadSavedData(string filePath)
         {
+            // Tell objects we are about to load (so pooled objects can despawn).
+            OnPreLoad();
+
             if (currentGameSave == null)
             {
                 if (!LoadGameSaveFromFile(filePath))
                     return;
             }
 
-            // Tell objects we are about to load (so pooled objects can despawn).
-            OnPreLoad();
-
             // Tell objects we have loaded the data. (Used to load the correct scene definition as an example).
+            OnPostLoad();
 
             // Reinstantiate the SaveableGameObjects
             foreach (SavedGameObject savedGameObject in currentGameSave.savedPooledObjects)
@@ -134,6 +172,7 @@ namespace BedrockFramework.Saves
             currentGameSave = new GameSave();
 
             // Will need to do some generic key/object saving here.
+            OnPreSave();
 
             // SaveableGameObject could be a special case for us to re instantiate.
             foreach (SaveableGameObject saveableGameObject in GameObject.FindObjectsOfType<SaveableGameObject>())
@@ -143,10 +182,5 @@ namespace BedrockFramework.Saves
 
             SaveGameSaveToFile(filePath);
         }
-
-
-        public void SaveObject(string key, object data) {}
-
-
     }
 }
