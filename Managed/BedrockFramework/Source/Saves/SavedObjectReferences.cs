@@ -2,13 +2,12 @@
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 
 Saveable Scriptable Objects store references to themselves in a shared list.
+TODO: Need to only store asset paths in the end to ensure we don't have all saveable assets loaded into memory.
 ********************************************************/
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System;
 using Sirenix.OdinInspector;
 
 namespace BedrockFramework.Saves
@@ -17,11 +16,11 @@ namespace BedrockFramework.Saves
     public class SavedObjectReferences : ScriptableObject, ISerializationCallbackReceiver
     {
         [ReadOnly, ShowInInspector]
-        private Map<int, UnityEngine.Object> savedObjects = new Map<int, UnityEngine.Object>();
+        private Map<int, Object> savedObjects = new Map<int, Object>();
         [SerializeField, HideInInspector]
         private List<int> savedScriptableObjectKeys;
         [SerializeField, HideInInspector]
-        private List<UnityEngine.Object> savedObjectValues;
+        private List<Object> savedObjectValues;
 
         void OnEnable()
         {
@@ -32,12 +31,12 @@ namespace BedrockFramework.Saves
         public void OnBeforeSerialize()
         {
             savedScriptableObjectKeys = new List<int>();
-            savedObjectValues = new List<UnityEngine.Object>();
+            savedObjectValues = new List<Object>();
             IEnumerator enumerator = savedObjects.GetEnumerator();
 
             while (enumerator.MoveNext())
             {
-                KeyValuePair<int, UnityEngine.Object> savedScriptableObject = (KeyValuePair<int, UnityEngine.Object>)enumerator.Current;
+                KeyValuePair<int, Object> savedScriptableObject = (KeyValuePair<int, Object>)enumerator.Current;
                 savedScriptableObjectKeys.Add(savedScriptableObject.Key);
                 savedObjectValues.Add(savedScriptableObject.Value);
             }
@@ -45,18 +44,18 @@ namespace BedrockFramework.Saves
 
         public void OnAfterDeserialize()
         {
-            savedObjects = new Map<int, UnityEngine.Object>();
+            savedObjects = new Map<int, Object>();
 
             for (int i = 0; i != savedScriptableObjectKeys.Count; i++)
                 savedObjects.Add(savedScriptableObjectKeys[i], savedObjectValues[i]);
         }
 
-        public T GetSavedObject<T>(int instanceID) where T : UnityEngine.Object
+        public T GetSavedObject<T>(int instanceID) where T : Object
         {
             return savedObjects.Forward[instanceID] as T;
         }
 
-        public int GetSavedObjectID(UnityEngine.Object objectInstance, bool logIfNone = true)
+        public int GetSavedObjectID(Object objectInstance, bool logIfNone = true)
         {
             if (!savedObjects.Reverse.Contains(objectInstance))
             {
@@ -68,9 +67,9 @@ namespace BedrockFramework.Saves
             return savedObjects.Reverse[objectInstance];
         }
 
-        public void AddObject(UnityEngine.Object so)
+        public void AddObject(Object so)
         {
-            savedObjects.Add(UnityEngine.Random.Range(1, int.MaxValue), so);
+            savedObjects.Add(Random.Range(1, int.MaxValue), so);
             Cleanup();
         }
 

@@ -19,7 +19,7 @@ namespace BedrockFramework.Saves
         /// Save class for applying and loading transform data.
         /// </summary>
         [ProtoContract]
-        public class TransformSaveData : SaveService.SavedData
+        public class TransformSaveData : object
         {
             public static readonly int Key = Animator.StringToHash("TransformSaveData");
 
@@ -47,7 +47,7 @@ namespace BedrockFramework.Saves
         /// Save class for applying and loading rigidbody data.
         /// </summary>
         [ProtoContract]
-        public class RigidBodySaveData : SaveService.SavedData
+        public class RigidBodySaveData : object
         {
             public static readonly int Key = Animator.StringToHash("RigidBodySaveData");
 
@@ -75,7 +75,7 @@ namespace BedrockFramework.Saves
         /// Save class for applying and loading animator data.
         /// </summary>
         [ProtoContract]
-        public class AnimatorSaveData : SaveService.SavedData
+        public class AnimatorSaveData : object
         {
             public static readonly int Key = Animator.StringToHash("AnimatorSaveData");
 

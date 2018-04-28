@@ -39,18 +39,12 @@ namespace BedrockFramework.Saves
     public class SaveService : Service, ISaveService
     {
         [ProtoContract]
-        [ProtoInclude(7, typeof(SaveableGameObject.TransformSaveData))]
-        [ProtoInclude(8, typeof(SaveableGameObject.RigidBodySaveData))]
-        [ProtoInclude(9, typeof(SaveableGameObject.AnimatorSaveData))]
-        public class SavedData { };
-
-        [ProtoContract]
         public class SavedGameObject
         {
             [ProtoMember(1)]
             public SavedObjectReference<Pool.PoolDefinition> gameObjectPool;
-            [ProtoMember(2)]
-            public Dictionary<int, SavedData> savedData = new Dictionary<int, SavedData>();
+            [ProtoMember(2, DynamicType = true)]
+            public Dictionary<int, object> savedData = new Dictionary<int, object>();
 
             public SavedGameObject() { }
 
@@ -62,8 +56,8 @@ namespace BedrockFramework.Saves
         [ProtoContract]
         class GameSave
         {
-            [ProtoMember(1)]
-            public Dictionary<int, SavedData> savedData = new Dictionary<int, SavedData>();
+            [ProtoMember(1, DynamicType = true)]
+            public Dictionary<int, object> savedData = new Dictionary<int, object>();
             [ProtoMember(2)]
             public List<SavedGameObject> savedPooledObjects = new List<SavedGameObject>();
         }
