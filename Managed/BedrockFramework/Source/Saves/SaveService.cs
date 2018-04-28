@@ -86,15 +86,14 @@ namespace BedrockFramework.Saves
 
         public void LoadSavedData()
         {
-            // Tell objects we are about to load (so pooled objects can despawn).
-            OnPreLoad();
-
-
             // IF LOADING FROM FILE: Load binary from file and convert to save game class.
             using (var file = File.OpenRead("E:/GameSave.bin"))
             {
                 currentGameSave = Serializer.Deserialize<GameSave>(file);
             }
+
+            // Tell objects we are about to load (so pooled objects can despawn).
+            OnPreLoad();
 
             // Tell objects we have loaded the data. (Used to load the correct scene definition as an example).
 

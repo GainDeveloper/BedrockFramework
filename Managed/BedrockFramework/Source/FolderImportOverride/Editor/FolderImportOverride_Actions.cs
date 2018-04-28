@@ -94,9 +94,13 @@ namespace BedrockFramework.FolderImportOverride
 
             // If we have a skinned mesh renderer then ignore any transforms part of the root hierarchy.
             SkinnedMeshRenderer smr = ((GameObject)gameObject).GetComponentInChildren<SkinnedMeshRenderer>();
-            if (smr != null && smr.rootBone != null)
+            if (smr != null)
             {
+                if (smr.rootBone == null)
+                    return;
+
                 toDestroy = toDestroy.Except(smr.rootBone.GetComponentsInChildren<Transform>().Select(x => x.gameObject)).ToList();
+                toDestroy = toDestroy.Except(smr.rootBone.GetComponentsInParent<Transform>().Select(x => x.gameObject)).ToList();
             }
 
             foreach (GameObject gameObjectToDestroy in toDestroy)
