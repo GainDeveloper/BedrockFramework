@@ -9,58 +9,101 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using BedrockFramework.Utilities;
+using ProtoBuf;
 
 namespace BedrockFramework.Scenes
 {
     public interface ISceneService
     {
-        void LoadScene(SceneDefinition sceneToLoad);
+        Coroutine LoadScene(SceneLoadInfo sceneToLoad);
+        event Action OnUnload;
         event Action OnPreFinishedLoading;
-        event Action<SceneDefinition> OnFinishedLoading;
+        event Action<SceneLoadInfo> OnFinishedLoading;
+
+        SceneLoadInfo CurrentLoaded { get; }
     }
 
     public class NullSceneService : ISceneService
     {
-        public void LoadScene(SceneDefinition sceneToLoad) { }
+        public Coroutine LoadScene(SceneLoadInfo sceneToLoad) { return null; }
+        public event Action OnUnload = delegate { };
         public event Action OnPreFinishedLoading = delegate { };
-        public event Action<SceneDefinition> OnFinishedLoading = delegate { };
+        public event Action<SceneLoadInfo> OnFinishedLoading = delegate { };
+
+        public SceneLoadInfo CurrentLoaded { get { return null; } }
+    }
+
+    [ProtoContract]
+    public class SceneLoadInfo
+    {
+        [ProtoMember(1)]
+        public Saves.SavedObjectReference<SceneDefinition> sceneDefinition;
+        public bool fromSave = false;
+
+        public SceneLoadInfo() { }
+
+        public SceneLoadInfo(SceneDefinition sceneDefinition)
+        {
+            this.sceneDefinition = new Saves.SavedObjectReference<SceneDefinition>(sceneDefinition);
+        }
     }
 
     public class SceneService : Service, ISceneService
     {
         const string SceneServiceLog = "Scenes";
 
+        public event Action OnUnload = delegate { };
         public event Action OnPreFinishedLoading = delegate { };
-        public event Action<SceneDefinition> OnFinishedLoading = delegate { };
+        public event Action<SceneLoadInfo> OnFinishedLoading = delegate { };
 
-        private SceneDefinition currentlyLoaded = null;
+        private SceneLoadInfo currentlyLoaded = null;
+        public SceneLoadInfo CurrentLoaded { get { return currentlyLoaded; } }
 
-        public SceneService(MonoBehaviour owner): base(owner) { }
-
-        public void LoadScene(SceneDefinition sceneToLoad)
+        public SceneService(MonoBehaviour owner): base(owner)
         {
-            // TODO: Take a SceneLoadInfo class to serialize load data for the scene.
-            //ServiceLocator.SaveService.SaveObjectReference("PreviouslyLoadedScene", sceneToLoad);
+            ServiceLocator.SaveService.OnPreSave += SaveService_OnPreSave;
+            ServiceLocator.SaveService.OnPreLoad += SaveService_OnPreLoad;
 
-            if (currentlyLoaded == null)
+            if (Debug.isDebugBuild)
             {
-                owner.StartCoroutine(LoadActiveAsync(sceneToLoad, LoadSceneMode.Single));
-            } else
-            {
-                owner.StartCoroutine(UnloadAndLoadAsync(currentlyLoaded, sceneToLoad));
+                foreach (SceneDefinition sceneDefinition in ServiceLocator.SaveService.SavedObjectReferences.GetObjectsOfType<SceneDefinition>())
+                    DevTools.DebugMenu.AddDebugItem("Scenes", "Load " + sceneDefinition.sceneSettings.SceneTitle, () => { LoadScene(new SceneLoadInfo(sceneDefinition)); });
             }
         }
 
+        private void SaveService_OnPreLoad(CoroutineEvent coroutineEvent)
+        {
+            SceneLoadInfo sceneLoadInfo = ServiceLocator.SaveService.GetSaveData<SceneLoadInfo>(Animator.StringToHash("PreviousScene"));
+            sceneLoadInfo.fromSave = true;
+            coroutineEvent.coroutines.Add(LoadScene(sceneLoadInfo));
+        }
+
+        private void SaveService_OnPreSave()
+        {
+            ServiceLocator.SaveService.AppendSaveData(Animator.StringToHash("PreviousScene"), currentlyLoaded);
+        }
+
+        public Coroutine LoadScene(SceneLoadInfo sceneToLoad)
+        {
+            if (currentlyLoaded == null)
+            {
+                return owner.StartCoroutine(LoadActiveAsync(sceneToLoad, LoadSceneMode.Single));
+            }
+
+            return owner.StartCoroutine(UnloadAndLoadAsync(currentlyLoaded, sceneToLoad));
+        }
+
         // Used for loading next level.
-        IEnumerator LoadActiveAsync(SceneDefinition sceneToLoad, LoadSceneMode loadSceneMode)
+        IEnumerator LoadActiveAsync(SceneLoadInfo sceneToLoad, LoadSceneMode loadSceneMode)
         {
             List<AsyncOperation> toWaitFor = new List<AsyncOperation>();
 
-            foreach (string sceneName in sceneToLoad.AllScenes)
+            foreach (string sceneName in sceneToLoad.sceneDefinition.ObjectReference.AllScenes)
             {
                 if (!SceneManager.GetSceneByName(sceneName).isLoaded)
                 {
-                    Logger.Logger.Log(SceneServiceLog, "Loading {}", () => new object[] { sceneName });
+                    DevTools.Logger.Log(SceneServiceLog, "Loading {}", () => new object[] { sceneName });
                     toWaitFor.Add(SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive));
                 }  
             }
@@ -68,7 +111,7 @@ namespace BedrockFramework.Scenes
             foreach (AsyncOperation asyncLevelUnload in toWaitFor)
                 yield return asyncLevelUnload;
 
-            Scene primaryScene = SceneManager.GetSceneByName(sceneToLoad.PrimaryScene);
+            Scene primaryScene = SceneManager.GetSceneByName(sceneToLoad.sceneDefinition.ObjectReference.PrimaryScene);
             SceneManager.SetActiveScene(primaryScene);
 
             currentlyLoaded = sceneToLoad;
@@ -76,22 +119,22 @@ namespace BedrockFramework.Scenes
             // Use to change the state of the active scenes GameObjects before progressing (Loading scene save data ect.)
             OnPreFinishedLoading();
 
-            Logger.Logger.Log(SceneServiceLog, "Finished Loading");
+            DevTools.Logger.Log(SceneServiceLog, "Finished Loading");
 
             OnFinishedLoading(sceneToLoad);
         }
 
         // Used for switching between levels.
-        IEnumerator UnloadAndLoadAsync(SceneDefinition sceneToUnload, SceneDefinition sceneToLoad)
+        IEnumerator UnloadAndLoadAsync(SceneLoadInfo sceneToUnload, SceneLoadInfo sceneToLoad)
         {
             List<AsyncOperation> toWaitFor = new List<AsyncOperation>();
 
             // Ensure we only unload scenes that we won't be using in the next scene.
-            foreach (string sceneName in sceneToLoad.AllScenes)
+            foreach (string sceneName in currentlyLoaded.sceneDefinition.ObjectReference.AllScenes)
             {
-                if (sceneToLoad.AllScenes.Where(item => item == sceneName).Count() == 0)
+                if (sceneToLoad.sceneDefinition.ObjectReference.AllScenes.Where(item => item == sceneName).Count() == 0)
                 {
-                    Logger.Logger.Log(SceneServiceLog, "Unloading {}", () => new object[] { sceneName });
+                    DevTools.Logger.Log(SceneServiceLog, "Unloading {}", () => new object[] { sceneName });
                     toWaitFor.Add(SceneManager.UnloadSceneAsync(sceneName));
                 }
             }
@@ -102,7 +145,8 @@ namespace BedrockFramework.Scenes
             }
 
             System.GC.Collect();
-            Logger.Logger.Log(SceneServiceLog, "Finished Unloading");
+            OnUnload();
+            DevTools.Logger.Log(SceneServiceLog, "Finished Unloading");
 
             yield return LoadActiveAsync(sceneToLoad, LoadSceneMode.Additive);
         }

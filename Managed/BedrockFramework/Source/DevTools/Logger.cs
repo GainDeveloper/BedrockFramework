@@ -5,7 +5,7 @@ using System.Text;
 using UnityEngine;
 using BedrockFramework.Utilities;
 
-namespace BedrockFramework.Logger
+namespace BedrockFramework.DevTools
 {
     public static class Logger
     {

@@ -35,9 +35,12 @@ namespace BedrockFramework.GameMode
             ServiceLocator.SceneService.OnFinishedLoading += SceneService_OnFinishedLoading;
         }
 
-        private void SceneService_OnFinishedLoading(Scenes.SceneDefinition loadedScene)
+        private void SceneService_OnFinishedLoading(Scenes.SceneLoadInfo loadedScene)
         {
-            currentGameMode = loadedScene.sceneSettings.defaultGameModeInfo.GameSetup();
+            if (loadedScene.sceneDefinition.ObjectReference.sceneSettings.defaultGameModeInfo == null)
+                return;
+
+            currentGameMode = loadedScene.sceneDefinition.ObjectReference.sceneSettings.defaultGameModeInfo.GameSetup();
             OnFinishedGameSetup(currentGameMode);
         }
 

@@ -283,6 +283,12 @@
     <Reference Include="BedrockFramework">
       <HintPath>Assets\Plugins\BedrockFramework\BedrockFramework.dll</HintPath>
     </Reference>
+    <Reference Include="BedrockFramework_Editor">
+      <HintPath>Assets\Plugins\BedrockFramework\BedrockFramework_Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>Assets\Plugins\BedrockFramework\protobuf-net.dll</HintPath>
+    </Reference>
     <Reference Include="Sirenix.OdinInspector.Attributes">
       <HintPath>Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Attributes.dll</HintPath>
     </Reference>
@@ -300,9 +306,6 @@
     </Reference>
     <Reference Include="Sirenix.Utilities.Editor">
       <HintPath>Assets\Plugins\Sirenix\Assemblies\Sirenix.Utilities.Editor.dll</HintPath>
-    </Reference>
-    <Reference Include="BedrockFramework_Editor">
-      <HintPath>Assets\Plugins\BedrockFramework\BedrockFramework_Editor.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -382,6 +385,7 @@
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-G.shader" />
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-R.shader" />
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-RGB.shader" />
+    <None Include="Assets\Plugins\BedrockFramework\protobuf-net.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Attributes.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Editor.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.Serialization.Config.xml" />

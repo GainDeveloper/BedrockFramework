@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System;
+using BedrockFramework.Utilities;
 
 using ProtoBuf;
 
@@ -16,7 +17,7 @@ namespace BedrockFramework.Saves
 {
     public interface ISaveService
     {
-        void LoadSavedData(string filePath);
+        IEnumerator LoadSavedData(string filePath);
         void SaveData(string filePath);
 
         SavedObjectReferences SavedObjectReferences { get; }
@@ -24,14 +25,14 @@ namespace BedrockFramework.Saves
         void AppendSaveData(int key, object saveData);
         T GetSaveData<T>(int key);
 
-        event Action OnPreLoad;
+        event Action<CoroutineEvent> OnPreLoad;
         event Action OnPostLoad;
         event Action OnPreSave;
     }
 
     public class NullSaveService : ISaveService
     {
-        public void LoadSavedData(string filePath) { }
+        public IEnumerator LoadSavedData(string filePath) { yield break; }
         public void SaveData(string filePath) { }
 
         public SavedObjectReferences SavedObjectReferences { get { return null; } }
@@ -39,7 +40,7 @@ namespace BedrockFramework.Saves
         public void AppendSaveData(int key, object saveData) { }
         public T GetSaveData<T>(int key) { return default(T); }
 
-        public event Action OnPreLoad = delegate { };
+        public event Action<CoroutineEvent> OnPreLoad = delegate { };
         public event Action OnPostLoad = delegate { };
         public event Action OnPreSave = delegate { };
     }
@@ -75,13 +76,15 @@ namespace BedrockFramework.Saves
         private SavedObjectReferences savedObjectReferences;
         public SavedObjectReferences SavedObjectReferences { get { return savedObjectReferences; } }
 
-        public event Action OnPreLoad = delegate { };
+        public event Action<CoroutineEvent> OnPreLoad = delegate { };
         public event Action OnPostLoad = delegate { };
         public event Action OnPreSave = delegate { };
 
         public SaveService(MonoBehaviour owner) : base(owner)
         {
             savedObjectReferences = Resources.LoadAll<Saves.SavedObjectReferences>("")[0];
+            DevTools.DebugMenu.AddDebugItem("Saves", "Save", () => { SaveData(Application.persistentDataPath + "/DevSave.save"); });
+            DevTools.DebugMenu.AddDebugItem("Saves", "Load", () => { owner.StartCoroutine(LoadSavedData(Application.persistentDataPath + "/DevSave.save")); });
         }
 
         private GameSave currentGameSave;
@@ -90,7 +93,7 @@ namespace BedrockFramework.Saves
         {
             if (currentGameSave == null)
             {
-                Logger.Logger.LogError(SaveServiceLog, "No currentGameSave to save data to!");
+                DevTools.Logger.LogError(SaveServiceLog, "No currentGameSave to save data to!");
                 return;
             }
 
@@ -101,13 +104,13 @@ namespace BedrockFramework.Saves
         {
             if (currentGameSave == null)
             {
-                Logger.Logger.LogError(SaveServiceLog, "No currentGameSave to load data from!");
+                DevTools.Logger.LogError(SaveServiceLog, "No currentGameSave to load data from!");
                 return default(T);
             }
 
             if (!currentGameSave.savedData.ContainsKey(key))
             {
-                Logger.Logger.LogError(SaveServiceLog, "No save data for key {} exists!", () => new object[] { key });
+                DevTools.Logger.LogError(SaveServiceLog, "No save data for key {} exists!", () => new object[] { key });
                 return default(T);
             }
 
@@ -118,7 +121,7 @@ namespace BedrockFramework.Saves
         {
             if (!File.Exists(filePath))
             {
-                Logger.Logger.LogError(SaveServiceLog, "Save file {} does not exist", () => new object[] { filePath });
+                DevTools.Logger.LogError(SaveServiceLog, "Save file {} does not exist", () => new object[] { filePath });
                 return false;
             }
 
@@ -133,7 +136,7 @@ namespace BedrockFramework.Saves
         {
             if (currentGameSave == null)
             {
-                Logger.Logger.LogError(SaveServiceLog, "No currentGameSave to save to file!");
+                DevTools.Logger.LogError(SaveServiceLog, "No currentGameSave to save to file!");
                 return;
             }
 
@@ -143,19 +146,20 @@ namespace BedrockFramework.Saves
             }
         }
 
-        public void LoadSavedData(string filePath)
+        //TODO: This should probably be a coroutine so we can wait for scenes to unload/load.
+        public IEnumerator LoadSavedData(string filePath)
         {
-            // Tell objects we are about to load (so pooled objects can despawn).
-            OnPreLoad();
-
             if (currentGameSave == null)
             {
                 if (!LoadGameSaveFromFile(filePath))
-                    return;
+                    yield break;
             }
 
-            // Tell objects we have loaded the data. (Used to load the correct scene definition as an example).
-            OnPostLoad();
+            // Tell objects we are about to load. (Used to load the correct scene definition as an example).
+            CoroutineEvent preLoadCoroutines = new CoroutineEvent();
+            OnPreLoad(preLoadCoroutines);
+
+            yield return preLoadCoroutines.WaitForCoroutines();
 
             // Reinstantiate the SaveableGameObjects
             foreach (SavedGameObject savedGameObject in currentGameSave.savedPooledObjects)
@@ -163,6 +167,11 @@ namespace BedrockFramework.Saves
                 //TODO: Need to consider how to handle transform parents. Should it be done here or by the SaveableGameObjectComponent.
                 ServiceLocator.PoolService.SpawnDefinition<SaveableGameObject>(savedGameObject.gameObjectPool.ObjectReference).ApplySaveData(savedGameObject);
             }
+
+            // Tell objects we have loaded the data. 
+            OnPostLoad();
+
+            DevTools.Logger.Log(SaveServiceLog, "Finished loading.");
         }
 
 
@@ -181,6 +190,8 @@ namespace BedrockFramework.Saves
             }
 
             SaveGameSaveToFile(filePath);
+
+            DevTools.Logger.Log(SaveServiceLog, "Finished saving game.");
         }
     }
 }

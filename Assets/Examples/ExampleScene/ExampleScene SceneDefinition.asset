@@ -14,9 +14,7 @@ MonoBehaviour:
   primaryScene:
     m_SceneAsset: {fileID: 102900000, guid: c1b9c26eab3e5f94db6861daacebdeeb, type: 3}
     m_SceneName: ExampleScene
-  additionalScenes:
-  - m_SceneAsset: {fileID: 102900000, guid: ff57e9425f7d3ec4e9807c2f15075843, type: 3}
-    m_SceneName: ExampleScene_Geo
+  additionalScenes: []
   sceneSettings:
     sceneTitle: Default Scene Title
     defaultGameModeInfo: {fileID: 0}

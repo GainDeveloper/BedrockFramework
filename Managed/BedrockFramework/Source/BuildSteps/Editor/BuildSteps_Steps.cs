@@ -11,7 +11,7 @@ namespace BedrockFramework.BuildSteps
     {
         public virtual void OnSceneBuild()
         {
-            Logger.Logger.Log("Build", "OnSceneBuild");
+            DevTools.Logger.Log("Build", "OnSceneBuild");
         }
 
         public virtual UnityEngine.Object[] AssetsToModify()

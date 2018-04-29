@@ -55,11 +55,13 @@ namespace BedrockFramework.Pool
 
         public PoolService(MonoBehaviour owner): base(owner)
         {
-            ServiceLocator.SaveService.OnPreLoad += SaveService_OnPreLoad;
+            ServiceLocator.SceneService.OnUnload += DeSpawnAllPools;
         }
 
-        private void SaveService_OnPreLoad()
+        private void DeSpawnAllPools()
         {
+            DevTools.Logger.Log(PoolServiceLog, "Despawning All.");
+
             GameObject[] activePooledGameObjectsCache = activePooledGameObjects.Select(x => x.Key).ToArray();
 
             for (int i = 0; i < activePooledGameObjectsCache.Length; i++)
@@ -74,7 +76,7 @@ namespace BedrockFramework.Pool
         }
 
         public void PrePool() {
-            Logger.Logger.Log(PoolServiceLog, "PrePooling.");
+            DevTools.Logger.Log(PoolServiceLog, "PrePooling.");
             foreach (PrePool prePoolObject in Resources.LoadAll<PrePool>(""))
             {
                 foreach(PrePool.PrePoolObject poolObject in prePoolObject.prePooledObjects)
@@ -107,7 +109,7 @@ namespace BedrockFramework.Pool
         {
             if (!IsGameObjectPrefab(poolDefinition.PooledObject))
             {
-                Logger.Logger.LogError(PoolServiceLog, "Instanced GameObject {} can not be pooled.", () => new object[] { poolDefinition.name });
+                DevTools.Logger.LogError(PoolServiceLog, "Instanced GameObject {} can not be pooled.", () => new object[] { poolDefinition.name });
                 return null;
             }
 
@@ -126,7 +128,7 @@ namespace BedrockFramework.Pool
                 activePooledGameObjects.Remove(gameObject);
             } else if (warnNonePooled)
             {
-                Logger.Logger.LogError(PoolServiceLog, "{} is not a pooled GameObject and can not be despawned.", () => new object[] { gameObject.name });
+                DevTools.Logger.LogError(PoolServiceLog, "{} is not a pooled GameObject and can not be despawned.", () => new object[] { gameObject.name });
             }
         }
 
@@ -148,7 +150,7 @@ namespace BedrockFramework.Pool
             {
                 prefabPool = CreatePrefabPool(prefab);
                 if (warnNewPool)
-                    Logger.Logger.Log(PoolServiceLog, "New pool for {} created.", () => new object[] { prefab.name });
+                    DevTools.Logger.Log(PoolServiceLog, "New pool for {} created.", () => new object[] { prefab.name });
             }
 
             return prefabPool;

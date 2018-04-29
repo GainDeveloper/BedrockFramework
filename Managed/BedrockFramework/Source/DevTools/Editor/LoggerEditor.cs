@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEditor;
 using BedrockFramework.Utilities;
 
-namespace BedrockFramework.Logger
+namespace BedrockFramework.DevTools
 {
     public class LoggerEditor : EditorWindow
     {

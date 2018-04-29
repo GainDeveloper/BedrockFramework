@@ -286,6 +286,9 @@
     <Reference Include="BedrockFramework_Editor">
       <HintPath>Assets\Plugins\BedrockFramework\BedrockFramework_Editor.dll</HintPath>
     </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>Assets\Plugins\BedrockFramework\protobuf-net.dll</HintPath>
+    </Reference>
     <Reference Include="Sirenix.OdinInspector.Attributes">
       <HintPath>Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Attributes.dll</HintPath>
     </Reference>
@@ -310,13 +313,13 @@
       <Project>{AD930646-C2C3-9B28-63CC-30A3329D7208}</Project>
       <Name>BedrockFramework.CSharp.Plugins</Name>
     </ProjectReference>
-    <ProjectReference Include="BedrockFramework.CSharp.Editor.Plugins.csproj">
-      <Project>{790B4E6A-6DBF-0EA5-71E1-439529BCC56F}</Project>
-      <Name>BedrockFramework.CSharp.Editor.Plugins</Name>
-    </ProjectReference>
     <ProjectReference Include="BedrockFramework.CSharp.csproj">
       <Project>{E8D93DFB-243C-E7A2-57F5-DEDDBC7E830C}</Project>
       <Name>BedrockFramework.CSharp</Name>
+    </ProjectReference>
+    <ProjectReference Include="BedrockFramework.CSharp.Editor.Plugins.csproj">
+      <Project>{790B4E6A-6DBF-0EA5-71E1-439529BCC56F}</Project>
+      <Name>BedrockFramework.CSharp.Editor.Plugins</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -329,6 +332,7 @@
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-G.shader" />
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-R.shader" />
     <None Include="Assets\Plugins\BedrockFramework\Shaders\Unlit-Vertex-RGB.shader" />
+    <None Include="Assets\Plugins\BedrockFramework\protobuf-net.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Attributes.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.OdinInspector.Editor.xml" />
     <None Include="Assets\Plugins\Sirenix\Assemblies\Sirenix.Serialization.Config.xml" />

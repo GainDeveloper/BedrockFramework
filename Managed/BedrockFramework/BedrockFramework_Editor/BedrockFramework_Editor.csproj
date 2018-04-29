@@ -72,7 +72,7 @@
     <Compile Include="..\Source\BuildSteps\Editor\*" />
     <Compile Include="..\Source\CustomLine\Editor\*" />
     <Compile Include="..\Source\FolderImportOverride\Editor\*" />
-    <Compile Include="..\Source\Logger\Editor\*" />
+    <Compile Include="..\Source\DevTools\Editor\*" />
     <Compile Include="..\Source\PlayModeEdit\Editor\*" />
     <Compile Include="..\Source\Prototype\Editor\*" />
     <Compile Include="..\Source\Scenes\Editor\*" />

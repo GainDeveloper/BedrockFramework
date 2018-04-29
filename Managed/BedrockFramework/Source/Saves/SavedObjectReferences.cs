@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Sirenix.OdinInspector;
+using System;
 
 namespace BedrockFramework.Saves
 {
@@ -16,27 +17,21 @@ namespace BedrockFramework.Saves
     public class SavedObjectReferences : ScriptableObject, ISerializationCallbackReceiver
     {
         [ReadOnly, ShowInInspector]
-        private Map<int, Object> savedObjects = new Map<int, Object>();
+        private Map<int, UnityEngine.Object> savedObjects = new Map<int, UnityEngine.Object>();
         [SerializeField, HideInInspector]
         private List<int> savedScriptableObjectKeys;
         [SerializeField, HideInInspector]
-        private List<Object> savedObjectValues;
-
-        void OnEnable()
-        {
-            if (!Application.isPlaying)
-                Cleanup();
-        }
+        private List<UnityEngine.Object> savedObjectValues;
 
         public void OnBeforeSerialize()
         {
             savedScriptableObjectKeys = new List<int>();
-            savedObjectValues = new List<Object>();
+            savedObjectValues = new List<UnityEngine.Object>();
             IEnumerator enumerator = savedObjects.GetEnumerator();
 
             while (enumerator.MoveNext())
             {
-                KeyValuePair<int, Object> savedScriptableObject = (KeyValuePair<int, Object>)enumerator.Current;
+                KeyValuePair<int, UnityEngine.Object> savedScriptableObject = (KeyValuePair<int, UnityEngine.Object>)enumerator.Current;
                 savedScriptableObjectKeys.Add(savedScriptableObject.Key);
                 savedObjectValues.Add(savedScriptableObject.Value);
             }
@@ -44,32 +39,40 @@ namespace BedrockFramework.Saves
 
         public void OnAfterDeserialize()
         {
-            savedObjects = new Map<int, Object>();
+            savedObjects = new Map<int, UnityEngine.Object>();
 
             for (int i = 0; i != savedScriptableObjectKeys.Count; i++)
                 savedObjects.Add(savedScriptableObjectKeys[i], savedObjectValues[i]);
         }
 
-        public T GetSavedObject<T>(int instanceID) where T : Object
+        public T GetSavedObject<T>(int instanceID) where T : UnityEngine.Object
         {
             return savedObjects.Forward[instanceID] as T;
         }
 
-        public int GetSavedObjectID(Object objectInstance, bool logIfNone = true)
+        public int GetSavedObjectID(UnityEngine.Object objectInstance, bool logIfNone = true)
         {
             if (!savedObjects.Reverse.Contains(objectInstance))
             {
                 if (logIfNone)
-                    Logger.Logger.LogError(SaveService.SaveServiceLog, "Received ID Request for {} but it has not been added to the saved references.", () => new object[] { objectInstance.name });
+                    DevTools.Logger.LogError(SaveService.SaveServiceLog, "Received ID Request for {} but it has not been added to the saved references.", () => new object[] { objectInstance.name });
                 return 0;
             }
 
             return savedObjects.Reverse[objectInstance];
         }
 
-        public void AddObject(Object so)
+        public T[] GetObjectsOfType<T>() where T : UnityEngine.Object
         {
-            savedObjects.Add(Random.Range(1, int.MaxValue), so);
+            return Array.ConvertAll<UnityEngine.Object, T>(savedObjectValues.Where(x => x.GetType() == typeof(T)).ToArray(), delegate (UnityEngine.Object i)
+            {
+                return (T)i;
+            });
+        }
+
+        public void AddObject(UnityEngine.Object so)
+        {
+            savedObjects.Add(UnityEngine.Random.Range(1, int.MaxValue), so);
             Cleanup();
         }
 

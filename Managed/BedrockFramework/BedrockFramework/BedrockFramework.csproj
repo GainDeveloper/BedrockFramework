@@ -65,8 +65,11 @@
     <Compile Include="..\Source\Prototype\Prototype.cs">
       <Link>Prototype\Prototype.cs</Link>
     </Compile>
-    <Compile Include="..\Source\Logger\Logger.cs">
-      <Link>Logger\Logger.cs</Link>
+    <Compile Include="..\Source\DevTools\Logger.cs">
+      <Link>DevTools\Logger.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\DevTools\DebugMenu.cs">
+      <Link>DevTools\DebugMenu.cs</Link>
     </Compile>
     <Compile Include="..\Source\Pool\Pool.cs">
       <Link>Pool\Pool.cs</Link>
@@ -95,6 +98,9 @@
     </Compile>
     <Compile Include="..\Source\Utilities\Map.cs">
       <Link>Utilities\Map.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Utilities\CoroutineEvent.cs">
+      <Link>Utilities\CoroutineEvent.cs</Link>
     </Compile>
     <Compile Include="..\Source\Scenes\SceneService.cs">
       <Link>Scenes\SceneService.cs</Link>
