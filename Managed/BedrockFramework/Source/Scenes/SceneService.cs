@@ -119,7 +119,7 @@ namespace BedrockFramework.Scenes
             // Use to change the state of the active scenes GameObjects before progressing (Loading scene save data ect.)
             OnPreFinishedLoading();
 
-            DevTools.Logger.Log(SceneServiceLog, "Finished Loading");
+            DevTools.Logger.Log(SceneServiceLog, "Finished Loading Scenes");
 
             OnFinishedLoading(sceneToLoad);
         }

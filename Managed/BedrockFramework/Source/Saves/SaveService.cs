@@ -155,6 +155,8 @@ namespace BedrockFramework.Saves
                     yield break;
             }
 
+            DevTools.Logger.Log(SaveServiceLog, "Started Loading Save.");
+
             // Tell objects we are about to load. (Used to load the correct scene definition as an example).
             CoroutineEvent preLoadCoroutines = new CoroutineEvent();
             OnPreLoad(preLoadCoroutines);
@@ -171,7 +173,7 @@ namespace BedrockFramework.Saves
             // Tell objects we have loaded the data. 
             OnPostLoad();
 
-            DevTools.Logger.Log(SaveServiceLog, "Finished loading.");
+            DevTools.Logger.Log(SaveServiceLog, "Finished Loading Save.");
         }
 
 
@@ -179,6 +181,8 @@ namespace BedrockFramework.Saves
         {
             // Define a SaveGame class that we fill with various properties.
             currentGameSave = new GameSave();
+
+            DevTools.Logger.Log(SaveServiceLog, "Started Saving Game.");
 
             // Will need to do some generic key/object saving here.
             OnPreSave();
@@ -191,7 +195,7 @@ namespace BedrockFramework.Saves
 
             SaveGameSaveToFile(filePath);
 
-            DevTools.Logger.Log(SaveServiceLog, "Finished saving game.");
+            DevTools.Logger.Log(SaveServiceLog, "Finished Saving Game.");
         }
     }
 }

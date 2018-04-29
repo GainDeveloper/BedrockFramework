@@ -12,15 +12,15 @@ namespace BedrockFramework.DevTools
         [System.Serializable]
         private class LoggerLogEditor
         {
-            //public string logCategory;
+            public LoggerEditorCategory logCategory;
             public string logMessage;
             public string logStackTrace;
             public LogType logType;
             GUIContent logGUI;
 
-            public LoggerLogEditor(Logger.LoggerLog newLog)
+            public LoggerLogEditor(Logger.LoggerLog newLog, LoggerEditorCategory assignedCategory)
             {
-                //logCategory = newLog.logCategory;
+                logCategory = assignedCategory;
                 logMessage = newLog.logMessage;
                 logType = newLog.logType;
                 logStackTrace = newLog.logStackTrace;
@@ -54,8 +54,12 @@ namespace BedrockFramework.DevTools
 
                 logEditor.SetIconToType(false, logType);
                 logGUI.image = logEditor.icon;
+
+                GUI.backgroundColor = logCategory.categoryColour;
+                
                 if (GUILayout.Button(logGUI, logEditor.boxStyle, GUILayout.ExpandWidth(true), GUILayout.Height(logEditor.boxStyle.CalcSize(logGUI).y)))
                     logEditor.selected = this;
+                GUI.backgroundColor = Color.white;
             }
 
             public void OpenScript()
@@ -74,51 +78,38 @@ namespace BedrockFramework.DevTools
         {
             public string category;
             public GUIContent categoryContent;
-            public List<LoggerLogEditor> categoryLogs;
+            public Color categoryColour;
+
             bool enabled = true;
             LogType lowestLogType = LogType.Log;
+            int logCount = 0;
 
-            public LoggerEditorCategory(string category)
+            public bool Enabled { get { return enabled; } }
+
+            public LoggerEditorCategory(string category, Color categoryColour)
             {
                 this.category = category;
+                this.categoryColour = categoryColour;
                 categoryContent = new GUIContent(category);
-                categoryLogs = new List<LoggerLogEditor>();
             }
 
             public void AddLog(LoggerEditor logEditor, Logger.LoggerLog logToAdd)
             {
-                categoryLogs.Add(new LoggerLogEditor(logToAdd));
+                logCount++;
                 categoryContent.image = logEditor.icon;
-                categoryContent.text = category + " (" + categoryLogs.Count + ")";
+                categoryContent.text = category + " (" + logCount + ")";
 
                 if (logToAdd.logType < lowestLogType)
                     lowestLogType = logToAdd.logType;
-
-                if (logEditor.errorPause && logToAdd.logType == LogType.Error)
-                    EditorApplication.isPaused = true;
             }
 
             public void DrawCategoryButtons(LoggerEditor logEditor)
             {
                 logEditor.SetIconToType(true, lowestLogType);
                 categoryContent.image = logEditor.icon;
-                if (GUILayout.Toggle(enabled, categoryContent, EditorStyles.toolbarButton, GUILayout.Width(EditorStyles.toolbarButton.CalcSize(categoryContent).x)))
-                {
-                    foreach (LoggerEditorCategory logCategory in logEditor.activeCategoryLogs)
-                        logCategory.enabled = false;
-                    enabled = true;
-                }
-            }
-
-            public void DrawCategoryLogs(LoggerEditor logEditor)
-            {
-                if (!enabled)
-                    return;
-
-                for (int i = 0; i < categoryLogs.Count; i++)
-                {
-                    categoryLogs[i].DrawLog(i % 2 != 0, logEditor);
-                }
+                GUI.backgroundColor = categoryColour;
+                enabled = GUILayout.Toggle(enabled, categoryContent, EditorStyles.toolbarButton, GUILayout.Width(EditorStyles.toolbarButton.CalcSize(categoryContent).x));
+                GUI.backgroundColor = Color.white;
             }
         }
 
@@ -130,6 +121,8 @@ namespace BedrockFramework.DevTools
             window.Show();
         }
 
+        [SerializeField]
+        private List<LoggerLogEditor> categoryLogs;
         [SerializeField]
         private List<LoggerEditorCategory> activeCategoryLogs;
         [SerializeField]
@@ -145,6 +138,8 @@ namespace BedrockFramework.DevTools
         [SerializeField]
         private bool showErrors = true;
 
+        private Color[] categoryColours = new Color[] { new Color(  .918f, .522f, .173f),
+            new Color(.431f, .812f, .922f), new Color(.100f, .38f, .922f), new Color(.675f, .922f, .431f)};
         private GUIContent clearContent = new GUIContent("Clear");
         private GUIContent clearOnPlayContent = new GUIContent("Clear on Play");
         private GUIContent errorPauseContent = new GUIContent("ErrorPause");
@@ -177,6 +172,7 @@ namespace BedrockFramework.DevTools
             if (activeCategoryLogs == null)
             {
                 activeCategoryLogs = new List<LoggerEditorCategory>();
+                categoryLogs = new List<LoggerLogEditor>();
 
                 foreach (Logger.LoggerLog log in Logger.currentLogs)
                     Logger_OnLogAdded(log);
@@ -263,21 +259,31 @@ namespace BedrockFramework.DevTools
                     return existingCategory;
             }
 
-            LoggerEditorCategory newCategory = new LoggerEditorCategory(category);
+            LoggerEditorCategory newCategory = new LoggerEditorCategory(category, categoryColours[activeCategoryLogs.Count.Wrap(0, categoryColours.Length)]);
             activeCategoryLogs.Add(newCategory);
             return newCategory;
         }
 
         private void Logger_OnLogAdded(Logger.LoggerLog newLog)
         {
-            GetCategory(newLog.logCategory).AddLog(this, newLog);
+            AddLog(newLog);
             Repaint();
         }
 
         private void LogMessageReceived(string condition, string stackTrace, LogType type)
         {
-            GetCategory(Logger.defaultCategory).AddLog(this, new Logger.LoggerLog(Logger.defaultCategory, condition, type, stackTrace));
+            AddLog(new Logger.LoggerLog(Logger.defaultCategory, condition, type, stackTrace));
             Repaint();
+        }
+
+        private void AddLog(Logger.LoggerLog logToAdd)
+        {
+            LoggerEditorCategory logCategory = GetCategory(logToAdd.logCategory);
+            logCategory.AddLog(this, logToAdd);
+            categoryLogs.Add(new LoggerLogEditor(logToAdd, logCategory));
+
+            if (errorPause && logToAdd.logType == LogType.Error)
+                EditorApplication.isPaused = true;
         }
 
         private void SetIconToType(bool small, LogType logType)
@@ -357,8 +363,15 @@ namespace BedrockFramework.DevTools
             GUILayout.BeginArea(upperPanel);
             upperPanelScroll = GUILayout.BeginScrollView(upperPanelScroll);
 
-            foreach (LoggerEditorCategory category in activeCategoryLogs)
-                category.DrawCategoryLogs(this);
+            int drawCount = 0;
+            for (int i = 0; i < categoryLogs.Count; i++)
+            {
+                if (!categoryLogs[i].logCategory.Enabled)
+                    continue;
+
+                categoryLogs[i].DrawLog(drawCount % 2 != 0, this);
+                drawCount++;
+            }
 
             GUILayout.EndScrollView();
             GUILayout.EndArea();
@@ -418,6 +431,7 @@ namespace BedrockFramework.DevTools
 
         private void ClearLogs()
         {
+            categoryLogs.Clear();
             activeCategoryLogs.Clear();
             selected = null;
         }
