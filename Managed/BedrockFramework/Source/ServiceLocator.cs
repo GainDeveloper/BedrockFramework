@@ -68,6 +68,21 @@ namespace BedrockFramework
             }
         }
 
+        // Network Service
+        private static Network.INetworkService networkService;
+        public static Network.INetworkService NetworkService { get { return networkService; } }
+        public static void RegisterNetworkService(Network.INetworkService service)
+        {
+            if (service == null)
+            {
+                networkService = new Network.NullNetworkService();
+            }
+            else
+            {
+                networkService = service;
+            }
+        }
+
         // Register null services as a fallback.
         static ServiceLocator()
         {
@@ -75,6 +90,7 @@ namespace BedrockFramework
             RegisterPoolService(null);
             RegisterSaveService(null);
             RegisterGameModeService(null);
+            RegisterNetworkService(null);
         }
     }
 }

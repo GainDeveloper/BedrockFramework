@@ -145,6 +145,8 @@ namespace BedrockFramework.Saves
                         case AnimatorControllerParameterType.Int:
                             intValuie = animator.GetInteger(id);
                             break;
+                        case AnimatorControllerParameterType.Trigger:
+                            break;
                     }
                 }
 
@@ -160,6 +162,8 @@ namespace BedrockFramework.Saves
                             break;
                         case AnimatorControllerParameterType.Int:
                             animator.SetInteger(id, intValuie);
+                            break;
+                        case AnimatorControllerParameterType.Trigger:
                             break;
                     }
                 }

@@ -10,28 +10,37 @@ namespace BedrockFramework.DevTools
 		{
 			string title;
 			Action action;
+            Func<bool> isEnabled;
 
-			public DebugItem(string title, Action action)
+
+            public DebugItem(string title, Action action, Func<bool> isEnabled)
 			{
 				this.title = title;
 				this.action = action;
-			}
+                this.isEnabled = isEnabled;
+            }
 
 			public bool OnGUI_DrawItem()
 			{
+                if (isEnabled != null)
+                    GUI.enabled = isEnabled();
+
 				if (action == null)
 				{
 					GUILayout.Label(title, GUILayout.MaxHeight(_DebugMainHeight), GUILayout.MaxWidth(DebugCategory._DebugCategoryMaxWidth));
-					return false;
+                    GUI.enabled = true;
+                    return false;
 				}
 
 				if (GUILayout.Button(title, GUILayout.MaxHeight(_DebugMainHeight), GUILayout.MaxWidth(DebugCategory._DebugCategoryMaxWidth)))
 				{
 					action();
-					return true;
+                    GUI.enabled = true;
+                    return true;
 				}
 
-				return false;
+                GUI.enabled = true;
+                return false;
 			}
 		}
 
@@ -125,7 +134,7 @@ namespace BedrockFramework.DevTools
 			}
 		}
 
-		public static void AddDebugItem(string categoryTitle, string name, Action action = null)
+		public static void AddDebugItem(string categoryTitle, string name, Action action = null, Func<bool> isEnabled = null)
 		{
             if (Instance == null)
                 return;
@@ -134,7 +143,7 @@ namespace BedrockFramework.DevTools
 			if (category == null)
 				category = Instance.CreateCategory(categoryTitle);
 
-			category.AddDebugItem(new DebugItem(name, action));
+			category.AddDebugItem(new DebugItem(name, action, isEnabled));
 		}
 
 		#region Categories

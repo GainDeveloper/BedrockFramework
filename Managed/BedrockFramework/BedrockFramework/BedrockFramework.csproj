@@ -141,6 +141,15 @@
     <Compile Include="..\Source\Saves\SavedObjectReference.cs">
       <Link>Saves\SavedObjectReference.cs</Link>
     </Compile>
+    <Compile Include="..\Source\Network\NetworkService.cs">
+      <Link>Network\NetworkService.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Network\NetworkConnection.cs">
+      <Link>Network\NetworkConnection.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Network\NetworkSocket.cs">
+      <Link>Network\NetworkSocket.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
