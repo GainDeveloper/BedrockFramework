@@ -6,39 +6,43 @@ BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
-using System;
+using System.Text;
 
 namespace BedrockFramework.Network
 {
     public interface INetworkService
     {
         void StartHost();
-        void StartClient();
+        void StartClient(string remoteHost);
         void Stop();
+
+        //void NewConnection(NetworkConnection newConnection);
+        //void NewConnectionReady(NetworkConnection readyConnection); 
     }
 
     public class NullNetworkService : INetworkService
     {
         public void StartHost() { }
-        public void StartClient() { }
+        public void StartClient(string remoteHost) { }
         public void Stop() { }
     }
 
     public class NetworkService : Service, INetworkService
     {
         public const string NetworkLog = "Network";
-        public const int MaxPlayers = 2;
+        public const int MaxConnections = 1;
 
         private int hostPort = 7777;
-        private string remoteHost = "127.0.0.1";
+        private string localHost = "127.0.0.1";
         private NetworkSocket currentSocket;
 
-        public bool IsActive { get { return currentSocket != null; } }
+        public bool IsActive { get { return currentSocket != null && currentSocket.IsActive; } }
 
         public NetworkService(MonoBehaviour owner) : base(owner)
         {
             DevTools.DebugMenu.AddDebugItem("Network", "Host", () => { StartHost(); }, () => { return !IsActive; });
-            DevTools.DebugMenu.AddDebugItem("Network", "Join", () => { StartClient(); }, () => { return !IsActive; });
+            DevTools.DebugMenu.AddDebugItem("Network", "Join", () => { StartClient(localHost); }, () => { return !IsActive; });
+            DevTools.DebugMenu.AddDebugItem("Network", "Send Test", () => { SendTestMessage(); }, () => { return IsActive; });
             DevTools.DebugMenu.AddDebugItem("Network", "Leave", () => { Stop(); }, () => { return IsActive; });
         }
 
@@ -50,10 +54,10 @@ namespace BedrockFramework.Network
 
             DevTools.Logger.Log(NetworkLog, "Starting Host");
             currentSocket = new NetworkSocket(owner);
-            currentSocket.Startup(hostPort, MaxPlayers);
+            currentSocket.Startup(hostPort, MaxConnections);
         }
 
-        public void StartClient()
+        public void StartClient(string remoteHost)
         {
             if (IsActive)
                 return;
@@ -66,16 +70,29 @@ namespace BedrockFramework.Network
             }
         }
 
+        public void SendTestMessage()
+        {
+            if (!IsActive)
+                return;
 
+            if (currentSocket.IsHost)
+            {
+                byte[] bytes = Encoding.ASCII.GetBytes("Test To Client");
+                foreach (NetworkConnection connection in currentSocket.ActiveConnections())
+                    currentSocket.SendData(connection, currentSocket.ReliableSequencedChannel, bytes, bytes.Length);
+            } else
+            {
+                byte[] bytes = Encoding.ASCII.GetBytes("Test To Server");
+                currentSocket.SendData(currentSocket.LocalConnection, currentSocket.ReliableSequencedChannel, bytes, bytes.Length);
+            }
+        }
 
         public void Stop()
         {
             if (!IsActive)
                 return;
 
-            currentSocket.Disconnect();
-            // If we are host we should tell everyone else to disconnect before closing the socket.
-            // Otherwise just send a disconnect event.
+            currentSocket.SendDisconnect();
         }
     }
 }

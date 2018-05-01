@@ -13,19 +13,28 @@ namespace BedrockFramework.Network
     public class NetworkSocket
     {
         private MonoBehaviour owner;
+        private Dictionary<int, NetworkConnection> activeConnections = new Dictionary<int, NetworkConnection>();
 
         private ConnectionConfig connectionConfig;
         private int reliableSequencedChannel;
-        private int serverID = -1;
+        private int socketID = -1;
         private int localConnectionID = 0;
-
-        bool IsHost { get { return localConnectionID == 0; } }
-        bool IsActive { get { return serverID != -1; } }
-
         private Coroutine eventPoll;
         private byte[] receivedDataBuffer = new byte[1024];
 
-        private Dictionary<int, NetworkConnection> activeConnections = new Dictionary<int, NetworkConnection>();
+        public bool IsHost { get { return localConnectionID == 0; } }
+        public bool IsActive { get { return socketID != -1; } }
+        public int SocketID { get { return socketID; } }
+        public int LocalConnectionID { get { return localConnectionID; } }
+        public int ReliableSequencedChannel { get { return reliableSequencedChannel; } }
+
+        public NetworkConnection LocalConnection { get { return activeConnections[localConnectionID]; } }
+        public IEnumerable<NetworkConnection> ActiveConnections() {
+            foreach (NetworkConnection connection in activeConnections.Values)
+                yield return connection;
+        }
+
+        //public NetworkMessage NetworkMessage { get { return networkMessage; } }
 
         public NetworkSocket(MonoBehaviour owner)
         {
@@ -47,8 +56,8 @@ namespace BedrockFramework.Network
             HostTopology topology = new HostTopology(connectionConfig, maxConnections);
 
 
-            serverID = NetworkTransport.AddHost(topology, port);
-            if (serverID == -1)
+            socketID = NetworkTransport.AddHost(topology, port);
+            if (socketID == -1)
             {
                 //SERVER FAILED
                 return false;
@@ -67,7 +76,7 @@ namespace BedrockFramework.Network
             }
 
             byte errorCode;
-            localConnectionID = NetworkTransport.Connect(serverID, remoteHost, hostPort, 0, out errorCode);
+            localConnectionID = NetworkTransport.Connect(socketID, remoteHost, hostPort, 0, out errorCode);
             if (errorCode == 0)
             {
                 DevTools.Logger.Log(NetworkService.NetworkLog, "Client Connection ID: {}", () => new object[] { localConnectionID });
@@ -77,6 +86,9 @@ namespace BedrockFramework.Network
             }
         }
 
+        //
+        // Lifetime
+        //
 
         IEnumerator PollNetworkEvents()
         {
@@ -86,7 +98,7 @@ namespace BedrockFramework.Network
                 int channelId;
                 int receivedSize;
                 byte error;
-                NetworkEventType networkEvent = NetworkTransport.ReceiveFromHost(serverID, out connectionId, out channelId, receivedDataBuffer, (ushort)receivedDataBuffer.Length, out receivedSize, out error);
+                NetworkEventType networkEvent = NetworkTransport.ReceiveFromHost(socketID, out connectionId, out channelId, receivedDataBuffer, (ushort)receivedDataBuffer.Length, out receivedSize, out error);
 
                 while (networkEvent != NetworkEventType.Nothing)
                 {
@@ -94,6 +106,7 @@ namespace BedrockFramework.Network
                     if (error != 0)
                     {
                         DevTools.Logger.LogError(NetworkService.NetworkLog, "{}: ", () => new object[] { (NetworkError)error, connectionId });
+                        Close();
                         break;
                     }
                     if (networkEvent == NetworkEventType.Nothing)
@@ -105,7 +118,7 @@ namespace BedrockFramework.Network
                             SetupConnection(connectionId);
                             break;
                         case NetworkEventType.DataEvent:
-                            // Pass received data to connection.
+                            activeConnections[connectionId].ReceiveData(channelId, receivedDataBuffer, receivedSize);
                             break;
                         case NetworkEventType.DisconnectEvent:
                             RemoveConnection(connectionId);
@@ -114,29 +127,50 @@ namespace BedrockFramework.Network
                             break;
                     }
 
-                    networkEvent = NetworkTransport.ReceiveFromHost(serverID, out connectionId, out channelId, receivedDataBuffer, (ushort)receivedDataBuffer.Length, out receivedSize, out error);
+                    networkEvent = NetworkTransport.ReceiveFromHost(socketID, out connectionId, out channelId, receivedDataBuffer, (ushort)receivedDataBuffer.Length, out receivedSize, out error);
                 }
 
                 yield return null;
             }
         }
 
+        public void SendData(NetworkConnection connection, int channelId, byte[] data, int dataSize)
+        {
+            if (IsHost)
+            {
+                connection.SendData(channelId, data, dataSize);
+            } else
+            {
+                if (connection != LocalConnection)
+                {
+                    DevTools.Logger.Log(NetworkService.NetworkLog, "Attempting to send data to a none local connection. This is not allowed.");
+                    return;
+                }
+
+                connection.SendData(channelId, data, dataSize);
+            }
+        }
+
+        //
+        // Manage Network Connections
+        //
+
         void SetupConnection(int connectionId)
         {
             if (activeConnections.ContainsKey(connectionId))
             {
-                Debug.LogError("Received new connection for existing connection");
+                DevTools.Logger.Log(NetworkService.NetworkLog, "Received new connection for existing connection");
                 return;
             }
 
-            activeConnections[connectionId] = new NetworkConnection(connectionId);
+            activeConnections[connectionId] = new NetworkConnection(this, connectionId);
         }
 
         void RemoveConnection(int connectionId)
         {
             if (!activeConnections.ContainsKey(connectionId))
             {
-                Debug.LogError("Received disconnect for connection that does not exist.");
+                DevTools.Logger.Log(NetworkService.NetworkLog, "Received disconnect for connection that does not exist.");
                 return;
             }
 
@@ -144,7 +178,11 @@ namespace BedrockFramework.Network
             activeConnections.Remove(connectionId);
         }
 
-        public void Disconnect()
+        //
+        // Disconnections
+        //
+
+        public void SendDisconnect()
         {
             if (!IsActive)
                 return;
@@ -152,13 +190,50 @@ namespace BedrockFramework.Network
             if (!IsHost)
             {
                 byte error;
-                NetworkTransport.Disconnect(serverID, localConnectionID, out error);
+                NetworkTransport.Disconnect(socketID, localConnectionID, out error);
+            } else
+            {
+                foreach (NetworkConnection connection in activeConnections.Values)
+                {
+                    byte error;
+                    NetworkTransport.Disconnect(socketID, connection.ConnectionID, out error);
+                }
+                owner.StartCoroutine(HostWaitClosedConnections());
             }
+        }
+
+        public void Close()
+        {
+            owner.StartCoroutine(ClientWaitShutdown());
+        }
+
+        // We wait one frame before closing the socket when we are a client.
+        // This is so the server has time to receive the close event.
+        IEnumerator ClientWaitShutdown()
+        {
+            yield return null;
+            Shutdown();
+        }
+
+        // We wait for all current connections to close before shutting down the server.
+        // TODO: We should add a timeout for this incase any clients don't respond.
+        IEnumerator HostWaitClosedConnections()
+        {
+            while (activeConnections.Count > 0)
+            {
+                yield return null;
+            }
+
+            Shutdown();
         }
 
         public void Shutdown()
         {
-            // Actually close the socket and shutdown the network transport.
+            NetworkTransport.RemoveHost(socketID);
+            socketID = -1;
+            localConnectionID = 0;
+
+            NetworkTransport.Shutdown();
         }
     }
 }
