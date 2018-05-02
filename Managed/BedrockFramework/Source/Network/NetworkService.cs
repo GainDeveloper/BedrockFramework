@@ -5,6 +5,7 @@ BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.Networking.Match;
 using System;
 using System.Collections.Generic;
 
@@ -12,7 +13,7 @@ namespace BedrockFramework.Network
 {
     public interface INetworkService
     {
-        void StartHost();
+        void StartHost(bool internetHost);
         void StartClient(string remoteHost);
         void Stop();
 
@@ -31,7 +32,7 @@ namespace BedrockFramework.Network
 
     public class NullNetworkService : INetworkService
     {
-        public void StartHost() { }
+        public void StartHost(bool internetHost) { }
         public void StartClient(string remoteHost) { }
         public void Stop() { }
 
@@ -52,6 +53,7 @@ namespace BedrockFramework.Network
 
         private int hostPort = 7777;
         private string localHost = "127.0.0.1";
+        private NetworkMatch networkMatch;
         private NetworkSocket currentSocket;
         private short nextUniqueNetworkID = 1;
 
@@ -92,21 +94,57 @@ namespace BedrockFramework.Network
         public NetworkService(MonoBehaviour owner) : base(owner)
         {
             DevTools.DebugMenu.AddDebugItem("Network", "Host", () => { StartHost(); }, () => { return !IsActive; });
-            DevTools.DebugMenu.AddDebugItem("Network", "Join", () => { StartClient(localHost); }, () => { return !IsActive; });
+            DevTools.DebugMenu.AddDebugItem("Network", "Join Internet", () => { JoinFirstInternetMatch(); }, () => { return !IsActive; });
+            DevTools.DebugMenu.AddDebugItem("Network", "Join Local", () => { StartClient(localHost); }, () => { return !IsActive; });
             DevTools.DebugMenu.AddDebugItem("Network", "Send Test", () => { SendTestMessage(); }, () => { return IsActive; });
             DevTools.DebugMenu.AddDebugItem("Network", "Leave", () => { Stop(); }, () => { return IsActive; });
+
+            networkMatch = owner.gameObject.AddComponent<NetworkMatch>();
         }
 
-        public void StartHost()
+        //
+        // Hosting
+        //
+
+        public void StartHost(bool internetHost = true)
         {
             if (IsActive)
                 return;
 
             DevTools.Logger.Log(NetworkLog, "Starting Host");
 
-            NewSocket();
-            currentSocket.Startup(hostPort, MaxConnections);
+            if (internetHost)
+                networkMatch.CreateMatch("BedrockHost", MaxConnections + 1, true, "", "", "", 0, 0, OnMatchCreate);
+            else
+            {
+                NewSocket();
+                currentSocket.Startup(hostPort, MaxConnections);
+            }
         }
+
+        // Called when relay server has created a match for us.
+        void OnMatchCreate(bool success, string extendedInfo, MatchInfo matchInfo)
+        {
+            if (success)
+            {
+                DevTools.Logger.Log(NetworkLog, "Create Relay Match Succeeded");
+                Utility.SetAccessTokenForNetwork(matchInfo.networkId, matchInfo.accessToken);
+
+                NewSocket();
+                currentSocket.Startup(hostPort, MaxConnections);
+
+                //m_MatchInfo = matchInfo;
+                currentSocket.StartupRelayHost(matchInfo);
+            }
+            else
+            {
+                DevTools.Logger.LogError(NetworkLog, "Create relay match failed: {}", () => new object[] { extendedInfo });
+            }
+        }
+
+        //
+        // Clients
+        //
 
         public void StartClient(string remoteHost)
         {
@@ -122,34 +160,40 @@ namespace BedrockFramework.Network
             }
         }
 
-        public void SendTestMessage()
+        public void JoinFirstInternetMatch()
         {
-            if (!IsActive)
+            if (IsActive)
                 return;
 
-            if (currentSocket.IsHost)
+            networkMatch.ListMatches(0, 1, "", true, 0, 0, (success, info, matches) =>
             {
-                foreach (NetworkConnection connection in currentSocket.ActiveConnections())
+                if (success && matches.Count > 0)
+                    networkMatch.JoinMatch(matches[0].networkId, "", "", "", 0, 0, OnMatchJoined);
+            });
+        }
+
+        void OnMatchJoined(bool success, string extendedInfo, MatchInfo matchInfo)
+        {
+            if (success)
+            {
+                DevTools.Logger.Log(NetworkLog, "Join Relay Match Succeeded");
+                Utility.SetAccessTokenForNetwork(matchInfo.networkId, matchInfo.accessToken);
+
+                //m_MatchInfo = matchInfo;
+                NewSocket();
+                if (currentSocket.Startup(0, 1))
                 {
-                    NetworkWriter writer = currentSocket.Writer.Setup(connection, currentSocket.ReliableSequencedChannel, MessageTypes.BRF_TestString);
-                    writer.Write("Test To Client");
-                    currentSocket.Writer.Send();
+                    currentSocket.ConnectThroughRelay(matchInfo);
                 }
-            } else
-            {
-                NetworkWriter writer = currentSocket.Writer.Setup(currentSocket.LocalConnection, currentSocket.ReliableSequencedChannel, MessageTypes.BRF_TestString);
-                writer.Write("Test To Server");
-                currentSocket.Writer.Send();
             }
+            else
+            {
+                DevTools.Logger.LogError(NetworkLog, "Join relay match failed: {}", () => new object[] { extendedInfo });            }
         }
 
-        public void Stop()
-        {
-            if (!IsActive)
-                return;
-
-            currentSocket.SendDisconnect();
-        }
+        //
+        // Generic
+        //
 
         private void NewSocket()
         {
@@ -174,6 +218,36 @@ namespace BedrockFramework.Network
             currentSocket.OnNewNetworkConnection -= CurrentSocket_OnNewNetworkConnection;
             currentSocket.OnNetworkConnectionReady -= CurrentSocket_OnNetworkConnectionReady;
             currentSocket.OnShutdown -= CurrentSocket_OnShutdown;
+        }
+
+        public void SendTestMessage()
+        {
+            if (!IsActive)
+                return;
+
+            if (currentSocket.IsHost)
+            {
+                foreach (NetworkConnection connection in currentSocket.ActiveConnections())
+                {
+                    NetworkWriter writer = currentSocket.Writer.Setup(connection, currentSocket.ReliableSequencedChannel, MessageTypes.BRF_TestString);
+                    writer.Write("Test To Client");
+                    currentSocket.Writer.Send();
+                }
+            }
+            else
+            {
+                NetworkWriter writer = currentSocket.Writer.Setup(currentSocket.LocalConnection, currentSocket.ReliableSequencedChannel, MessageTypes.BRF_TestString);
+                writer.Write("Test To Server");
+                currentSocket.Writer.Send();
+            }
+        }
+
+        public void Stop()
+        {
+            if (!IsActive)
+                return;
+
+            currentSocket.SendDisconnect();
         }
     }
 }

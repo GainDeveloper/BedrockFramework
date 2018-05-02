@@ -5,6 +5,8 @@ Stores list of connections.
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.Networking.Types;
+using UnityEngine.Networking.Match;
 using System.Collections;
 using System.Collections.Generic;
 using System;
@@ -21,6 +23,7 @@ namespace BedrockFramework.Network
         private int reliableChannel;
         private int socketID = -1;
         private int localConnectionID = 0;
+        private MatchInfo matchInfo = null;
         private Coroutine eventPoll;
         private byte[] receivedDataBuffer = new byte[1024];
         private NetworkWriterWrapper writer;
@@ -77,6 +80,19 @@ namespace BedrockFramework.Network
             return true;
         }
 
+        public void StartupRelayHost(MatchInfo matchInfo)
+        {
+            this.matchInfo = matchInfo;
+
+            byte error;
+            NetworkTransport.ConnectAsNetworkHost(
+                socketID, matchInfo.address, matchInfo.port, matchInfo.networkId, Utility.GetSourceID(), matchInfo.nodeId, out error);
+        }
+
+        //
+        // Client
+        //
+
         public void Connect(string remoteHost, int hostPort)
         {
             if (localConnectionID != 0)
@@ -87,10 +103,34 @@ namespace BedrockFramework.Network
 
             byte errorCode;
             localConnectionID = NetworkTransport.Connect(socketID, remoteHost, hostPort, 0, out errorCode);
+
             if (errorCode == 0)
             {
                 DevTools.Logger.Log(NetworkService.NetworkLog, "Client Connection ID: {}", () => new object[] { localConnectionID });
             } else
+            {
+                Debug.LogError(errorCode);
+            }
+        }
+
+        public void ConnectThroughRelay(MatchInfo matchInfo)
+        {
+            if (localConnectionID != 0)
+            {
+                // Already connected.
+                return;
+            }
+
+            this.matchInfo = matchInfo;
+
+            byte errorCode;
+            localConnectionID = NetworkTransport.ConnectToNetworkPeer(socketID, matchInfo.address, matchInfo.port, 0, 0, matchInfo.networkId, Utility.GetSourceID(), matchInfo.nodeId, out errorCode);
+
+            if (errorCode == 0)
+            {
+                DevTools.Logger.Log(NetworkService.NetworkLog, "Client Connection ID: {}", () => new object[] { localConnectionID });
+            }
+            else
             {
                 Debug.LogError(errorCode);
             }
@@ -105,11 +145,21 @@ namespace BedrockFramework.Network
             //TODO: Need to handle timeouts. They don't come with any specific connection id.
             while (IsActive)
             {
+                // Get events from the relay connection
+                byte error;
+                NetworkEventType networkEvent;
+
+                networkEvent = NetworkTransport.ReceiveRelayEventFromHost(socketID, out error);
+                if (networkEvent == NetworkEventType.ConnectEvent)
+                    DevTools.Logger.Log(NetworkService.NetworkLog, "Relay Server Connected");
+                if (networkEvent == NetworkEventType.DisconnectEvent)
+                    DevTools.Logger.Log(NetworkService.NetworkLog, "Relay Server Disconnected");
+
+                // Get events from host connection
                 int connectionId;
                 int channelId;
                 int receivedSize;
-                byte error;
-                NetworkEventType networkEvent = NetworkTransport.ReceiveFromHost(socketID, out connectionId, out channelId, receivedDataBuffer, (ushort)receivedDataBuffer.Length, out receivedSize, out error);
+                networkEvent = NetworkTransport.ReceiveFromHost(socketID, out connectionId, out channelId, receivedDataBuffer, (ushort)receivedDataBuffer.Length, out receivedSize, out error);
 
                 while (networkEvent != NetworkEventType.Nothing)
                 {
@@ -117,7 +167,7 @@ namespace BedrockFramework.Network
                     if (error != 0)
                     {
                         DevTools.Logger.LogError(NetworkService.NetworkLog, "{}: ", () => new object[] { (NetworkError)error, connectionId });
-                        Close();
+                        Close(); //Do we actually want to CLOSE the connection if we hit an error? Perhaps on clients but not on host.
                         break;
                     }
                     if (networkEvent == NetworkEventType.Nothing)
@@ -212,6 +262,7 @@ namespace BedrockFramework.Network
                 NetworkTransport.Disconnect(socketID, localConnectionID, out error);
             } else
             {
+                // Should probably make the network match unjoinable
                 foreach (NetworkConnection connection in activeConnections.Values)
                 {
                     byte error;
@@ -219,6 +270,11 @@ namespace BedrockFramework.Network
                 }
                 owner.StartCoroutine(HostWaitClosedConnections());
             }
+        }
+
+        public void OnConnectionDropped(bool success, string extendedInfo)
+        {
+            Debug.Log("Connection has been dropped on matchmaker server");
         }
 
         public void Close()
@@ -230,6 +286,9 @@ namespace BedrockFramework.Network
         // This is so the server has time to receive the close event.
         IEnumerator ClientWaitShutdown()
         {
+            if (matchInfo != null)
+                yield return owner.GetComponent<NetworkMatch>().DropConnection(matchInfo.networkId, matchInfo.nodeId, 0, null);
+
             yield return null;
             Shutdown();
         }
@@ -243,7 +302,7 @@ namespace BedrockFramework.Network
                 yield return null;
             }
 
-            Shutdown();
+            Close();
         }
 
         public void Shutdown()
@@ -251,6 +310,7 @@ namespace BedrockFramework.Network
             NetworkTransport.RemoveHost(socketID);
             socketID = -1;
             localConnectionID = 0;
+            matchInfo = null;
 
             NetworkTransport.Shutdown();
             OnShutdown();
