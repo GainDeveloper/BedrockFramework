@@ -17,7 +17,7 @@ namespace BedrockFramework.Saves
     public class SavedObjectReferences : ScriptableObject, ISerializationCallbackReceiver
     {
         [ReadOnly, ShowInInspector]
-        private Map<int, UnityEngine.Object> savedObjects = new Map<int, UnityEngine.Object>();
+        private Map<short, UnityEngine.Object> savedObjects = new Map<short, UnityEngine.Object>();
         [SerializeField, HideInInspector]
         private List<int> savedScriptableObjectKeys;
         [SerializeField, HideInInspector]
@@ -31,7 +31,7 @@ namespace BedrockFramework.Saves
 
             while (enumerator.MoveNext())
             {
-                KeyValuePair<int, UnityEngine.Object> savedScriptableObject = (KeyValuePair<int, UnityEngine.Object>)enumerator.Current;
+                KeyValuePair<short, UnityEngine.Object> savedScriptableObject = (KeyValuePair<short, UnityEngine.Object>)enumerator.Current;
                 savedScriptableObjectKeys.Add(savedScriptableObject.Key);
                 savedObjectValues.Add(savedScriptableObject.Value);
             }
@@ -39,18 +39,18 @@ namespace BedrockFramework.Saves
 
         public void OnAfterDeserialize()
         {
-            savedObjects = new Map<int, UnityEngine.Object>();
+            savedObjects = new Map<short, UnityEngine.Object>();
 
             for (int i = 0; i != savedScriptableObjectKeys.Count; i++)
-                savedObjects.Add(savedScriptableObjectKeys[i], savedObjectValues[i]);
+                savedObjects.Add((short)savedScriptableObjectKeys[i], savedObjectValues[i]);
         }
 
-        public T GetSavedObject<T>(int instanceID) where T : UnityEngine.Object
+        public T GetSavedObject<T>(short instanceID) where T : UnityEngine.Object
         {
             return savedObjects.Forward[instanceID] as T;
         }
 
-        public int GetSavedObjectID(UnityEngine.Object objectInstance, bool logIfNone = true)
+        public short GetSavedObjectID(UnityEngine.Object objectInstance, bool logIfNone = true)
         {
             if (!savedObjects.Reverse.Contains(objectInstance))
             {
@@ -72,15 +72,15 @@ namespace BedrockFramework.Saves
 
         public void AddObject(UnityEngine.Object so)
         {
-            savedObjects.Add(UnityEngine.Random.Range(1, int.MaxValue), so);
+            savedObjects.Add((short)UnityEngine.Random.Range(1, short.MaxValue), so);
             Cleanup();
         }
 
         private void Cleanup()
         {
-            List<int> toRemove = savedObjects.Where(x => x.Value == null).Select(x => x.Key).ToList();
+            List<short> toRemove = savedObjects.Where(x => x.Value == null).Select(x => x.Key).ToList();
 
-            for (int i = 0; i != toRemove.Count; i++)
+            for (short i = 0; i != toRemove.Count; i++)
                 savedObjects.Remove(toRemove[i]);
         }
     }

@@ -5,8 +5,8 @@ BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections;
-using System.Text;
+using System;
+using System.Collections.Generic;
 
 namespace BedrockFramework.Network
 {
@@ -16,8 +16,17 @@ namespace BedrockFramework.Network
         void StartClient(string remoteHost);
         void Stop();
 
-        //void NewConnection(NetworkConnection newConnection);
-        //void NewConnectionReady(NetworkConnection readyConnection); 
+        event Action<NetworkConnection> OnNewNetworkConnection;
+        event Action<NetworkConnection> OnNetworkConnectionReady;
+
+        /// <summary>
+        /// Returns true when either not online or is host.
+        /// </summary>
+        bool IsHost { get; }
+        bool IsActive { get; }
+        NetworkSocket ActiveSocket { get; }
+
+        short UniqueNetworkID { get; }
     }
 
     public class NullNetworkService : INetworkService
@@ -25,6 +34,15 @@ namespace BedrockFramework.Network
         public void StartHost() { }
         public void StartClient(string remoteHost) { }
         public void Stop() { }
+
+        public event Action<NetworkConnection> OnNewNetworkConnection = delegate { };
+        public event Action<NetworkConnection> OnNetworkConnectionReady = delegate { };
+
+        public bool IsHost { get { return true; } }
+        public bool IsActive { get { return false; } }
+        public NetworkSocket ActiveSocket { get { return null; } }
+
+        public short UniqueNetworkID { get { return 0; } }
     }
 
     public class NetworkService : Service, INetworkService
@@ -35,8 +53,41 @@ namespace BedrockFramework.Network
         private int hostPort = 7777;
         private string localHost = "127.0.0.1";
         private NetworkSocket currentSocket;
+        private short nextUniqueNetworkID = 1;
 
         public bool IsActive { get { return currentSocket != null && currentSocket.IsActive; } }
+        public event Action<NetworkConnection> OnNewNetworkConnection = delegate { };
+        public event Action<NetworkConnection> OnNetworkConnectionReady = delegate { };
+
+        public bool IsHost {
+            get {
+                if (!IsActive)
+                    return true;
+                else
+                {
+                    return currentSocket.IsHost;
+                }
+            }
+        }
+
+        public NetworkSocket ActiveSocket {
+            get
+            {
+                if (!IsActive)
+                    return null;
+                return currentSocket;
+            }
+        }
+
+        public short UniqueNetworkID
+        {
+            get
+            {
+                short cachedNetworkID = nextUniqueNetworkID;
+                nextUniqueNetworkID++;
+                return cachedNetworkID;
+            }
+        }
 
         public NetworkService(MonoBehaviour owner) : base(owner)
         {
@@ -46,14 +97,14 @@ namespace BedrockFramework.Network
             DevTools.DebugMenu.AddDebugItem("Network", "Leave", () => { Stop(); }, () => { return IsActive; });
         }
 
-
         public void StartHost()
         {
             if (IsActive)
                 return;
 
             DevTools.Logger.Log(NetworkLog, "Starting Host");
-            currentSocket = new NetworkSocket(owner);
+
+            NewSocket();
             currentSocket.Startup(hostPort, MaxConnections);
         }
 
@@ -63,7 +114,8 @@ namespace BedrockFramework.Network
                 return;
 
             DevTools.Logger.Log(NetworkLog, "Starting Client");
-            currentSocket = new NetworkSocket(owner);
+
+            NewSocket();
             if (currentSocket.Startup(0, 1))
             {
                 currentSocket.Connect(remoteHost, hostPort);
@@ -77,13 +129,17 @@ namespace BedrockFramework.Network
 
             if (currentSocket.IsHost)
             {
-                byte[] bytes = Encoding.ASCII.GetBytes("Test To Client");
                 foreach (NetworkConnection connection in currentSocket.ActiveConnections())
-                    currentSocket.SendData(connection, currentSocket.ReliableSequencedChannel, bytes, bytes.Length);
+                {
+                    NetworkWriter writer = currentSocket.Writer.Setup(connection, currentSocket.ReliableSequencedChannel, MessageTypes.BRF_TestString);
+                    writer.Write("Test To Client");
+                    currentSocket.Writer.Send();
+                }
             } else
             {
-                byte[] bytes = Encoding.ASCII.GetBytes("Test To Server");
-                currentSocket.SendData(currentSocket.LocalConnection, currentSocket.ReliableSequencedChannel, bytes, bytes.Length);
+                NetworkWriter writer = currentSocket.Writer.Setup(currentSocket.LocalConnection, currentSocket.ReliableSequencedChannel, MessageTypes.BRF_TestString);
+                writer.Write("Test To Server");
+                currentSocket.Writer.Send();
             }
         }
 
@@ -93,6 +149,31 @@ namespace BedrockFramework.Network
                 return;
 
             currentSocket.SendDisconnect();
+        }
+
+        private void NewSocket()
+        {
+            currentSocket = new NetworkSocket(owner);
+            currentSocket.OnNewNetworkConnection += CurrentSocket_OnNewNetworkConnection;
+            currentSocket.OnNetworkConnectionReady += CurrentSocket_OnNetworkConnectionReady;
+            currentSocket.OnShutdown += CurrentSocket_OnShutdown;
+        }
+
+        private void CurrentSocket_OnNewNetworkConnection(NetworkConnection networkConnection)
+        {
+            OnNewNetworkConnection(networkConnection);
+        }
+
+        private void CurrentSocket_OnNetworkConnectionReady(NetworkConnection networkConnection)
+        {
+            OnNetworkConnectionReady(networkConnection);
+        }
+
+        private void CurrentSocket_OnShutdown()
+        {
+            currentSocket.OnNewNetworkConnection -= CurrentSocket_OnNewNetworkConnection;
+            currentSocket.OnNetworkConnectionReady -= CurrentSocket_OnNetworkConnectionReady;
+            currentSocket.OnShutdown -= CurrentSocket_OnShutdown;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace BedrockFramework.Saves
         void ApplySaveData(object data);
     }
 
-    [HideMonoScript]
+    [HideMonoScript, AddComponentMenu("BedrockFramework/Saveable GameObject")]
     public class SaveableGameObject : MonoBehaviour, IPool
     {
         /// <summary>

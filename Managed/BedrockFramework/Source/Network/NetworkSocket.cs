@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 namespace BedrockFramework.Network
 {
@@ -17,16 +18,20 @@ namespace BedrockFramework.Network
 
         private ConnectionConfig connectionConfig;
         private int reliableSequencedChannel;
+        private int reliableChannel;
         private int socketID = -1;
         private int localConnectionID = 0;
         private Coroutine eventPoll;
         private byte[] receivedDataBuffer = new byte[1024];
+        private NetworkWriterWrapper writer;
 
         public bool IsHost { get { return localConnectionID == 0; } }
         public bool IsActive { get { return socketID != -1; } }
         public int SocketID { get { return socketID; } }
         public int LocalConnectionID { get { return localConnectionID; } }
         public int ReliableSequencedChannel { get { return reliableSequencedChannel; } }
+        public int ReliableChannel { get { return reliableChannel; } }
+        public NetworkWriterWrapper Writer { get { return writer; } }
 
         public NetworkConnection LocalConnection { get { return activeConnections[localConnectionID]; } }
         public IEnumerable<NetworkConnection> ActiveConnections() {
@@ -34,11 +39,16 @@ namespace BedrockFramework.Network
                 yield return connection;
         }
 
-        //public NetworkMessage NetworkMessage { get { return networkMessage; } }
+        public event Action<NetworkConnection> OnNewNetworkConnection = delegate { };
+        public event Action<NetworkConnection> OnNetworkConnectionReady = delegate { };
+
+        public event Action OnShutdown = delegate { };
 
         public NetworkSocket(MonoBehaviour owner)
         {
             this.owner = owner;
+            this.writer = new NetworkWriterWrapper(this);
+
             Application.runInBackground = true; // We force this as server should never suspend.
             SetupConfig();
         }
@@ -48,13 +58,13 @@ namespace BedrockFramework.Network
             GlobalConfig globalConfig = new GlobalConfig();
             connectionConfig = new ConnectionConfig();
             reliableSequencedChannel = connectionConfig.AddChannel(QosType.ReliableSequenced);
+            reliableChannel = connectionConfig.AddChannel(QosType.Reliable);
             NetworkTransport.Init(globalConfig);
         }
 
         public bool Startup(int port, int maxConnections)
         {
             HostTopology topology = new HostTopology(connectionConfig, maxConnections);
-
 
             socketID = NetworkTransport.AddHost(topology, port);
             if (socketID == -1)
@@ -92,6 +102,7 @@ namespace BedrockFramework.Network
 
         IEnumerator PollNetworkEvents()
         {
+            //TODO: Need to handle timeouts. They don't come with any specific connection id.
             while (IsActive)
             {
                 int connectionId;
@@ -164,6 +175,13 @@ namespace BedrockFramework.Network
             }
 
             activeConnections[connectionId] = new NetworkConnection(this, connectionId);
+            activeConnections[connectionId].OnReady += NetworkSocket_OnReady;
+            OnNewNetworkConnection(activeConnections[connectionId]);
+        }
+
+        private void NetworkSocket_OnReady(NetworkConnection obj)
+        {
+            OnNetworkConnectionReady(obj);
         }
 
         void RemoveConnection(int connectionId)
@@ -174,6 +192,7 @@ namespace BedrockFramework.Network
                 return;
             }
 
+            activeConnections[connectionId].OnReady -= NetworkSocket_OnReady;
             activeConnections[connectionId].Disconnect();
             activeConnections.Remove(connectionId);
         }
@@ -234,6 +253,7 @@ namespace BedrockFramework.Network
             localConnectionID = 0;
 
             NetworkTransport.Shutdown();
+            OnShutdown();
         }
     }
 }

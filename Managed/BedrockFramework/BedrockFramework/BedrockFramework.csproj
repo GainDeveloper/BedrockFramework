@@ -178,6 +178,15 @@
     <Compile Include="..\Source\Network\NetworkSocket.cs">
       <Link>Network\NetworkSocket.cs</Link>
     </Compile>
+    <Compile Include="..\Source\Network\NetworkMessageTypes.cs">
+      <Link>Network\NetworkMessageTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Network\NetworkWriterWrapper.cs">
+      <Link>Network\NetworkWriterWrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\Network\NetworkGameObject.cs">
+      <Link>Network\NetworkGameObject.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

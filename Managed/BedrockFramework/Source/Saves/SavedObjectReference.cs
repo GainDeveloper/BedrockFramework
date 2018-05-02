@@ -14,7 +14,7 @@ namespace BedrockFramework.Saves
         [ReadOnly, ShowInInspector]
         T objectReference;
         [ProtoMember(1)]
-        private int objectReferenceID = 0;
+        private short objectReferenceID = 0;
 
         public SavedObjectReference() {}
 
@@ -22,6 +22,13 @@ namespace BedrockFramework.Saves
         {
             ObjectReference = newObjectReference;
         }
+
+        public SavedObjectReference(short newObjectReferenceID)
+        {
+            objectReferenceID = newObjectReferenceID;
+        }
+
+        public short ObjectReferenceID { get { return objectReferenceID; } }
 
         public T ObjectReference
         {

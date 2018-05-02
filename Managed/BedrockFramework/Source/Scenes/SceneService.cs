@@ -5,6 +5,7 @@ Scene Service. Handles loading scenes, subscenes and sending out the correct mes
 ********************************************************/
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Networking;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,24 +15,34 @@ using ProtoBuf;
 
 namespace BedrockFramework.Scenes
 {
+    public enum SceneLoadingState
+    {
+        Loaded,
+        Loading
+    }
+
     public interface ISceneService
     {
         Coroutine LoadScene(SceneLoadInfo sceneToLoad);
+        event Action<SceneLoadInfo> OnLoadScene;
         event Action OnUnload;
         event Action OnPreFinishedLoading;
         event Action<SceneLoadInfo> OnFinishedLoading;
 
         SceneLoadInfo CurrentLoaded { get; }
+        SceneLoadingState CurrentState { get; }
     }
 
     public class NullSceneService : ISceneService
     {
         public Coroutine LoadScene(SceneLoadInfo sceneToLoad) { return null; }
+        public event Action<SceneLoadInfo> OnLoadScene = delegate { };
         public event Action OnUnload = delegate { };
         public event Action OnPreFinishedLoading = delegate { };
         public event Action<SceneLoadInfo> OnFinishedLoading = delegate { };
 
         public SceneLoadInfo CurrentLoaded { get { return null; } }
+        public SceneLoadingState CurrentState { get { return SceneLoadingState.Loaded; } }
     }
 
     [ProtoContract]
@@ -47,18 +58,33 @@ namespace BedrockFramework.Scenes
         {
             this.sceneDefinition = new Saves.SavedObjectReference<SceneDefinition>(sceneDefinition);
         }
+
+        public SceneLoadInfo(NetworkReader reader)
+        {
+            this.sceneDefinition = new Saves.SavedObjectReference<SceneDefinition>(reader.ReadInt16());
+            fromSave = true;
+        }
+
+        public void NetworkWrite(NetworkWriter writer)
+        {
+            writer.Write(sceneDefinition.ObjectReferenceID);
+        }
     }
 
     public class SceneService : Service, ISceneService
     {
         const string SceneServiceLog = "Scenes";
 
+        public event Action<SceneLoadInfo> OnLoadScene = delegate { };
         public event Action OnUnload = delegate { };
         public event Action OnPreFinishedLoading = delegate { };
         public event Action<SceneLoadInfo> OnFinishedLoading = delegate { };
 
         private SceneLoadInfo currentlyLoaded = null;
         public SceneLoadInfo CurrentLoaded { get { return currentlyLoaded; } }
+
+        private SceneLoadingState currentState = SceneLoadingState.Loaded;
+        public SceneLoadingState CurrentState { get { return currentState; } }
 
         public SceneService(MonoBehaviour owner): base(owner)
         {
@@ -72,6 +98,11 @@ namespace BedrockFramework.Scenes
             }
         }
 
+        private void SaveService_OnPreSave()
+        {
+            ServiceLocator.SaveService.AppendSaveData(Animator.StringToHash("PreviousScene"), currentlyLoaded);
+        }
+
         private void SaveService_OnPreLoad(CoroutineEvent coroutineEvent)
         {
             SceneLoadInfo sceneLoadInfo = ServiceLocator.SaveService.GetSaveData<SceneLoadInfo>(Animator.StringToHash("PreviousScene"));
@@ -79,13 +110,12 @@ namespace BedrockFramework.Scenes
             coroutineEvent.coroutines.Add(LoadScene(sceneLoadInfo));
         }
 
-        private void SaveService_OnPreSave()
-        {
-            ServiceLocator.SaveService.AppendSaveData(Animator.StringToHash("PreviousScene"), currentlyLoaded);
-        }
-
         public Coroutine LoadScene(SceneLoadInfo sceneToLoad)
         {
+            currentState = SceneLoadingState.Loading;
+
+            OnLoadScene(sceneToLoad);
+
             if (currentlyLoaded == null)
             {
                 return owner.StartCoroutine(LoadActiveAsync(sceneToLoad, LoadSceneMode.Single));
@@ -119,8 +149,8 @@ namespace BedrockFramework.Scenes
             // Use to change the state of the active scenes GameObjects before progressing (Loading scene save data ect.)
             OnPreFinishedLoading();
 
+            currentState = SceneLoadingState.Loaded;
             DevTools.Logger.Log(SceneServiceLog, "Finished Loading Scenes");
-
             OnFinishedLoading(sceneToLoad);
         }
 
