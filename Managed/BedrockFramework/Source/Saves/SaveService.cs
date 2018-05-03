@@ -83,8 +83,8 @@ namespace BedrockFramework.Saves
         public SaveService(MonoBehaviour owner) : base(owner)
         {
             savedObjectReferences = Resources.LoadAll<Saves.SavedObjectReferences>("")[0];
-            DevTools.DebugMenu.AddDebugItem("Saves", "Save", () => { SaveData(Application.persistentDataPath + "/DevSave.save"); });
-            DevTools.DebugMenu.AddDebugItem("Saves", "Load", () => { owner.StartCoroutine(LoadSavedData(Application.persistentDataPath + "/DevSave.save")); });
+            DevTools.DebugMenu.AddDebugButton("Saves", "Save", () => { SaveData(Application.persistentDataPath + "/DevSave.save"); });
+            DevTools.DebugMenu.AddDebugButton("Saves", "Load", () => { owner.StartCoroutine(LoadSavedData(Application.persistentDataPath + "/DevSave.save")); });
         }
 
         private GameSave currentGameSave;

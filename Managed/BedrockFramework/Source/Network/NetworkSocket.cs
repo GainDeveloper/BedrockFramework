@@ -19,12 +19,12 @@ namespace BedrockFramework.Network
         private Dictionary<int, NetworkConnection> activeConnections = new Dictionary<int, NetworkConnection>();
 
         private ConnectionConfig connectionConfig;
-        private int reliableSequencedChannel;
-        private int reliableChannel;
+        private int reliableSequencedChannel, reliableChannel, unreliableChannel;
         private int socketID = -1;
         private int localConnectionID = 0;
         private MatchInfo matchInfo = null;
-        private Coroutine eventPoll;
+        private Coroutine eventPoll, byteCounter;
+        private int bytesPerSecond = 0;
         private byte[] receivedDataBuffer = new byte[1024];
         private NetworkWriterWrapper writer;
 
@@ -34,9 +34,11 @@ namespace BedrockFramework.Network
         public int LocalConnectionID { get { return localConnectionID; } }
         public int ReliableSequencedChannel { get { return reliableSequencedChannel; } }
         public int ReliableChannel { get { return reliableChannel; } }
+        public int UnreliableChannel { get { return unreliableChannel; } }
         public NetworkWriterWrapper Writer { get { return writer; } }
+        public int BytesPerSecond { get { return bytesPerSecond; } }
 
-        public NetworkConnection LocalConnection { get { return activeConnections[localConnectionID]; } }
+        public NetworkConnection LocalConnection { get { return !activeConnections.ContainsKey(localConnectionID) ? null : activeConnections[localConnectionID]; } }
         public IEnumerable<NetworkConnection> ActiveConnections() {
             foreach (NetworkConnection connection in activeConnections.Values)
                 yield return connection;
@@ -62,6 +64,7 @@ namespace BedrockFramework.Network
             connectionConfig = new ConnectionConfig();
             reliableSequencedChannel = connectionConfig.AddChannel(QosType.ReliableSequenced);
             reliableChannel = connectionConfig.AddChannel(QosType.Reliable);
+            unreliableChannel = connectionConfig.AddChannel(QosType.Unreliable);
             NetworkTransport.Init(globalConfig);
         }
 
@@ -77,6 +80,7 @@ namespace BedrockFramework.Network
             }
 
             eventPoll = owner.StartCoroutine(PollNetworkEvents());
+            byteCounter = owner.StartCoroutine(ByteSecondCounter());
             return true;
         }
 
@@ -195,11 +199,11 @@ namespace BedrockFramework.Network
             }
         }
 
-        public void SendData(NetworkConnection connection, int channelId, byte[] data, int dataSize)
+        public void SendData(NetworkConnection connection, int channelId, byte[] data, int dataSize, Func<string> dataSendType)
         {
             if (IsHost)
             {
-                connection.SendData(channelId, data, dataSize);
+                connection.SendData(channelId, data, dataSize, dataSendType);
             } else
             {
                 if (connection != LocalConnection)
@@ -208,7 +212,25 @@ namespace BedrockFramework.Network
                     return;
                 }
 
-                connection.SendData(channelId, data, dataSize);
+                connection.SendData(channelId, data, dataSize, dataSendType);
+            }
+        }
+
+        int TotalBytes()
+        {
+            byte error;
+            return NetworkTransport.GetOutgoingFullBytesCountForHost(socketID, out error);
+        }
+
+        IEnumerator ByteSecondCounter()
+        {
+            int lastTotalBytes = TotalBytes();
+
+            while (true)
+            {
+                yield return new WaitForSeconds(1);
+                bytesPerSecond = TotalBytes() - lastTotalBytes;
+                lastTotalBytes = TotalBytes();
             }
         }
 
@@ -216,7 +238,7 @@ namespace BedrockFramework.Network
         // Manage Network Connections
         //
 
-        void SetupConnection(int connectionId)
+            void SetupConnection(int connectionId)
         {
             if (activeConnections.ContainsKey(connectionId))
             {
@@ -287,11 +309,13 @@ namespace BedrockFramework.Network
         IEnumerator ClientWaitShutdown()
         {
             if (matchInfo != null)
-                yield return owner.GetComponent<NetworkMatch>().DropConnection(matchInfo.networkId, matchInfo.nodeId, 0, null);
+                yield return owner.GetComponent<NetworkMatch>().DropConnection(matchInfo.networkId, matchInfo.nodeId, 0, OnDropConnection);
 
             yield return null;
             Shutdown();
         }
+
+        void OnDropConnection(bool success, string extendedInfo) { }
 
         // We wait for all current connections to close before shutting down the server.
         // TODO: We should add a timeout for this incase any clients don't respond.
@@ -311,6 +335,9 @@ namespace BedrockFramework.Network
             socketID = -1;
             localConnectionID = 0;
             matchInfo = null;
+
+            owner.StopCoroutine(eventPoll);
+            owner.StopCoroutine(byteCounter);
 
             NetworkTransport.Shutdown();
             OnShutdown();

@@ -49,6 +49,7 @@ namespace BedrockFramework.Network
     public class NetworkService : Service, INetworkService
     {
         public const string NetworkLog = "Network";
+        public const string NetworkDataLog = "Network Data";
         public const int MaxConnections = 1;
 
         private int hostPort = 7777;
@@ -93,20 +94,43 @@ namespace BedrockFramework.Network
 
         public NetworkService(MonoBehaviour owner) : base(owner)
         {
-            DevTools.DebugMenu.AddDebugItem("Network", "Host", () => { StartHost(); }, () => { return !IsActive; });
-            DevTools.DebugMenu.AddDebugItem("Network", "Join Internet", () => { JoinFirstInternetMatch(); }, () => { return !IsActive; });
-            DevTools.DebugMenu.AddDebugItem("Network", "Join Local", () => { StartClient(localHost); }, () => { return !IsActive; });
-            DevTools.DebugMenu.AddDebugItem("Network", "Send Test", () => { SendTestMessage(); }, () => { return IsActive; });
-            DevTools.DebugMenu.AddDebugItem("Network", "Leave", () => { Stop(); }, () => { return IsActive; });
+            DevTools.DebugMenu.AddDebugButton("Network", "Host Internet", () => { StartHost(true); }, () => { return !IsActive; });
+            DevTools.DebugMenu.AddDebugButton("Network", "Host Local", () => { StartHost(false); }, () => { return !IsActive; });
+            DevTools.DebugMenu.AddDebugButton("Network", "Join Internet", () => { JoinFirstInternetMatch(); }, () => { return !IsActive; });
+            DevTools.DebugMenu.AddDebugButton("Network", "Join Local", () => { StartClient(localHost); }, () => { return !IsActive; });
+            DevTools.DebugMenu.AddDebugButton("Network", "Send Test", () => { SendTestMessage(); }, () => { return IsActive; });
+            DevTools.DebugMenu.AddDebugButton("Network", "Leave", () => { Stop(); }, () => { return IsActive; });
+            DevTools.DebugMenu.AddDebugStats("Network Stats", NetworkStats);
 
             networkMatch = owner.gameObject.AddComponent<NetworkMatch>();
+        }
+
+        IEnumerable<string> NetworkStats()
+        {
+            yield return "Active: " + IsActive;
+            if (IsActive)
+            {
+                yield return "Host: " + IsHost;
+                foreach (NetworkConnection connection in ActiveSocket.ActiveConnections())
+                {
+                    string connectionStat = connection.ConnectionID.ToString();
+                    if (connection.IsLocalConnection)
+                        connectionStat += " (Local)";
+                    connectionStat += " : " + connection.CurrentState;
+                    yield return connectionStat;
+                }
+
+                // Total Outgoing Bytes
+                string outgoingBytes = ActiveSocket.BytesPerSecond.ToString() + " B/s";
+                yield return outgoingBytes;
+            }
         }
 
         //
         // Hosting
         //
 
-        public void StartHost(bool internetHost = true)
+        public void StartHost(bool internetHost)
         {
             if (IsActive)
                 return;
@@ -229,16 +253,14 @@ namespace BedrockFramework.Network
             {
                 foreach (NetworkConnection connection in currentSocket.ActiveConnections())
                 {
-                    NetworkWriter writer = currentSocket.Writer.Setup(connection, currentSocket.ReliableSequencedChannel, MessageTypes.BRF_TestString);
-                    writer.Write("Test To Client");
-                    currentSocket.Writer.Send();
+                    NetworkWriter writer = currentSocket.Writer.Setup(connection, currentSocket.UnreliableChannel, MessageTypes.BRF_DebugTest);
+                    currentSocket.Writer.Send(() => "Debug Test");
                 }
             }
             else
             {
-                NetworkWriter writer = currentSocket.Writer.Setup(currentSocket.LocalConnection, currentSocket.ReliableSequencedChannel, MessageTypes.BRF_TestString);
-                writer.Write("Test To Server");
-                currentSocket.Writer.Send();
+                NetworkWriter writer = currentSocket.Writer.Setup(currentSocket.LocalConnection, currentSocket.UnreliableChannel, MessageTypes.BRF_DebugTest);
+                currentSocket.Writer.Send(() => "Debug Test");
             }
         }
 

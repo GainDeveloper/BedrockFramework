@@ -6,14 +6,35 @@ using BedrockFramework.Utilities;
 namespace BedrockFramework.DevTools
 {
 	public class DebugMenu : MonoBehaviour {
-		class DebugItem
+        // A collection of stats under a specific title.
+        class DebugStat
+        {
+            string title;
+            Func<IEnumerable<string>> getStats;
+
+            public DebugStat(string title, Func<IEnumerable<string>>  getStats)
+            {
+                this.title = title;
+                this.getStats = getStats;
+            }
+
+            public void OnGUI_DrawStats(DebugMenu debugMenu)
+            {
+                GUILayout.Label(title, debugMenu.rightAlignedTextBold);
+                foreach (string stat in getStats())
+                    GUILayout.Label(stat, debugMenu.rightAlignedText);
+            }
+        }
+
+        // Simple button that can be dynamically disabled.
+		class DebugButton
 		{
 			string title;
 			Action action;
             Func<bool> isEnabled;
 
 
-            public DebugItem(string title, Action action, Func<bool> isEnabled)
+            public DebugButton(string title, Action action, Func<bool> isEnabled)
 			{
 				this.title = title;
 				this.action = action;
@@ -53,7 +74,7 @@ namespace BedrockFramework.DevTools
 			Rect buttonRect;
 			int menuItemHeight;
 
-			List<DebugItem> debugItems = new List<DebugItem>();
+			List<DebugButton> debugItems = new List<DebugButton>();
 
 			public string Title { get { return title; } }
 
@@ -63,7 +84,7 @@ namespace BedrockFramework.DevTools
 				this.colour = colour;
 			}
 
-			public void AddDebugItem(DebugItem item)
+			public void AddDebugItem(DebugButton item)
 			{
 				debugItems.Add(item);
 				menuItemHeight = _DebugMainHeight + (debugItems.Count * _DebugMainHeight);
@@ -97,7 +118,7 @@ namespace BedrockFramework.DevTools
 				GUILayout.BeginArea(menuItemArea, GUI.skin.box);
 				GUILayout.BeginVertical();
 				GUILayoutUtility.GetRect(_DebugCategoryMaxWidth, _DebugMainHeight);
-				foreach (DebugItem debugItem in debugItems)
+				foreach (DebugButton debugItem in debugItems)
 				{
 					if (debugItem.OnGUI_DrawItem())
 						return false;
@@ -110,15 +131,21 @@ namespace BedrockFramework.DevTools
 		}
 
 		const int _DebugMainHeight = 16;
+        const int _DebugStatWidth = 256;
 
-		[SerializeField]
+        [SerializeField]
 		GUISkin menuSkin;
 
 		[SerializeField]
 		Color[] categoryColours;
 
-		static DebugMenu instance;
+        [SerializeField]
+        GUIStyle rightAlignedText;
+        GUIStyle rightAlignedTextBold;
+
+        static DebugMenu instance;
 		List<DebugCategory> debugCategories = new List<DebugCategory>();
+        List<DebugStat> debugStats = new List<DebugStat>();
 		DebugCategory activeCategory;
 
 		static DebugMenu Instance
@@ -134,7 +161,7 @@ namespace BedrockFramework.DevTools
 			}
 		}
 
-		public static void AddDebugItem(string categoryTitle, string name, Action action = null, Func<bool> isEnabled = null)
+		public static void AddDebugButton(string categoryTitle, string name, Action action = null, Func<bool> isEnabled = null)
 		{
             if (Instance == null)
                 return;
@@ -143,8 +170,16 @@ namespace BedrockFramework.DevTools
 			if (category == null)
 				category = Instance.CreateCategory(categoryTitle);
 
-			category.AddDebugItem(new DebugItem(name, action, isEnabled));
+			category.AddDebugItem(new DebugButton(name, action, isEnabled));
 		}
+
+        public static void AddDebugStats(string title, Func<IEnumerable<string>> stats)
+        {
+            if (Instance == null)
+                return;
+
+            Instance.debugStats.Add(new DebugStat(title, stats));
+        }
 
 		#region Categories
 
@@ -171,6 +206,9 @@ namespace BedrockFramework.DevTools
         {
             if (!Debug.isDebugBuild)
                 DestroyImmediate(this);
+
+            rightAlignedTextBold = new GUIStyle(rightAlignedText);
+            rightAlignedTextBold.fontSize += 3;
         }
 
 		void OnGUI()
@@ -183,7 +221,9 @@ namespace BedrockFramework.DevTools
 				if (!activeCategory.OnGUI_DrawDropDownMenu())
 					activeCategory = null;
 			}
-		}
+
+            DrawDebugStats();
+        }
 
 		void DrawCategories()
 		{
@@ -197,5 +237,17 @@ namespace BedrockFramework.DevTools
 			GUILayout.EndHorizontal();
 			GUILayout.EndArea();
 		}
+
+        void DrawDebugStats()
+        {
+            GUILayout.BeginArea(new Rect(Screen.width - _DebugStatWidth - 2, _DebugMainHeight, _DebugStatWidth, Screen.height));
+            GUILayout.BeginVertical();
+            foreach (DebugStat stat in debugStats)
+            {
+                stat.OnGUI_DrawStats(this);
+            }
+            GUILayout.EndVertical();
+            GUILayout.EndArea();
+        }
 	}
 }

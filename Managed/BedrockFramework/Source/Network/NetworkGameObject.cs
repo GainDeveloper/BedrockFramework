@@ -65,7 +65,7 @@ namespace BedrockFramework.Network
 
             //TODO: Write out everything we want to send as initial data.
 
-            ServiceLocator.NetworkService.ActiveSocket.Writer.Send();
+            ServiceLocator.NetworkService.ActiveSocket.Writer.Send(() => "NetworkGameObject Init");
         }
 
         public void Client_ReceiveGameObject(NetworkReader reader)

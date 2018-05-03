@@ -364,7 +364,7 @@ namespace BedrockFramework.DevTools
             upperPanelScroll = GUILayout.BeginScrollView(upperPanelScroll);
 
             int drawCount = 0;
-            for (int i = 0; i < categoryLogs.Count; i++)
+            for (int i = categoryLogs.Count - 1; i >= 0; i--)
             {
                 if (!categoryLogs[i].logCategory.Enabled)
                     continue;

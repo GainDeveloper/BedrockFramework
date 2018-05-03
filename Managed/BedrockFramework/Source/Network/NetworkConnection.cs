@@ -63,10 +63,14 @@ namespace BedrockFramework.Network
             DevTools.Logger.Log(NetworkService.NetworkLog, "Disconnect: {}", () => new object[] { connectionID });
         }
 
-        public void SendData(int channelId, byte[] data, int dataSize)
+        public void SendData(int channelId, byte[] data, int dataSize, Func<string> dataSendType = null)
         {
             byte error;
             NetworkTransport.Send(networkSocket.SocketID, connectionID, channelId, data, dataSize, out error);
+
+            if (dataSendType == null)
+                DevTools.Logger.Log(NetworkService.NetworkDataLog, "Sending {} {} bytes.", () => new object[] { connectionID, dataSize });
+            else DevTools.Logger.Log(NetworkService.NetworkDataLog, "Sending {} {} bytes for {}", () => new object[] { connectionID, dataSize, dataSendType() });
 
             if (error != 0)
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "SendData: {}", () => new object[] { (NetworkError)error });
@@ -87,8 +91,8 @@ namespace BedrockFramework.Network
 
             switch (msgType)
             {
-                case MessageTypes.BRF_TestString:
-                    Debug.Log(reader.ReadString());
+                case MessageTypes.BRF_DebugTest:
+                    Debug.Log("Received Debug Test");
                     break;
                 case MessageTypes.BRF_Client_Receive_OnLoadScene:
                     Client_Receive_OnLoadScene(reader);
@@ -124,7 +128,7 @@ namespace BedrockFramework.Network
             currentState = NetworkConnectionState.Loading;
             NetworkWriter writer = networkSocket.Writer.Setup(this, networkSocket.ReliableSequencedChannel, MessageTypes.BRF_Client_Receive_OnLoadScene);
             sceneLoadInfo.NetworkWrite(writer);
-            networkSocket.Writer.Send();
+            networkSocket.Writer.Send(() => "Send Client SceneLoadInfo");
         }
 
         private void Client_Receive_OnLoadScene(NetworkReader reader)
@@ -152,7 +156,7 @@ namespace BedrockFramework.Network
             // Tell host we have finished loading.
             currentState = NetworkConnectionState.Waiting;
             NetworkWriter writer = networkSocket.Writer.Setup(this, networkSocket.ReliableSequencedChannel, MessageTypes.BRF_Host_Receive_OnFinishedLoading);
-            networkSocket.Writer.Send();
+            networkSocket.Writer.Send(() => "Send host finished loading");
         }
 
         private void Host_Receive_OnFinishedLoading()
@@ -196,7 +200,7 @@ namespace BedrockFramework.Network
 
             currentState = NetworkConnectionState.Ready;
             NetworkWriter writer = networkSocket.Writer.Setup(this, networkSocket.ReliableSequencedChannel, MessageTypes.BRF_Client_Receive_OnReady);
-            networkSocket.Writer.Send();
+            networkSocket.Writer.Send(() => "Send client ready");
             OnReady(this);
         }
 

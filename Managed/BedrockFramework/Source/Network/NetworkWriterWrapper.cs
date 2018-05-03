@@ -35,10 +35,14 @@ namespace BedrockFramework.Network
             return writer;
         }
 
-        public void Send()
+        public void Send(Func<string> dataSendType = null)
         {
             writer.FinishMessage();
-            socket.SendData(recipient, channelID, writer.ToArray(), writer.Position);
+
+            if (dataSendType == null)
+                socket.SendData(recipient, channelID, writer.ToArray(), writer.Position, null);
+            else
+                socket.SendData(recipient, channelID, writer.ToArray(), writer.Position, dataSendType);
         }
     }
 }

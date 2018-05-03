@@ -94,7 +94,7 @@ namespace BedrockFramework.Scenes
             if (Debug.isDebugBuild)
             {
                 foreach (SceneDefinition sceneDefinition in ServiceLocator.SaveService.SavedObjectReferences.GetObjectsOfType<SceneDefinition>())
-                    DevTools.DebugMenu.AddDebugItem("Scenes", "Load " + sceneDefinition.sceneSettings.SceneTitle, () => { LoadScene(new SceneLoadInfo(sceneDefinition)); });
+                    DevTools.DebugMenu.AddDebugButton("Scenes", "Load " + sceneDefinition.sceneSettings.SceneTitle, () => { LoadScene(new SceneLoadInfo(sceneDefinition)); });
             }
         }
 
