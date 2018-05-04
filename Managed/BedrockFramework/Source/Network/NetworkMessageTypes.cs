@@ -17,5 +17,6 @@ namespace BedrockFramework.Network
         public const short BRF_Client_Receive_OnReady = MsgType.Highest + 3;
         public const short BRF_DebugTest = MsgType.Highest + 4;
         public const short BRF_Client_Receive_GameObject = MsgType.Highest + 5;
+        public const short BRF_Client_Update_GameObject = MsgType.Highest + 6;
     }
 }

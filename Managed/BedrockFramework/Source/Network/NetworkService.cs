@@ -17,8 +17,12 @@ namespace BedrockFramework.Network
         void StartClient(string remoteHost);
         void Stop();
 
+        event Action OnBecomeHost;
+
         event Action<NetworkConnection> OnNewNetworkConnection;
         event Action<NetworkConnection> OnNetworkConnectionReady;
+
+        event Action OnStop;
 
         /// <summary>
         /// Returns true when either not online or is host.
@@ -28,6 +32,9 @@ namespace BedrockFramework.Network
         NetworkSocket ActiveSocket { get; }
 
         short UniqueNetworkID { get; }
+        NetworkGameObject GetNetworkGameObject(short id);
+        void AddNetworkGameObject(NetworkGameObject netObj);
+        void RemoveNetworkGameObject(NetworkGameObject netObj);
     }
 
     public class NullNetworkService : INetworkService
@@ -36,20 +43,28 @@ namespace BedrockFramework.Network
         public void StartClient(string remoteHost) { }
         public void Stop() { }
 
+        public event Action OnBecomeHost = delegate { };
+
         public event Action<NetworkConnection> OnNewNetworkConnection = delegate { };
         public event Action<NetworkConnection> OnNetworkConnectionReady = delegate { };
+
+        public event Action OnStop = delegate { };
 
         public bool IsHost { get { return true; } }
         public bool IsActive { get { return false; } }
         public NetworkSocket ActiveSocket { get { return null; } }
 
         public short UniqueNetworkID { get { return 0; } }
+        public NetworkGameObject GetNetworkGameObject(short id) { return null; }
+        public void AddNetworkGameObject(NetworkGameObject netObj) { }
+        public void RemoveNetworkGameObject(NetworkGameObject netObj) { }
     }
 
     public class NetworkService : Service, INetworkService
     {
         public const string NetworkLog = "Network";
-        public const string NetworkDataLog = "Network Data";
+        public const string NetworkIncomingLog = "Incoming Data";
+        public const string NetworkOutgoingLog = "Outgoing Data";
         public const int MaxConnections = 1;
 
         private int hostPort = 7777;
@@ -57,10 +72,13 @@ namespace BedrockFramework.Network
         private NetworkMatch networkMatch;
         private NetworkSocket currentSocket;
         private short nextUniqueNetworkID = 1;
+        private Dictionary<short, NetworkGameObject> activeNetworkGameObjects = new Dictionary<short, NetworkGameObject>();
 
         public bool IsActive { get { return currentSocket != null && currentSocket.IsActive; } }
+        public event Action OnBecomeHost = delegate { };
         public event Action<NetworkConnection> OnNewNetworkConnection = delegate { };
         public event Action<NetworkConnection> OnNetworkConnectionReady = delegate { };
+        public event Action OnStop = delegate { };
 
         public bool IsHost {
             get {
@@ -92,6 +110,10 @@ namespace BedrockFramework.Network
             }
         }
 
+        public NetworkGameObject GetNetworkGameObject(short id) { return activeNetworkGameObjects.ContainsKey(id) ? activeNetworkGameObjects[id] : null; }
+        public void AddNetworkGameObject(NetworkGameObject netObj) { activeNetworkGameObjects[netObj.NetworkID] = netObj; }
+        public void RemoveNetworkGameObject(NetworkGameObject netObj) { activeNetworkGameObjects.Remove(netObj.NetworkID); }
+
         public NetworkService(MonoBehaviour owner) : base(owner)
         {
             DevTools.DebugMenu.AddDebugButton("Network", "Host Internet", () => { StartHost(true); }, () => { return !IsActive; });
@@ -107,6 +129,8 @@ namespace BedrockFramework.Network
 
         IEnumerable<string> NetworkStats()
         {
+            byte error;
+
             yield return "Active: " + IsActive;
             if (IsActive)
             {
@@ -117,6 +141,7 @@ namespace BedrockFramework.Network
                     if (connection.IsLocalConnection)
                         connectionStat += " (Local)";
                     connectionStat += " : " + connection.CurrentState;
+                    //connectionStat += " (" + NetworkTransport.GetCurrentRTT(currentSocket.SocketID, connection.ConnectionID, out error) + "MS)";
                     yield return connectionStat;
                 }
 
@@ -142,7 +167,8 @@ namespace BedrockFramework.Network
             else
             {
                 NewSocket();
-                currentSocket.Startup(hostPort, MaxConnections);
+                if (currentSocket.Startup(hostPort, MaxConnections))
+                    OnBecomeHost();
             }
         }
 
@@ -155,10 +181,11 @@ namespace BedrockFramework.Network
                 Utility.SetAccessTokenForNetwork(matchInfo.networkId, matchInfo.accessToken);
 
                 NewSocket();
-                currentSocket.Startup(hostPort, MaxConnections);
-
-                //m_MatchInfo = matchInfo;
-                currentSocket.StartupRelayHost(matchInfo);
+                if (currentSocket.Startup(hostPort, MaxConnections))
+                {
+                    currentSocket.StartupRelayHost(matchInfo);
+                    OnBecomeHost();
+                } 
             }
             else
             {
@@ -239,8 +266,8 @@ namespace BedrockFramework.Network
 
         private void CurrentSocket_OnShutdown()
         {
-            currentSocket.OnNewNetworkConnection -= CurrentSocket_OnNewNetworkConnection;
-            currentSocket.OnNetworkConnectionReady -= CurrentSocket_OnNetworkConnectionReady;
+            currentSocket.OnNewNetworkConnection -= OnNewNetworkConnection;
+            currentSocket.OnNetworkConnectionReady -= OnNetworkConnectionReady;
             currentSocket.OnShutdown -= CurrentSocket_OnShutdown;
         }
 
@@ -253,14 +280,14 @@ namespace BedrockFramework.Network
             {
                 foreach (NetworkConnection connection in currentSocket.ActiveConnections())
                 {
-                    NetworkWriter writer = currentSocket.Writer.Setup(connection, currentSocket.UnreliableChannel, MessageTypes.BRF_DebugTest);
-                    currentSocket.Writer.Send(() => "Debug Test");
+                    NetworkWriter writer = currentSocket.Writer.Setup(currentSocket.UnreliableChannel, MessageTypes.BRF_DebugTest);
+                    currentSocket.Writer.Send(connection, () => "Debug Test");
                 }
             }
             else
             {
-                NetworkWriter writer = currentSocket.Writer.Setup(currentSocket.LocalConnection, currentSocket.UnreliableChannel, MessageTypes.BRF_DebugTest);
-                currentSocket.Writer.Send(() => "Debug Test");
+                NetworkWriter writer = currentSocket.Writer.Setup(currentSocket.UnreliableChannel, MessageTypes.BRF_DebugTest);
+                currentSocket.Writer.Send(currentSocket.LocalConnection, () => "Debug Test");
             }
         }
 
@@ -269,6 +296,7 @@ namespace BedrockFramework.Network
             if (!IsActive)
                 return;
 
+            OnStop();
             currentSocket.SendDisconnect();
         }
     }

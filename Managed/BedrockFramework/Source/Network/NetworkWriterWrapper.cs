@@ -16,28 +16,34 @@ namespace BedrockFramework.Network
         NetworkSocket socket;
         NetworkWriter writer;
 
+        private bool finished = false;
+
         public NetworkWriterWrapper(NetworkSocket socket)
         {
             this.socket = socket;
             this.writer = new NetworkWriter();
         }
 
-        NetworkConnection recipient;
         int channelID;
 
         //TODO: Should extend setup with varients for specific types of messages (i.e messages between network objects)
-        public NetworkWriter Setup(NetworkConnection recipient, int channelID, short messageType)
+        public NetworkWriter Setup(int channelID, short messageType)
         {
-            this.recipient = recipient;
+            finished = false;
+
             this.channelID = channelID;
             writer.StartMessage(messageType);
 
             return writer;
         }
 
-        public void Send(Func<string> dataSendType = null)
+        public void Send(NetworkConnection recipient, Func<string> dataSendType = null)
         {
-            writer.FinishMessage();
+            if (!finished)
+            {
+                writer.FinishMessage();
+                finished = true;
+            }
 
             if (dataSendType == null)
                 socket.SendData(recipient, channelID, writer.ToArray(), writer.Position, null);

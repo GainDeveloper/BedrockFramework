@@ -344,7 +344,10 @@ namespace BedrockFramework.Network
 
             owner.StopCoroutine(eventPoll);
             if (statCounter != null)
+            {
                 owner.StopCoroutine(statCounter);
+                statCounter = null;
+            }
 
             NetworkTransport.Shutdown();
             OnShutdown();

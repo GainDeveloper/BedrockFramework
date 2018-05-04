@@ -69,8 +69,8 @@ namespace BedrockFramework.Network
             NetworkTransport.Send(networkSocket.SocketID, connectionID, channelId, data, dataSize, out error);
 
             if (dataSendType == null)
-                DevTools.Logger.Log(NetworkService.NetworkDataLog, "Sending {} {} bytes.", () => new object[] { connectionID, dataSize });
-            else DevTools.Logger.Log(NetworkService.NetworkDataLog, "Sending {} {} bytes for {}", () => new object[] { connectionID, dataSize, dataSendType() });
+                DevTools.Logger.Log(NetworkService.NetworkOutgoingLog, "Sending {} {} bytes.", () => new object[] { connectionID, dataSize });
+            else DevTools.Logger.Log(NetworkService.NetworkOutgoingLog, "Sending {} {} bytes for {}", () => new object[] { connectionID, dataSize, dataSendType() });
 
             if (error != 0)
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "SendData: {}", () => new object[] { (NetworkError)error });
@@ -88,6 +88,7 @@ namespace BedrockFramework.Network
             ushort sz = reader.ReadUInt16();
             short msgType = reader.ReadInt16();
 
+            DevTools.Logger.Log(NetworkService.NetworkIncomingLog, "Received {} bytes for {}", () => new object[] { dataSize, msgType });
 
             switch (msgType)
             {
@@ -105,6 +106,9 @@ namespace BedrockFramework.Network
                     break;
                 case MessageTypes.BRF_Client_Receive_GameObject:
                     Client_Receive_GameObject(reader);
+                    break;
+                case MessageTypes.BRF_Client_Update_GameObject:
+                    Client_Receive_Update_GameObject(reader);
                     break;
                 default:
                     Debug.AssertFormat(false, "wrong msgType {0}", msgType);
@@ -126,9 +130,9 @@ namespace BedrockFramework.Network
             }
 
             currentState = NetworkConnectionState.Loading;
-            NetworkWriter writer = networkSocket.Writer.Setup(this, networkSocket.ReliableSequencedChannel, MessageTypes.BRF_Client_Receive_OnLoadScene);
+            NetworkWriter writer = networkSocket.Writer.Setup(networkSocket.ReliableSequencedChannel, MessageTypes.BRF_Client_Receive_OnLoadScene);
             sceneLoadInfo.NetworkWrite(writer);
-            networkSocket.Writer.Send(() => "Send Client SceneLoadInfo");
+            networkSocket.Writer.Send(this, () => "Send Client SceneLoadInfo");
         }
 
         private void Client_Receive_OnLoadScene(NetworkReader reader)
@@ -155,8 +159,8 @@ namespace BedrockFramework.Network
 
             // Tell host we have finished loading.
             currentState = NetworkConnectionState.Waiting;
-            NetworkWriter writer = networkSocket.Writer.Setup(this, networkSocket.ReliableSequencedChannel, MessageTypes.BRF_Host_Receive_OnFinishedLoading);
-            networkSocket.Writer.Send(() => "Send host finished loading");
+            NetworkWriter writer = networkSocket.Writer.Setup(networkSocket.ReliableSequencedChannel, MessageTypes.BRF_Host_Receive_OnFinishedLoading);
+            networkSocket.Writer.Send(this, () => "Send host finished loading");
         }
 
         private void Host_Receive_OnFinishedLoading()
@@ -199,8 +203,8 @@ namespace BedrockFramework.Network
             }
 
             currentState = NetworkConnectionState.Ready;
-            NetworkWriter writer = networkSocket.Writer.Setup(this, networkSocket.ReliableSequencedChannel, MessageTypes.BRF_Client_Receive_OnReady);
-            networkSocket.Writer.Send(() => "Send client ready");
+            NetworkWriter writer = networkSocket.Writer.Setup(networkSocket.ReliableSequencedChannel, MessageTypes.BRF_Client_Receive_OnReady);
+            networkSocket.Writer.Send(this, () => "Send client ready");
             OnReady(this);
         }
 
@@ -233,6 +237,20 @@ namespace BedrockFramework.Network
             networkObject.Client_ReceiveGameObject(reader);
         }
 
+        private void Client_Receive_Update_GameObject(NetworkReader reader)
+        {
+            if (networkSocket.IsHost || !IsLocalConnection)
+            {
+                DevTools.Logger.LogError(NetworkService.NetworkLog, "Client Method called on a host.");
+                return;
+            }
 
+            short networkID = reader.ReadInt16();
+            NetworkGameObject networkObject = ServiceLocator.NetworkService.GetNetworkGameObject(networkID);
+            if (networkObject != null)
+                networkObject.Client_ReceiveGameObjectUpdate(reader);
+            else
+                DevTools.Logger.LogWarning(NetworkService.NetworkLog, "Received NetworkID {} which does not exist.", () => new object[] { networkID });
+        }
     }
 }
