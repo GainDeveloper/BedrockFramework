@@ -23,8 +23,8 @@ namespace BedrockFramework.Network
         private int socketID = -1;
         private int localConnectionID = 0;
         private MatchInfo matchInfo = null;
-        private Coroutine eventPoll, byteCounter;
-        private int bytesPerSecond = 0;
+        private Coroutine eventPoll, statCounter;
+        private int bytesPerSecond = 0, messagesPerSecond = 0;
         private byte[] receivedDataBuffer = new byte[1024];
         private NetworkWriterWrapper writer;
 
@@ -37,6 +37,7 @@ namespace BedrockFramework.Network
         public int UnreliableChannel { get { return unreliableChannel; } }
         public NetworkWriterWrapper Writer { get { return writer; } }
         public int BytesPerSecond { get { return bytesPerSecond; } }
+        public int MessagesPerSecond { get { return messagesPerSecond; } }
 
         public NetworkConnection LocalConnection { get { return !activeConnections.ContainsKey(localConnectionID) ? null : activeConnections[localConnectionID]; } }
         public IEnumerable<NetworkConnection> ActiveConnections() {
@@ -80,7 +81,8 @@ namespace BedrockFramework.Network
             }
 
             eventPoll = owner.StartCoroutine(PollNetworkEvents());
-            byteCounter = owner.StartCoroutine(ByteSecondCounter());
+            if (Debug.isDebugBuild)
+                statCounter = owner.StartCoroutine(SecondStatsCounter());
             return true;
         }
 
@@ -222,15 +224,19 @@ namespace BedrockFramework.Network
             return NetworkTransport.GetOutgoingFullBytesCountForHost(socketID, out error);
         }
 
-        IEnumerator ByteSecondCounter()
+        IEnumerator SecondStatsCounter()
         {
             int lastTotalBytes = TotalBytes();
+            int lastTotalMessages = NetworkTransport.GetOutgoingMessageCount();
 
             while (true)
             {
-                yield return new WaitForSeconds(1);
+                yield return new WaitForSecondsRealtime(1);
                 bytesPerSecond = TotalBytes() - lastTotalBytes;
                 lastTotalBytes = TotalBytes();
+
+                messagesPerSecond = NetworkTransport.GetOutgoingMessageCount() - lastTotalMessages;
+                lastTotalMessages = NetworkTransport.GetOutgoingMessageCount();
             }
         }
 
@@ -337,7 +343,8 @@ namespace BedrockFramework.Network
             matchInfo = null;
 
             owner.StopCoroutine(eventPoll);
-            owner.StopCoroutine(byteCounter);
+            if (statCounter != null)
+                owner.StopCoroutine(statCounter);
 
             NetworkTransport.Shutdown();
             OnShutdown();

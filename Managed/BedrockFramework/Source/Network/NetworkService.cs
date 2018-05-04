@@ -120,9 +120,9 @@ namespace BedrockFramework.Network
                     yield return connectionStat;
                 }
 
-                // Total Outgoing Bytes
-                string outgoingBytes = ActiveSocket.BytesPerSecond.ToString() + " B/s";
-                yield return outgoingBytes;
+
+                yield return ActiveSocket.BytesPerSecond.ToString() + " B/s";
+                yield return ActiveSocket.MessagesPerSecond.ToString() + " M/s";
             }
         }
 
