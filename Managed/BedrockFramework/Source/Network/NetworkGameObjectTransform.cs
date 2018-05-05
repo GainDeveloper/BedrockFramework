@@ -1,15 +1,11 @@
 /********************************************************           
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
-// TODO: Only update when necessary.
-// TODO: Control whether this is an initial update or stream.
-// TODO: Heavily compress Vector3.
+// TODO: Handle teleporting and other 'large' position updates.
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections;
-using System.Collections.Generic;
-using System;
 using BedrockFramework.Utilities;
+using DG.Tweening;
 
 namespace BedrockFramework.Network
 {
@@ -26,7 +22,7 @@ namespace BedrockFramework.Network
         private bool[] netVarsToUpdate = new bool[2];
         private Transform observed;
         private Vector3 lastSentPosition, lastReceivedPosition;
-        private float lastSentYAngle = -1000;
+        private float lastSentYAngle = -1000, lastReceivedAngle;
 
         public void Setup(Transform toObserve)
         {
@@ -61,15 +57,11 @@ namespace BedrockFramework.Network
                 {
                     // Create a derivative that max's the movement.
                     Vector3 diff = observed.position - lastSentPosition;
-                    Debug.Log(diff);
                     byte[] diffBytes = (Vector3.ClampMagnitude(diff, maxDistance) / maxDistance).Vector3ToByteArray();
                     toWrite.Write(diffBytes, 3);
                     diffBytes.ByteArrayToVector3(out diff);
-                    Debug.Log(diff * maxDistance);
-
                     lastSentPosition += diff * maxDistance;
                 }
-
             }
 
             if (forceUpdate || netVarsToUpdate[1])
@@ -84,7 +76,7 @@ namespace BedrockFramework.Network
                 netVarsToUpdate[i] = false;
         }
 
-        public void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool forceUpdate)
+        public void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool forceUpdate, float sendRate)
         {
             if (observed == null)
                 return;
@@ -98,12 +90,19 @@ namespace BedrockFramework.Network
                 } else
                 {
                     lastReceivedPosition += reader.ReadBytes(3).ByteArrayToVector3() * maxDistance;
-                    observed.position = lastReceivedPosition;
+                    observed.DOMove(lastReceivedPosition, sendRate).SetEase(Ease.Linear);
                 }
             }
 
             if (forceUpdate || updatedNetVars[currentPosition + 1])
-                observed.eulerAngles = new Vector3(0, reader.ReadByte().ZeroOneToFloat() * 360, 0);
+            {
+                lastReceivedAngle = reader.ReadByte().ZeroOneToFloat() * 360;
+                if (forceUpdate)
+                    observed.eulerAngles = new Vector3(0, lastReceivedAngle, 0);
+                else
+                    observed.DORotate(new Vector3(0, lastReceivedAngle, 0), sendRate);
+            }
+                
         }
     }
 }

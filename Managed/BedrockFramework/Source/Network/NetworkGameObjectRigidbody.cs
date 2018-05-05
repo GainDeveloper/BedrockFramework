@@ -1,8 +1,6 @@
 /********************************************************           
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
-// TODO: Only update when necessary.
-// TODO: Control whether this is an initial update or stream.
-// TODO: Heavily compress Vector3.
+//TODO: Compress velocity/ make it derivative.
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
@@ -58,13 +56,20 @@ namespace BedrockFramework.Network
                 netVarsToUpdate[i] = false;
         }
 
-        public void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool force)
+        public void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool force, float sendRate)
         {
             if (observed == null)
                 return;
 
             if (force || updatedNetVars[currentPosition])
                 observed.velocity = reader.ReadVector3();
+        }
+
+        public void ClientUpdate(float interpI)
+        {
+            if (observed == null)
+                return;
+
         }
     }
 }

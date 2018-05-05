@@ -21,7 +21,7 @@ namespace BedrockFramework.Network
         int NumNetVars { get; }
         bool[] GetNetVarsToUpdate();
         void WriteUpdatedNetVars(NetworkWriter toWrite, bool forceAll);
-        void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool forceAll);
+        void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool forceAll, float sendRate);
     }
 
     [HideMonoScript, AddComponentMenu("BedrockFramework/Network GameObject")]
@@ -39,6 +39,7 @@ namespace BedrockFramework.Network
 
         private Coroutine activeLoop;
         private List<INetworkComponent> activeNetworkComponents;
+        private float lastUpdateTime;
 
         public short NetworkID { get { return networkID; } }
 
@@ -136,18 +137,19 @@ namespace BedrockFramework.Network
         public void Client_ReceiveGameObject(NetworkReader reader)
         {
             networkID = reader.ReadInt16();
+            lastUpdateTime = Time.time;
             ServiceLocator.NetworkService.AddNetworkGameObject(this);
 
             int currentPosition = 0;
             for (int i = 0; i < activeNetworkComponents.Count; i++)
             {
-                activeNetworkComponents[i].ReadUpdatedNetVars(reader, null, currentPosition, true);
+                activeNetworkComponents[i].ReadUpdatedNetVars(reader, null, currentPosition, true, 0);
                 currentPosition += activeNetworkComponents[i].NumNetVars;
             }
         }
 
         //
-        // Update Loop
+        // Host Update Loop
         //
 
         int NumNetVars { get {
@@ -213,8 +215,14 @@ namespace BedrockFramework.Network
             }
         }
 
+        //
+        // Client Update Loop
+        //
+
         public void Client_ReceiveGameObjectUpdate(NetworkReader reader)
         {
+            lastUpdateTime = Time.time;
+
             // Read the bool array with what has been updated.
             bool[] updatedNetVars = reader.ReadBytes(NumNetVars.BoolArraySizeToByteArraySize()).ToBoolArray();
 
@@ -223,7 +231,7 @@ namespace BedrockFramework.Network
             int currentPosition = 0;
             for (int i = 0; i < activeNetworkComponents.Count; i++)
             {
-                activeNetworkComponents[i].ReadUpdatedNetVars(reader, updatedNetVars, currentPosition, false);
+                activeNetworkComponents[i].ReadUpdatedNetVars(reader, updatedNetVars, currentPosition, false, 1f / updatesPerSecond);
                 currentPosition += activeNetworkComponents[i].NumNetVars;
             }
         }

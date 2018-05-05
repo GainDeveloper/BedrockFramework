@@ -26,7 +26,6 @@ namespace BedrockFramework.Network
 
         int channelID;
 
-        //TODO: Should extend setup with varients for specific types of messages (i.e messages between network objects)
         public NetworkWriter Setup(int channelID, short messageType)
         {
             finished = false;
