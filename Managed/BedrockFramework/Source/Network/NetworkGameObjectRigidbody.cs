@@ -1,6 +1,6 @@
 /********************************************************           
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
-//TODO: Compress velocity/ make it derivative.
+// TODO: Will need to handle faster velocities.
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
@@ -26,6 +26,16 @@ namespace BedrockFramework.Network
         public void Setup(Rigidbody toObserve)
         {
             this.observed = toObserve;
+        }
+
+        public void TakenOwnership()
+        {
+            lastSentVelocity = lastReceivedVelocity;
+        }
+
+        public void LostOwnership()
+        {
+            lastReceivedVelocity = lastSentVelocity;
         }
 
         // Calculate any specific netvars that need to be updated.

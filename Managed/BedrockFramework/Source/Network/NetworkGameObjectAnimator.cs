@@ -1,7 +1,8 @@
 /********************************************************           
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 //TODO: Handle triggers, perhaps should be RPC calls.
-//TODO: Initial setup will need to handle full state syncing. Might not be an issue for smaller animations.
+//TODO: Initial setup will need to handle full state syncing (current state and state time). Might not be an issue for smaller animations. 
+//TODO: Compress floats. Bools could also be put into one byte if we have a lot of them.
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
@@ -29,6 +30,10 @@ namespace BedrockFramework.Network
             parameters = observed.parameters;
             netVarsToUpdate = new bool[observed.parameterCount];
         }
+
+        public void TakenOwnership() { }
+        public void LostOwnership() { }
+
 
         // Calculate any specific netvars that need to be updated.
         public bool[] GetNetVarsToUpdate()

@@ -19,23 +19,29 @@ namespace BedrockFramework.Network
         private Dictionary<int, NetworkConnection> activeConnections = new Dictionary<int, NetworkConnection>();
 
         private ConnectionConfig connectionConfig;
-        private int reliableSequencedChannel, reliableChannel, unreliableChannel;
         private int socketID = -1;
         private int localConnectionID = 0;
         private MatchInfo matchInfo = null;
         private Coroutine eventPoll, statCounter;
-        private int bytesPerSecond = 0, messagesPerSecond = 0;
-        private byte[] receivedDataBuffer = new byte[1024];
-        private NetworkWriterWrapper writer;
-
+        
         public bool IsHost { get { return localConnectionID == 0; } }
         public bool IsActive { get { return socketID != -1; } }
         public int SocketID { get { return socketID; } }
         public int LocalConnectionID { get { return localConnectionID; } }
+
+        // Writer
+        private byte[] receivedDataBuffer = new byte[1024];
+        private NetworkWriterWrapper writer;
+        public NetworkWriterWrapper Writer { get { return writer; } }
+
+        // Channels
+        private int reliableSequencedChannel, reliableChannel, unreliableChannel;
         public int ReliableSequencedChannel { get { return reliableSequencedChannel; } }
         public int ReliableChannel { get { return reliableChannel; } }
         public int UnreliableChannel { get { return unreliableChannel; } }
-        public NetworkWriterWrapper Writer { get { return writer; } }
+
+        // Stats
+        private int bytesPerSecond = 0, messagesPerSecond = 0;
         public int BytesPerSecond { get { return bytesPerSecond; } }
         public int MessagesPerSecond { get { return messagesPerSecond; } }
 
@@ -48,7 +54,7 @@ namespace BedrockFramework.Network
 
         public event Action<NetworkConnection> OnNewNetworkConnection = delegate { };
         public event Action<NetworkConnection> OnNetworkConnectionReady = delegate { };
-
+        public event Action<NetworkConnection> OnNetworkConnectionDisconnected = delegate { };
         public event Action OnShutdown = delegate { };
 
         public NetworkSocket(MonoBehaviour owner)
@@ -245,7 +251,7 @@ namespace BedrockFramework.Network
         // Manage Network Connections
         //
 
-            void SetupConnection(int connectionId)
+        void SetupConnection(int connectionId)
         {
             if (activeConnections.ContainsKey(connectionId))
             {
@@ -271,8 +277,9 @@ namespace BedrockFramework.Network
                 return;
             }
 
-            activeConnections[connectionId].OnReady -= NetworkSocket_OnReady;
             activeConnections[connectionId].Disconnect();
+            OnNetworkConnectionDisconnected(activeConnections[connectionId]);
+            activeConnections[connectionId].OnReady -= NetworkSocket_OnReady;
             activeConnections.Remove(connectionId);
         }
 

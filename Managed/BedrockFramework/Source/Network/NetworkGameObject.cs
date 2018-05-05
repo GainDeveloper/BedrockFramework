@@ -1,8 +1,8 @@
 /********************************************************           
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
-Receives all data from the host.
-Stores list of connections.
-// TODO: Ownership, which allows connections to take control of updating.
+Host always sends initialisation data.
+Receives all data from current owner.
+Host can change ownership at will.
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
@@ -22,6 +22,8 @@ namespace BedrockFramework.Network
         bool[] GetNetVarsToUpdate();
         void WriteUpdatedNetVars(NetworkWriter toWrite, bool forceAll);
         void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool forceAll, float sendRate);
+        void TakenOwnership();
+        void LostOwnership();
     }
 
     [HideMonoScript, AddComponentMenu("BedrockFramework/Network GameObject")]
@@ -36,9 +38,11 @@ namespace BedrockFramework.Network
         private PoolDefinition poolDefinition;
         [ReadOnly, ShowInInspector]
         private short networkID = 0;
+        [ReadOnly, ShowInInspector, HorizontalGroup("Ownership")]
+        private NetworkConnection owner = null;
 
         private Coroutine activeLoop;
-        private List<INetworkComponent> activeNetworkComponents;
+        private List<INetworkComponent> activeNetworkComponents = new List<INetworkComponent>();
         private float lastUpdateTime;
 
         public short NetworkID { get { return networkID; } }
@@ -85,6 +89,7 @@ namespace BedrockFramework.Network
                 networkID = ServiceLocator.NetworkService.UniqueNetworkID;
 
             ServiceLocator.NetworkService.AddNetworkGameObject(this);
+            StartOwning();
 
             // Tell all active connections about our creation.
             if (ServiceLocator.NetworkService.IsActive)
@@ -92,21 +97,17 @@ namespace BedrockFramework.Network
                 Host_SendGameObject(ServiceLocator.NetworkService.ActiveSocket.ActiveConnections().Where(x => x.CurrentState == NetworkConnectionState.Ready).ToArray());
             }
 
-            activeLoop = StartCoroutine(UpdateLoop());
             ServiceLocator.NetworkService.OnNetworkConnectionReady += OnNetworkConnectionReady;
+            ServiceLocator.NetworkService.OnNetworkConnectionDisconnected += OnNetworkConnectionDisconnected;
             ServiceLocator.NetworkService.OnStop += NetworkService_OnStop;
         }
 
         private void NetworkService_OnStop()
         {
-            if (activeLoop != null)
-            {
-                StopCoroutine(activeLoop);
-                activeLoop = null;
-            }
-
+            StopOwning(null);
             ServiceLocator.NetworkService.RemoveNetworkGameObject(this);
             ServiceLocator.NetworkService.OnNetworkConnectionReady -= OnNetworkConnectionReady;
+            ServiceLocator.NetworkService.OnNetworkConnectionDisconnected -= OnNetworkConnectionDisconnected;
             ServiceLocator.NetworkService.OnStop -= NetworkService_OnStop;
         }
 
@@ -116,6 +117,13 @@ namespace BedrockFramework.Network
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "None host is trying to handle a connection ready network game object request!");
 
             Host_SendGameObject(new NetworkConnection[] { readyConnection });
+            SetOwner(readyConnection);
+        }
+
+        private void OnNetworkConnectionDisconnected(NetworkConnection disconnected)
+        {
+            if (owner == disconnected)
+                SetOwner(null);
         }
 
         //
@@ -167,8 +175,7 @@ namespace BedrockFramework.Network
         IEnumerator UpdateLoop()
         {
             bool[] updatedNetVars = new bool[NumNetVars];
-
-            while (true)
+            while (ServiceLocator.NetworkService.IsActive)
             {
                 yield return new WaitForSecondsRealtime(1f / updatesPerSecond);
 
@@ -176,7 +183,7 @@ namespace BedrockFramework.Network
                 RefreshUpdatedNetVars(ref updatedNetVars);
 
                 // Check if any NetVars were updated.
-                if (updatedNetVars.ArrayContainsValue(true) && ServiceLocator.NetworkService.ActiveSocket.NumActiveConnections > 0)
+                if (ServiceLocator.NetworkService.IsActive && updatedNetVars.ArrayContainsValue(true) && ServiceLocator.NetworkService.ActiveSocket.NumActiveConnections > 0)
                 {
                     WriteAndSendNetVars(updatedNetVars);
                 }
@@ -238,6 +245,96 @@ namespace BedrockFramework.Network
                 activeNetworkComponents[i].ReadUpdatedNetVars(reader, updatedNetVars, currentPosition, false, 1f / updatesPerSecond);
                 currentPosition += activeNetworkComponents[i].NumNetVars;
             }
+        }
+
+        //
+        // Ownership
+        //
+
+        private void StartOwning()
+        {
+            DevTools.Logger.Log(NetworkService.NetworkLog, "Taking ownership of {}.", () => new object[] { gameObject.name });
+            owner = ServiceLocator.NetworkService.ActiveSocket.LocalConnection;
+
+            for (int i = 0; i < activeNetworkComponents.Count; i++)
+                activeNetworkComponents[i].TakenOwnership();
+            activeLoop = StartCoroutine(UpdateLoop());
+        }
+
+        private void StopOwning(NetworkConnection newOwner)
+        {
+            DevTools.Logger.Log(NetworkService.NetworkLog, "Discarding ownership of {}. New Owner : {}", () => new object[] {gameObject.name, newOwner != null ? newOwner.ConnectionID : 0});
+
+            if (activeLoop != null)
+            {
+                StopCoroutine(activeLoop);
+                activeLoop = null;
+            }
+
+            owner = newOwner;
+
+            for (int i = 0; i < activeNetworkComponents.Count; i++)
+                activeNetworkComponents[i].LostOwnership();
+        }
+
+        public void SetOwner(NetworkConnection newOwner)
+        {
+            if (owner == newOwner)
+                return;
+
+            if (ServiceLocator.NetworkService.IsHost)
+            {
+                if (newOwner == null)
+                {
+                    Host_SendOwnership(owner, false);
+                    StartOwning();
+                }
+                else if (owner == null)
+                {
+                    StopOwning(newOwner);
+                    Host_SendOwnership(newOwner, true);
+                }
+            }
+            else
+            {
+                if (newOwner == ServiceLocator.NetworkService.ActiveSocket.LocalConnection)
+                    StartOwning();
+                else if (owner == ServiceLocator.NetworkService.ActiveSocket.LocalConnection)
+                    StopOwning(null);
+            }
+        }
+
+        [Button, HorizontalGroup("Ownership")]
+        private void BecomeOwner()
+        {
+            if (ServiceLocator.NetworkService.IsHost)
+            {
+                SetOwner(null);
+            }
+        }
+
+        public void Host_SendOwnership(NetworkConnection connection, bool takeOwnership)
+        {
+            if (!ServiceLocator.NetworkService.IsHost)
+                DevTools.Logger.LogError(NetworkService.NetworkLog, "None host is trying to send ownership of a NetworkGameObject!");
+
+            if (connection.CurrentState == NetworkConnectionState.Disconnecting)
+                return;
+
+            NetworkWriter writer = ServiceLocator.NetworkService.ActiveSocket.Writer.Setup(ServiceLocator.NetworkService.ActiveSocket.ReliableChannel, MessageTypes.BRF_Client_Ownership_GameObject);
+            writer.Write(networkID);
+            writer.Write(takeOwnership);
+            ServiceLocator.NetworkService.ActiveSocket.Writer.Send(connection, () => "NetworkGameObject Ownership");
+        }
+
+        public void Client_ReceiveOwnershipChange(NetworkReader reader)
+        {
+            bool takeOwnership = reader.ReadBoolean();
+
+            if (takeOwnership)
+                SetOwner(ServiceLocator.NetworkService.ActiveSocket.LocalConnection);
+            else
+                SetOwner(null);
         }
     }
 }

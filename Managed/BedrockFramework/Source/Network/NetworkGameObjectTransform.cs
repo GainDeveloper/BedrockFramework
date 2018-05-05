@@ -1,7 +1,7 @@
 /********************************************************           
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 // TODO: Handle teleporting and other 'large' position updates.
-// TODO: Interpolation could work physics rather than bypassing it.
+// TODO: Interpolation could work with physics rather than bypassing it. Perhaps it's just a case of having faster interpolation.
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
@@ -17,6 +17,7 @@ namespace BedrockFramework.Network
         public float minDistance = 0.05f;
         public float maxDistance = 1.5f;
         public float minAngle = 3f;
+        public float interpolationScale = 0.2f;
 
         public int NumNetVars { get { return netVarsToUpdate.Length; } }
 
@@ -28,6 +29,18 @@ namespace BedrockFramework.Network
         public void Setup(Transform toObserve)
         {
             this.observed = toObserve;
+        }
+
+        public void TakenOwnership()
+        {
+            lastSentPosition = lastReceivedPosition;
+            lastSentYAngle = lastReceivedAngle;
+        }
+
+        public void LostOwnership()
+        {
+            lastReceivedPosition = lastSentPosition;
+            lastReceivedAngle = lastSentYAngle;
         }
 
         // Calculate any specific netvars that need to be updated.
@@ -94,7 +107,7 @@ namespace BedrockFramework.Network
                 } else
                 {
                     lastReceivedPosition += reader.ReadBytes(3).ByteArrayToVector3() * maxDistance;
-                    observed.DOMove(lastReceivedPosition, sendRate).SetEase(Ease.Linear);
+                    observed.DOMove(lastReceivedPosition, sendRate * interpolationScale).SetEase(Ease.Linear);
                 }
             }
 
@@ -104,9 +117,8 @@ namespace BedrockFramework.Network
                 if (forceUpdate)
                     observed.eulerAngles = new Vector3(0, lastReceivedAngle, 0);
                 else
-                    observed.DORotate(new Vector3(0, lastReceivedAngle, 0), sendRate);
+                    observed.DORotate(new Vector3(0, lastReceivedAngle, 0), sendRate * interpolationScale);
             }
-                
         }
     }
 }

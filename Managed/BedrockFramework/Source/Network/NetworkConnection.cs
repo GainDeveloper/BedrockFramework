@@ -9,6 +9,7 @@ using System.Collections;
 using ProtoBuf;
 using System;
 using System.IO;
+using Sirenix.OdinInspector;
 
 namespace BedrockFramework.Network
 {
@@ -16,11 +17,13 @@ namespace BedrockFramework.Network
     {
         Loading,
         Waiting,
-        Ready
+        Ready,
+        Disconnecting
     }
 
     public class NetworkConnection
     {
+        [ReadOnly, ShowInInspector]
         int connectionID;
         NetworkSocket networkSocket;
         NetworkConnectionState currentState = NetworkConnectionState.Loading;
@@ -55,6 +58,7 @@ namespace BedrockFramework.Network
 
         public void Disconnect()
         {
+            currentState = NetworkConnectionState.Disconnecting;
             ServiceLocator.SceneService.OnLoadScene -= Host_OnLoadScene;
             ServiceLocator.SceneService.OnFinishedLoading -= Client_OnFinishedLoading;
 
@@ -108,7 +112,10 @@ namespace BedrockFramework.Network
                     Client_Receive_GameObject(reader);
                     break;
                 case MessageTypes.BRF_Client_Update_GameObject:
-                    Client_Receive_Update_GameObject(reader);
+                    NoneOwner_Receive_Update_GameObject(reader);
+                    break;
+                case MessageTypes.BRF_Client_Ownership_GameObject:
+                    Client_Receive_Ownership_GameObject(reader);
                     break;
                 default:
                     Debug.AssertFormat(false, "wrong msgType {0}", msgType);
@@ -237,7 +244,17 @@ namespace BedrockFramework.Network
             networkObject.Client_ReceiveGameObject(reader);
         }
 
-        private void Client_Receive_Update_GameObject(NetworkReader reader)
+        private void NoneOwner_Receive_Update_GameObject(NetworkReader reader)
+        {
+            short networkID = reader.ReadInt16();
+            NetworkGameObject networkObject = ServiceLocator.NetworkService.GetNetworkGameObject(networkID);
+            if (networkObject != null)
+                networkObject.Client_ReceiveGameObjectUpdate(reader);
+            else
+                DevTools.Logger.LogWarning(NetworkService.NetworkLog, "Received NetworkID {} which does not exist.", () => new object[] { networkID });
+        }
+
+        private void Client_Receive_Ownership_GameObject(NetworkReader reader)
         {
             if (networkSocket.IsHost || !IsLocalConnection)
             {
@@ -248,7 +265,7 @@ namespace BedrockFramework.Network
             short networkID = reader.ReadInt16();
             NetworkGameObject networkObject = ServiceLocator.NetworkService.GetNetworkGameObject(networkID);
             if (networkObject != null)
-                networkObject.Client_ReceiveGameObjectUpdate(reader);
+                networkObject.Client_ReceiveOwnershipChange(reader);
             else
                 DevTools.Logger.LogWarning(NetworkService.NetworkLog, "Received NetworkID {} which does not exist.", () => new object[] { networkID });
         }

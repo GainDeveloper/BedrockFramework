@@ -20,6 +20,7 @@ namespace BedrockFramework.Network
 
         event Action<NetworkConnection> OnNewNetworkConnection;
         event Action<NetworkConnection> OnNetworkConnectionReady;
+        event Action<NetworkConnection> OnNetworkConnectionDisconnected;
 
         event Action OnStop;
 
@@ -46,6 +47,7 @@ namespace BedrockFramework.Network
 
         public event Action<NetworkConnection> OnNewNetworkConnection = delegate { };
         public event Action<NetworkConnection> OnNetworkConnectionReady = delegate { };
+        public event Action<NetworkConnection> OnNetworkConnectionDisconnected = delegate { };
 
         public event Action OnStop = delegate { };
 
@@ -77,6 +79,7 @@ namespace BedrockFramework.Network
         public event Action OnBecomeHost = delegate { };
         public event Action<NetworkConnection> OnNewNetworkConnection = delegate { };
         public event Action<NetworkConnection> OnNetworkConnectionReady = delegate { };
+        public event Action<NetworkConnection> OnNetworkConnectionDisconnected = delegate { };
         public event Action OnStop = delegate { };
 
         public bool IsHost {
@@ -250,6 +253,7 @@ namespace BedrockFramework.Network
             currentSocket = new NetworkSocket(owner);
             currentSocket.OnNewNetworkConnection += CurrentSocket_OnNewNetworkConnection;
             currentSocket.OnNetworkConnectionReady += CurrentSocket_OnNetworkConnectionReady;
+            currentSocket.OnNetworkConnectionDisconnected += CurrentSocket_OnNetworkConnectionDisconnected;
             currentSocket.OnShutdown += CurrentSocket_OnShutdown;
         }
 
@@ -261,6 +265,11 @@ namespace BedrockFramework.Network
         private void CurrentSocket_OnNetworkConnectionReady(NetworkConnection networkConnection)
         {
             OnNetworkConnectionReady(networkConnection);
+        }
+
+        private void CurrentSocket_OnNetworkConnectionDisconnected(NetworkConnection networkConnection)
+        {
+            OnNetworkConnectionDisconnected(networkConnection);
         }
 
         private void CurrentSocket_OnShutdown()
