@@ -197,6 +197,12 @@
     <Compile Include="..\Source\Network\NetworkGameObjectRigidbody.cs">
       <Link>Network\NetworkGameObjectRigidbody.cs</Link>
     </Compile>
+    <Compile Include="..\Source\Utilities\TransformExtensions.cs">
+      <Link>Utilities\TransformExtensions.cs</Link>
+    </Compile>
+	<Compile Include="..\Source\Utilities\ArrayExtensions.cs">
+      <Link>Utilities\ArrayExtensions.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

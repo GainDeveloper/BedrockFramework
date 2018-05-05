@@ -9,6 +9,7 @@ using UnityEngine.Networking;
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using BedrockFramework.Utilities;
 
 namespace BedrockFramework.Network
 {
@@ -17,13 +18,15 @@ namespace BedrockFramework.Network
     {
         public bool enabled = true;
         public float minDistance = 0.05f;
-
+        public float maxDistance = 1.5f;
+        public float minAngle = 3f;
 
         public int NumNetVars { get { return netVarsToUpdate.Length; } }
 
-        private bool[] netVarsToUpdate = new bool[1];
+        private bool[] netVarsToUpdate = new bool[2];
         private Transform observed;
-        private Vector3 lastSentPosition;
+        private Vector3 lastSentPosition, lastReceivedPosition;
+        private float lastSentYAngle = -1000;
 
         public void Setup(Transform toObserve)
         {
@@ -36,6 +39,9 @@ namespace BedrockFramework.Network
             if (lastSentPosition == null || Vector3.Distance(lastSentPosition, observed.position) > minDistance)
                 netVarsToUpdate[0] = true;
 
+            if (lastSentYAngle == -1000 || Mathf.Abs(lastSentYAngle - observed.rotation.eulerAngles.y) > minAngle)
+                netVarsToUpdate[1] = true;
+
             return netVarsToUpdate;
         }
 
@@ -46,8 +52,31 @@ namespace BedrockFramework.Network
 
             if (forceUpdate || netVarsToUpdate[0])
             {
-                toWrite.Write(observed.position);
-                lastSentPosition = observed.position;
+                // For initilisation we send the full position.
+                if (forceUpdate)
+                {
+                    toWrite.Write(observed.position);
+                    lastSentPosition = observed.position;
+                } else
+                {
+                    // Create a derivative that max's the movement.
+                    Vector3 diff = observed.position - lastSentPosition;
+                    Debug.Log(diff);
+                    byte[] diffBytes = (Vector3.ClampMagnitude(diff, maxDistance) / maxDistance).Vector3ToByteArray();
+                    toWrite.Write(diffBytes, 3);
+                    diffBytes.ByteArrayToVector3(out diff);
+                    Debug.Log(diff * maxDistance);
+
+                    lastSentPosition += diff * maxDistance;
+                }
+
+            }
+
+            if (forceUpdate || netVarsToUpdate[1])
+            {
+                byte angle = (observed.eulerAngles.y.Wrap(0, 360) / 360).ZeroOneToByte();
+                toWrite.Write(angle);
+                lastSentYAngle = observed.eulerAngles.y;
             }
 
             // Reset sent netvars to update.
@@ -61,7 +90,20 @@ namespace BedrockFramework.Network
                 return;
 
             if (forceUpdate || updatedNetVars[currentPosition])
-                observed.position = reader.ReadVector3();
+            {
+                if (forceUpdate)
+                {
+                    observed.position = reader.ReadVector3();
+                    lastReceivedPosition = observed.position;
+                } else
+                {
+                    lastReceivedPosition += reader.ReadBytes(3).ByteArrayToVector3() * maxDistance;
+                    observed.position = lastReceivedPosition;
+                }
+            }
+
+            if (forceUpdate || updatedNetVars[currentPosition + 1])
+                observed.eulerAngles = new Vector3(0, reader.ReadByte().ZeroOneToFloat() * 360, 0);
         }
     }
 }

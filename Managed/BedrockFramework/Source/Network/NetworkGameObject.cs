@@ -218,6 +218,8 @@ namespace BedrockFramework.Network
             // Read the bool array with what has been updated.
             bool[] updatedNetVars = reader.ReadBytes(NumNetVars.BoolArraySizeToByteArraySize()).ToBoolArray();
 
+            //Debug.Log(string.Join(", ", updatedNetVars.Select(x => x.ToString()).ToArray()));
+
             int currentPosition = 0;
             for (int i = 0; i < activeNetworkComponents.Count; i++)
             {
