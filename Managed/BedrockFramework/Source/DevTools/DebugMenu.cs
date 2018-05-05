@@ -245,6 +245,7 @@ namespace BedrockFramework.DevTools
             foreach (DebugStat stat in debugStats)
             {
                 stat.OnGUI_DrawStats(this);
+                GUILayoutUtility.GetRect(5, 15);
             }
             GUILayout.EndVertical();
             GUILayout.EndArea();

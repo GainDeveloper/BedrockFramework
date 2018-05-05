@@ -47,6 +47,10 @@
       <HintPath>..\..\..\Assets\Plugins\DOTween\DOTween.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Facepunch.Steamworks">
+      <HintPath>..\..\..\Assets\Plugins\Facepunch.Steamworks\Facepunch.Steamworks.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -207,8 +211,14 @@
     <Compile Include="..\Source\Utilities\TransformExtensions.cs">
       <Link>Utilities\TransformExtensions.cs</Link>
     </Compile>
-	<Compile Include="..\Source\Utilities\ArrayExtensions.cs">
+    <Compile Include="..\Source\Utilities\ArrayExtensions.cs">
       <Link>Utilities\ArrayExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\Source\PlatformFrontend\PlatformFrontendService.cs">
+      <Link>PlatformFrontend\PlatformFrontendService.cs</Link>
+    </Compile>
+	<Compile Include="..\Source\PlatformFrontend\SteamFrontendService.cs">
+      <Link>PlatformFrontend\SteamFrontendService.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

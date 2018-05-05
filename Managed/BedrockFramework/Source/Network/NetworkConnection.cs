@@ -2,6 +2,7 @@
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 Represents a connection between a client and a server.
 Holds the current status of the connection.
+Holds basic info about the connection.
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
@@ -27,6 +28,9 @@ namespace BedrockFramework.Network
         int connectionID;
         NetworkSocket networkSocket;
         NetworkConnectionState currentState = NetworkConnectionState.Loading;
+
+        private string friendlyName = "Unnamed";
+        public string FriendlyName { get { return friendlyName; } }
 
         public int ConnectionID { get { return connectionID; } }
         /// <summary>
@@ -103,7 +107,7 @@ namespace BedrockFramework.Network
                     Client_Receive_OnLoadScene(reader);
                     break;
                 case MessageTypes.BRF_Host_Receive_OnFinishedLoading:
-                    Host_Receive_OnFinishedLoading();
+                    Host_Receive_OnFinishedLoading(reader);
                     break;
                 case MessageTypes.BRF_Client_Receive_OnReady:
                     Client_Receive_OnReady();
@@ -138,6 +142,7 @@ namespace BedrockFramework.Network
 
             currentState = NetworkConnectionState.Loading;
             NetworkWriter writer = networkSocket.Writer.Setup(networkSocket.ReliableSequencedChannel, MessageTypes.BRF_Client_Receive_OnLoadScene);
+            writer.Write(ServiceLocator.PlatformService.Username); // Tell client what our name is.
             sceneLoadInfo.NetworkWrite(writer);
             networkSocket.Writer.Send(this, () => "Send Client SceneLoadInfo");
         }
@@ -151,6 +156,7 @@ namespace BedrockFramework.Network
             }
 
             currentState = NetworkConnectionState.Loading;
+            friendlyName = reader.ReadString();
             Scenes.SceneLoadInfo loadInfo = new Scenes.SceneLoadInfo(reader);
             ServiceLocator.SceneService.LoadScene(loadInfo);
         }
@@ -167,10 +173,11 @@ namespace BedrockFramework.Network
             // Tell host we have finished loading.
             currentState = NetworkConnectionState.Waiting;
             NetworkWriter writer = networkSocket.Writer.Setup(networkSocket.ReliableSequencedChannel, MessageTypes.BRF_Host_Receive_OnFinishedLoading);
+            writer.Write(ServiceLocator.PlatformService.Username); // Tell host what our name is.
             networkSocket.Writer.Send(this, () => "Send host finished loading");
         }
 
-        private void Host_Receive_OnFinishedLoading()
+        private void Host_Receive_OnFinishedLoading(NetworkReader reader)
         {
             if (!networkSocket.IsHost || IsLocalConnection)
             {
@@ -179,6 +186,7 @@ namespace BedrockFramework.Network
             }
 
             currentState = NetworkConnectionState.Waiting;
+            friendlyName = reader.ReadString();
 
             if (ServiceLocator.SceneService.CurrentState == Scenes.SceneLoadingState.Loaded)
             {

@@ -131,15 +131,13 @@ namespace BedrockFramework.Network
 
         IEnumerable<string> NetworkStats()
         {
-            byte error;
-
             yield return "Active: " + IsActive;
             if (IsActive)
             {
                 yield return "Host: " + IsHost;
                 foreach (NetworkConnection connection in ActiveSocket.ActiveConnections())
                 {
-                    string connectionStat = connection.ConnectionID.ToString();
+                    string connectionStat = connection.FriendlyName + " " + connection.ConnectionID.ToString();
                     if (connection.IsLocalConnection)
                         connectionStat += " (Local)";
                     connectionStat += " : " + connection.CurrentState;

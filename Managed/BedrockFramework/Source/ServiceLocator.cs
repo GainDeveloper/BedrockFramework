@@ -83,9 +83,25 @@ namespace BedrockFramework
             }
         }
 
+        // Platform Service
+        private static PlatformFrontend.IPlatformFrontendService platformService;
+        public static PlatformFrontend.IPlatformFrontendService PlatformService { get { return platformService; } }
+        public static void RegisterPlatformService(PlatformFrontend.IPlatformFrontendService service)
+        {
+            if (service == null)
+            {
+                platformService = new PlatformFrontend.NullPlatformFrontendService();
+            }
+            else
+            {
+                platformService = service;
+            }
+        }
+
         // Register null services as a fallback.
         static ServiceLocator()
         {
+            RegisterPlatformService(null);
             RegisterSceneService(null);
             RegisterPoolService(null);
             RegisterSaveService(null);

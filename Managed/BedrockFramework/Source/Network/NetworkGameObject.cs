@@ -3,6 +3,7 @@ BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 Host always sends initialisation data.
 Receives all data from current owner.
 Host can change ownership at will.
+TODO: Create an interface and try and generalise most of what is here so we can have Networked Components.
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
