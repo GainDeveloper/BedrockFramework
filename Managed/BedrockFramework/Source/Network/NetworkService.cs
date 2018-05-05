@@ -1,7 +1,6 @@
 /********************************************************           
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 
-
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;

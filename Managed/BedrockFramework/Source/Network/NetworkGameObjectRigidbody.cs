@@ -13,19 +13,19 @@ using System;
 namespace BedrockFramework.Network
 {
     [System.Serializable]
-    public class NetworkGameObjectTransform : INetworkComponent
+    public class NetworkGameObjectRigidbody : INetworkComponent
     {
         public bool enabled = true;
-        public float minDistance = 0.05f;
+        public float minVelocityDiff = 0.05f;
 
 
         public int NumNetVars { get { return netVarsToUpdate.Length; } }
 
         private bool[] netVarsToUpdate = new bool[1];
-        private Transform observed;
-        private Vector3 lastSentPosition;
+        private Rigidbody observed;
+        private Vector3 lastSentVelocity;
 
-        public void Setup(Transform toObserve)
+        public void Setup(Rigidbody toObserve)
         {
             this.observed = toObserve;
         }
@@ -33,7 +33,10 @@ namespace BedrockFramework.Network
         // Calculate any specific netvars that need to be updated.
         public bool[] GetNetVarsToUpdate()
         {
-            if (lastSentPosition == null || Vector3.Distance(lastSentPosition, observed.position) > minDistance)
+            if (observed == null)
+                return netVarsToUpdate;
+
+            if (lastSentVelocity == null || Vector3.Distance(lastSentVelocity, observed.velocity) > minVelocityDiff)
                 netVarsToUpdate[0] = true;
 
             return netVarsToUpdate;
@@ -46,8 +49,8 @@ namespace BedrockFramework.Network
 
             if (netVarsToUpdate[0])
             {
-                toWrite.Write(observed.position);
-                lastSentPosition = observed.position;
+                toWrite.Write(observed.velocity);
+                lastSentVelocity = observed.velocity;
             }
 
             // Reset sent netvars to update.
@@ -61,7 +64,7 @@ namespace BedrockFramework.Network
                 return;
 
             if (updatedNetVars[currentPosition])
-                observed.position = reader.ReadVector3();
+                observed.velocity = reader.ReadVector3();
         }
     }
 }

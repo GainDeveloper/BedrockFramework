@@ -194,6 +194,9 @@
     <Compile Include="..\Source\Network\NetworkGameObjectTransform.cs">
       <Link>Network\NetworkGameObjectTransform.cs</Link>
     </Compile>
+    <Compile Include="..\Source\Network\NetworkGameObjectRigidbody.cs">
+      <Link>Network\NetworkGameObjectRigidbody.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

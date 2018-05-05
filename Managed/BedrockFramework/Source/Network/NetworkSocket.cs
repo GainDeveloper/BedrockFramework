@@ -44,6 +44,7 @@ namespace BedrockFramework.Network
             foreach (NetworkConnection connection in activeConnections.Values)
                 yield return connection;
         }
+        public int NumActiveConnections { get { return activeConnections.Count; } }
 
         public event Action<NetworkConnection> OnNewNetworkConnection = delegate { };
         public event Action<NetworkConnection> OnNetworkConnectionReady = delegate { };

@@ -11,14 +11,17 @@ using System.Collections.Generic;
 using System.Linq;
 using Sirenix.OdinInspector;
 using BedrockFramework.Pool;
+using BedrockFramework.Utilities;
+using System;
 
 namespace BedrockFramework.Network
 {
     interface INetworkComponent
     {
         int NumNetVars { get; }
-        void WriteUpdatedNetVars(NetworkWriter toWrite, ref bool[] updatedVars, int currentPosition);
-        void ReadUpdatedNetVars(NetworkReader reader);
+        bool[] GetNetVarsToUpdate();
+        void WriteUpdatedNetVars(NetworkWriter toWrite);
+        void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition);
     }
 
     [HideMonoScript, AddComponentMenu("BedrockFramework/Network GameObject")]
@@ -26,6 +29,8 @@ namespace BedrockFramework.Network
     {
         public byte updatesPerSecond  = 3;
         public NetworkGameObjectTransform networkTransform = new NetworkGameObjectTransform();
+        public NetworkGameObjectRigidbody networkRigidbody = new NetworkGameObjectRigidbody();
+
 
         [ReadOnly, ShowInInspector]
         private PoolDefinition poolDefinition;
@@ -39,11 +44,15 @@ namespace BedrockFramework.Network
 
         void Awake()
         {
-            networkTransform.observed = gameObject.transform;
+            networkTransform.Setup(gameObject.transform);
+            networkRigidbody.Setup(gameObject.GetComponent<Rigidbody>());
+
 
             activeNetworkComponents = GetComponents<INetworkComponent>().ToList();
             if (networkTransform.enabled)
                 activeNetworkComponents.Add((INetworkComponent)networkTransform);
+            if (networkRigidbody.enabled)
+                activeNetworkComponents.Add((INetworkComponent)networkRigidbody);
         }
 
         // Pool
@@ -137,7 +146,7 @@ namespace BedrockFramework.Network
                 return i;
             } }
 
-        // Collects all NetVars in active network components.
+        // Collects all NetVars in active network components and send those that have been updated.
         IEnumerator UpdateLoop()
         {
             bool[] updatedNetVars = new bool[NumNetVars];
@@ -146,55 +155,62 @@ namespace BedrockFramework.Network
             {
                 yield return new WaitForSecondsRealtime(1f / updatesPerSecond);
 
-                // Write updated net vars.
-                NetworkWriter writer = ServiceLocator.NetworkService.ActiveSocket.Writer.Setup(ServiceLocator.NetworkService.ActiveSocket.UnreliableChannel, MessageTypes.BRF_Client_Update_GameObject);
-                writer.Write(networkID);
-
-                int currentPosition = 0;
-                for (int i = 0; i < activeNetworkComponents.Count; i++)
-                {
-                    activeNetworkComponents[i].WriteUpdatedNetVars(writer, ref updatedNetVars, currentPosition);
-                    currentPosition += activeNetworkComponents[i].NumNetVars;
-                }
+                // Get updated netvars
+                RefreshUpdatedNetVars(ref updatedNetVars);
 
                 // Check if any NetVars were updated.
-                bool hasUpdatedNetVar = false;
-                for (int i = 0; i < updatedNetVars.Length; i++)
+                if (updatedNetVars.ArrayContainsValue(true) && ServiceLocator.NetworkService.ActiveSocket.NumActiveConnections > 0)
                 {
-                    if (updatedNetVars[i])
-                    {
-                        hasUpdatedNetVar = true;
-                        break;
-                    }
+                    WriteAndSendNetVars(updatedNetVars);
                 }
+            }
+        }
 
-                // Send NetVars
-                if (hasUpdatedNetVar)
-                {
-                    foreach (NetworkConnection active in ServiceLocator.NetworkService.ActiveSocket.ActiveConnections())
-                    {
-                        if (active.CurrentState != NetworkConnectionState.Ready)
-                            continue;
+        private void WriteAndSendNetVars(bool[] updatedNetVars)
+        {
+            // Write updated net vars.
+            NetworkWriter writer = ServiceLocator.NetworkService.ActiveSocket.Writer.Setup(ServiceLocator.NetworkService.ActiveSocket.UnreliableChannel, MessageTypes.BRF_Client_Update_GameObject);
+            writer.Write(networkID);
+            writer.Write(updatedNetVars.ToByteArray(), NumNetVars.BoolArraySizeToByteArraySize());
 
-                        ServiceLocator.NetworkService.ActiveSocket.Writer.Send(active, () => "NetworkGameObject Update");
-                    }
-                }
+            for (int i = 0; i < activeNetworkComponents.Count; i++)
+            {
+                activeNetworkComponents[i].WriteUpdatedNetVars(writer);
+            }
 
-                //TODO: Need to send the bool array with what has been updated.
+            // Send NetVars
+            foreach (NetworkConnection active in ServiceLocator.NetworkService.ActiveSocket.ActiveConnections())
+            {
+                if (active.CurrentState != NetworkConnectionState.Ready)
+                    continue;
 
-                for (int i = 0; i < updatedNetVars.Length; i++)
-                    updatedNetVars[i] = false;
+                ServiceLocator.NetworkService.ActiveSocket.Writer.Send(active, () => "NetworkGameObject Update");
+            }
+        }
+
+        /// <summary>
+        /// Updates the list of bools with what vars want to be synced.
+        /// </summary>
+        /// <param name="updatedNetVars"></param>
+        private void RefreshUpdatedNetVars(ref bool[] updatedNetVars)
+        {
+            int currentPosition = 0;
+            for (int i = 0; i < activeNetworkComponents.Count; i++)
+            {
+                activeNetworkComponents[i].GetNetVarsToUpdate().CopyTo(updatedNetVars, currentPosition);
+                currentPosition += activeNetworkComponents[i].NumNetVars;
             }
         }
 
         public void Client_ReceiveGameObjectUpdate(NetworkReader reader)
         {
-            // TODO: Read the bool array with what has been updated.
+            // Read the bool array with what has been updated.
+            bool[] updatedNetVars = reader.ReadBytes(NumNetVars.BoolArraySizeToByteArraySize()).ToBoolArray();
 
             int currentPosition = 0;
             for (int i = 0; i < activeNetworkComponents.Count; i++)
             {
-                activeNetworkComponents[i].ReadUpdatedNetVars(reader);
+                activeNetworkComponents[i].ReadUpdatedNetVars(reader, updatedNetVars, currentPosition);
                 currentPosition += activeNetworkComponents[i].NumNetVars;
             }
         }
