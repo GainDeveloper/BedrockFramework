@@ -39,12 +39,12 @@ namespace BedrockFramework.Network
             return netVarsToUpdate;
         }
 
-        public void WriteUpdatedNetVars(NetworkWriter toWrite)
+        public void WriteUpdatedNetVars(NetworkWriter toWrite, bool forceUpdate)
         {
             if (observed == null)
                 return;
 
-            if (netVarsToUpdate[0])
+            if (forceUpdate || netVarsToUpdate[0])
             {
                 toWrite.Write(observed.position);
                 lastSentPosition = observed.position;
@@ -55,12 +55,12 @@ namespace BedrockFramework.Network
                 netVarsToUpdate[i] = false;
         }
 
-        public void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition)
+        public void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool forceUpdate)
         {
             if (observed == null)
                 return;
 
-            if (updatedNetVars[currentPosition])
+            if (forceUpdate || updatedNetVars[currentPosition])
                 observed.position = reader.ReadVector3();
         }
     }

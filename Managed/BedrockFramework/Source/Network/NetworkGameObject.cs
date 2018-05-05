@@ -20,8 +20,8 @@ namespace BedrockFramework.Network
     {
         int NumNetVars { get; }
         bool[] GetNetVarsToUpdate();
-        void WriteUpdatedNetVars(NetworkWriter toWrite);
-        void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition);
+        void WriteUpdatedNetVars(NetworkWriter toWrite, bool forceAll);
+        void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool forceAll);
     }
 
     [HideMonoScript, AddComponentMenu("BedrockFramework/Network GameObject")]
@@ -123,7 +123,11 @@ namespace BedrockFramework.Network
             writer.Write(ServiceLocator.SaveService.SavedObjectReferences.GetSavedObjectID(poolDefinition));
             writer.Write(networkID);
 
-            //TODO: Write out everything we want to send as initial data.
+            // Send initial data for active components.
+            for (int i = 0; i < activeNetworkComponents.Count; i++)
+            {
+                activeNetworkComponents[i].WriteUpdatedNetVars(writer, true);
+            }
 
             for (int i = 0; i < receivers.Length; i++)
                 ServiceLocator.NetworkService.ActiveSocket.Writer.Send(receivers[i], () => "NetworkGameObject Init");
@@ -133,6 +137,13 @@ namespace BedrockFramework.Network
         {
             networkID = reader.ReadInt16();
             ServiceLocator.NetworkService.AddNetworkGameObject(this);
+
+            int currentPosition = 0;
+            for (int i = 0; i < activeNetworkComponents.Count; i++)
+            {
+                activeNetworkComponents[i].ReadUpdatedNetVars(reader, null, currentPosition, true);
+                currentPosition += activeNetworkComponents[i].NumNetVars;
+            }
         }
 
         //
@@ -175,7 +186,7 @@ namespace BedrockFramework.Network
 
             for (int i = 0; i < activeNetworkComponents.Count; i++)
             {
-                activeNetworkComponents[i].WriteUpdatedNetVars(writer);
+                activeNetworkComponents[i].WriteUpdatedNetVars(writer, false);
             }
 
             // Send NetVars
@@ -210,7 +221,7 @@ namespace BedrockFramework.Network
             int currentPosition = 0;
             for (int i = 0; i < activeNetworkComponents.Count; i++)
             {
-                activeNetworkComponents[i].ReadUpdatedNetVars(reader, updatedNetVars, currentPosition);
+                activeNetworkComponents[i].ReadUpdatedNetVars(reader, updatedNetVars, currentPosition, false);
                 currentPosition += activeNetworkComponents[i].NumNetVars;
             }
         }
