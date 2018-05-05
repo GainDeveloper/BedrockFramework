@@ -1,6 +1,7 @@
 /********************************************************           
 BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 // TODO: Handle teleporting and other 'large' position updates.
+// TODO: Interpolation could work physics rather than bypassing it.
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
@@ -32,6 +33,9 @@ namespace BedrockFramework.Network
         // Calculate any specific netvars that need to be updated.
         public bool[] GetNetVarsToUpdate()
         {
+            if (observed == null || !enabled)
+                return netVarsToUpdate;
+
             if (lastSentPosition == null || Vector3.Distance(lastSentPosition, observed.position) > minDistance)
                 netVarsToUpdate[0] = true;
 
@@ -78,7 +82,7 @@ namespace BedrockFramework.Network
 
         public void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool forceUpdate, float sendRate)
         {
-            if (observed == null)
+            if (observed == null) //We need to be reading regardless of whether we are observed/ enabled.
                 return;
 
             if (forceUpdate || updatedNetVars[currentPosition])

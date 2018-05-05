@@ -201,6 +201,9 @@
     <Compile Include="..\Source\Network\NetworkGameObjectRigidbody.cs">
       <Link>Network\NetworkGameObjectRigidbody.cs</Link>
     </Compile>
+    <Compile Include="..\Source\Network\NetworkGameObjectAnimator.cs">
+      <Link>Network\NetworkGameObjectAnimator.cs</Link>
+    </Compile>
     <Compile Include="..\Source\Utilities\TransformExtensions.cs">
       <Link>Utilities\TransformExtensions.cs</Link>
     </Compile>

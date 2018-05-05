@@ -30,7 +30,7 @@ namespace BedrockFramework.Network
         public byte updatesPerSecond  = 3;
         public NetworkGameObjectTransform networkTransform = new NetworkGameObjectTransform();
         public NetworkGameObjectRigidbody networkRigidbody = new NetworkGameObjectRigidbody();
-
+        public NetworkGameObjectAnimator networkAnimator = new NetworkGameObjectAnimator();
 
         [ReadOnly, ShowInInspector]
         private PoolDefinition poolDefinition;
@@ -43,24 +43,28 @@ namespace BedrockFramework.Network
 
         public short NetworkID { get { return networkID; } }
 
-        void Awake()
-        {
-            networkTransform.Setup(gameObject.transform);
-            networkRigidbody.Setup(gameObject.GetComponent<Rigidbody>());
-
-
-            activeNetworkComponents = GetComponents<INetworkComponent>().ToList();
-            if (networkTransform.enabled)
-                activeNetworkComponents.Add((INetworkComponent)networkTransform);
-            if (networkRigidbody.enabled)
-                activeNetworkComponents.Add((INetworkComponent)networkRigidbody);
-        }
-
         // Pool
         PoolDefinition IPool.PoolDefinition { set { poolDefinition = value; } }
 
         void IPool.OnSpawn()
         {
+            activeNetworkComponents = GetComponents<INetworkComponent>().ToList();
+
+            if (networkRigidbody.enabled)
+            {
+                networkRigidbody.Setup(gameObject.GetComponent<Rigidbody>());
+                activeNetworkComponents.Add((INetworkComponent)networkRigidbody);
+            }
+            if (networkAnimator.enabled)
+            {
+                networkAnimator.Setup(gameObject.GetComponent<Animator>());
+                activeNetworkComponents.Add((INetworkComponent)networkAnimator);
+            }
+
+            networkTransform.Setup(gameObject.transform);
+            if (networkTransform.enabled)
+                activeNetworkComponents.Add((INetworkComponent)networkTransform);
+
             ServiceLocator.NetworkService.OnBecomeHost += HostGameObject;
             if (ServiceLocator.NetworkService.IsActive && ServiceLocator.NetworkService.IsHost)
                 HostGameObject();

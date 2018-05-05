@@ -4,7 +4,7 @@ BEDROCKFRAMEWORK : https://github.com/GainDeveloper/BedrockFramework
 ********************************************************/
 using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections;
+using BedrockFramework.Utilities;
 using System.Collections.Generic;
 using System;
 
@@ -14,14 +14,14 @@ namespace BedrockFramework.Network
     public class NetworkGameObjectRigidbody : INetworkComponent
     {
         public bool enabled = true;
-        public float minVelocityDiff = 0.05f;
+        public float minVelocityDiff = 0.15f, maxVelocity = 10f;
 
 
         public int NumNetVars { get { return netVarsToUpdate.Length; } }
 
         private bool[] netVarsToUpdate = new bool[1];
         private Rigidbody observed;
-        private Vector3 lastSentVelocity;
+        private Vector3 lastSentVelocity, lastReceivedVelocity;
 
         public void Setup(Rigidbody toObserve)
         {
@@ -31,7 +31,7 @@ namespace BedrockFramework.Network
         // Calculate any specific netvars that need to be updated.
         public bool[] GetNetVarsToUpdate()
         {
-            if (observed == null)
+            if (observed == null || !enabled)
                 return netVarsToUpdate;
 
             if (lastSentVelocity == null || Vector3.Distance(lastSentVelocity, observed.velocity) > minVelocityDiff)
@@ -47,8 +47,11 @@ namespace BedrockFramework.Network
 
             if (force || netVarsToUpdate[0])
             {
-                toWrite.Write(observed.velocity);
-                lastSentVelocity = observed.velocity;
+                Vector3 diff = observed.velocity - lastSentVelocity;
+                byte[] diffBytes = (Vector3.ClampMagnitude(diff, maxVelocity) / maxVelocity).Vector3ToByteArray();
+                toWrite.Write(diffBytes, 3);
+                diffBytes.ByteArrayToVector3(out diff);
+                lastSentVelocity += diff * maxVelocity;
             }
 
             // Reset sent netvars to update.
@@ -58,18 +61,22 @@ namespace BedrockFramework.Network
 
         public void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool force, float sendRate)
         {
-            if (observed == null)
+            if (observed == null) //We need to be reading regardless of whether we are observed/ enabled.
                 return;
 
             if (force || updatedNetVars[currentPosition])
-                observed.velocity = reader.ReadVector3();
-        }
-
-        public void ClientUpdate(float interpI)
-        {
-            if (observed == null)
-                return;
-
+            {
+                if (force)
+                {
+                    observed.velocity = reader.ReadBytes(3).ByteArrayToVector3() * maxVelocity;
+                    lastReceivedVelocity = observed.velocity;
+                }
+                else
+                {
+                    lastReceivedVelocity += reader.ReadBytes(3).ByteArrayToVector3() * maxVelocity;
+                    observed.velocity = lastReceivedVelocity;
+                }
+            }
         }
     }
 }
