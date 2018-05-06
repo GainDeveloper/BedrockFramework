@@ -138,8 +138,6 @@ namespace BedrockFramework.Network
                 foreach (NetworkConnection connection in ActiveSocket.ActiveConnections())
                 {
                     string connectionStat = connection.FriendlyName + " " + connection.ConnectionID.ToString();
-                    if (connection.IsLocalConnection)
-                        connectionStat += " (Local)";
                     connectionStat += " : " + connection.CurrentState;
                     //connectionStat += " (" + NetworkTransport.GetCurrentRTT(currentSocket.SocketID, connection.ConnectionID, out error) + "MS)";
                     yield return connectionStat;

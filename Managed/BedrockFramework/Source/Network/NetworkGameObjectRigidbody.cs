@@ -28,12 +28,12 @@ namespace BedrockFramework.Network
             this.observed = toObserve;
         }
 
-        public void TakenOwnership()
+        public void TakenOwnership(bool hasReceivedNewUpdates)
         {
             lastSentVelocity = lastReceivedVelocity;
         }
 
-        public void LostOwnership()
+        public void LostOwnership(bool hasReceivedNewUpdates)
         {
             lastReceivedVelocity = lastSentVelocity;
         }

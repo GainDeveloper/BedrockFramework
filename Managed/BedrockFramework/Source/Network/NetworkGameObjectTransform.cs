@@ -16,13 +16,16 @@ namespace BedrockFramework.Network
         public bool enabled = true;
         public float minDistance = 0.05f;
         public float maxDistance = 1.5f;
+        public float positionInterpolationScale = 0.2f;
         public float minAngle = 3f;
-        public float interpolationScale = 0.2f;
+        public float rotationInterpolationScale = 0.8f;
+
 
         public int NumNetVars { get { return netVarsToUpdate.Length; } }
 
         private bool[] netVarsToUpdate = new bool[2];
         private Transform observed;
+        float lastSentTime, lastReceivedTime;
         private Vector3 lastSentPosition, lastReceivedPosition;
         private float lastSentYAngle = -1000, lastReceivedAngle;
 
@@ -31,16 +34,22 @@ namespace BedrockFramework.Network
             this.observed = toObserve;
         }
 
-        public void TakenOwnership()
+        public void TakenOwnership(bool hasReceivedNewUpdates)
         {
-            lastSentPosition = lastReceivedPosition;
-            lastSentYAngle = lastReceivedAngle;
+            if (hasReceivedNewUpdates)
+            {
+                lastSentPosition = lastReceivedPosition;
+                lastSentYAngle = lastReceivedAngle;
+            }
         }
 
-        public void LostOwnership()
+        public void LostOwnership(bool hasReceivedNewUpdates)
         {
-            lastReceivedPosition = lastSentPosition;
-            lastReceivedAngle = lastSentYAngle;
+            if (hasReceivedNewUpdates)
+            {
+                lastReceivedPosition = lastSentPosition;
+                lastReceivedAngle = lastSentYAngle;
+            }
         }
 
         // Calculate any specific netvars that need to be updated.
@@ -91,6 +100,8 @@ namespace BedrockFramework.Network
             // Reset sent netvars to update.
             for (int i = 0; i < netVarsToUpdate.Length; i++)
                 netVarsToUpdate[i] = false;
+
+            lastSentTime = Time.time;
         }
 
         public void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool forceUpdate, float sendRate)
@@ -107,7 +118,7 @@ namespace BedrockFramework.Network
                 } else
                 {
                     lastReceivedPosition += reader.ReadBytes(3).ByteArrayToVector3() * maxDistance;
-                    observed.DOMove(lastReceivedPosition, sendRate * interpolationScale).SetEase(Ease.Linear);
+                    observed.DOMove(lastReceivedPosition, sendRate * positionInterpolationScale).SetEase(Ease.Linear);
                 }
             }
 
@@ -117,8 +128,10 @@ namespace BedrockFramework.Network
                 if (forceUpdate)
                     observed.eulerAngles = new Vector3(0, lastReceivedAngle, 0);
                 else
-                    observed.DORotate(new Vector3(0, lastReceivedAngle, 0), sendRate * interpolationScale);
+                    observed.DORotate(new Vector3(0, lastReceivedAngle, 0), sendRate * rotationInterpolationScale);
             }
+
+            lastReceivedTime = Time.time;
         }
     }
 }

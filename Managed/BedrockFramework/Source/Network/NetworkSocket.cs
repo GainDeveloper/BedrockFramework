@@ -27,7 +27,6 @@ namespace BedrockFramework.Network
         public bool IsHost { get { return localConnectionID == 0; } }
         public bool IsActive { get { return socketID != -1; } }
         public int SocketID { get { return socketID; } }
-        public int LocalConnectionID { get { return localConnectionID; } }
 
         // Writer
         private byte[] receivedDataBuffer = new byte[1024];

@@ -33,11 +33,6 @@ namespace BedrockFramework.Network
         public string FriendlyName { get { return friendlyName; } }
 
         public int ConnectionID { get { return connectionID; } }
-        /// <summary>
-        /// Are we the one that initiated this connection.
-        /// </summary>
-        public bool IsLocalConnection { get { return connectionID == this.networkSocket.LocalConnectionID; } }
-
         public NetworkConnectionState CurrentState { get { return currentState; } }
 
         public event Action<NetworkConnection> OnReady = delegate { };
@@ -66,7 +61,7 @@ namespace BedrockFramework.Network
             ServiceLocator.SceneService.OnLoadScene -= Host_OnLoadScene;
             ServiceLocator.SceneService.OnFinishedLoading -= Client_OnFinishedLoading;
 
-            if (IsLocalConnection)
+            if (!networkSocket.IsHost)
                 networkSocket.Close();
             DevTools.Logger.Log(NetworkService.NetworkLog, "Disconnect: {}", () => new object[] { connectionID });
         }
@@ -86,12 +81,6 @@ namespace BedrockFramework.Network
 
         public void ReceiveData(int channelId, byte[] data, int dataSize)
         {
-            if (!networkSocket.IsHost && !IsLocalConnection)
-            {
-                DevTools.Logger.LogError(NetworkService.NetworkLog, "Received data from a none local connection. This is not allowed.");
-                return;
-            }
-
             NetworkReader reader = new NetworkReader(data);
             ushort sz = reader.ReadUInt16();
             short msgType = reader.ReadInt16();
@@ -134,7 +123,7 @@ namespace BedrockFramework.Network
         // Called when the host starts to load a new scene.
         private void Host_OnLoadScene(Scenes.SceneLoadInfo sceneLoadInfo)
         {
-            if (!networkSocket.IsHost || IsLocalConnection)
+            if (!networkSocket.IsHost)
             {
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "Host Method called on a client.");
                 return;
@@ -149,7 +138,7 @@ namespace BedrockFramework.Network
 
         private void Client_Receive_OnLoadScene(NetworkReader reader)
         {
-            if (networkSocket.IsHost || !IsLocalConnection)
+            if (networkSocket.IsHost)
             {
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "Client Method called on a host.");
                 return;
@@ -164,7 +153,7 @@ namespace BedrockFramework.Network
         // Called when the client has finished loading the scene.
         private void Client_OnFinishedLoading(Scenes.SceneLoadInfo sceneLoadInfo)
         {
-            if (networkSocket.IsHost || !IsLocalConnection)
+            if (networkSocket.IsHost)
             {
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "Client Method called on a host.");
                 return;
@@ -179,7 +168,7 @@ namespace BedrockFramework.Network
 
         private void Host_Receive_OnFinishedLoading(NetworkReader reader)
         {
-            if (!networkSocket.IsHost || IsLocalConnection)
+            if (!networkSocket.IsHost)
             {
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "Host Method called on a client.");
                 return;
@@ -211,7 +200,7 @@ namespace BedrockFramework.Network
 
         private void Host_OnReady()
         {
-            if (!networkSocket.IsHost || IsLocalConnection)
+            if (!networkSocket.IsHost)
             {
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "Host Method called on a client.");
                 return;
@@ -225,7 +214,7 @@ namespace BedrockFramework.Network
 
         private void Client_Receive_OnReady()
         {
-            if (networkSocket.IsHost || !IsLocalConnection)
+            if (networkSocket.IsHost)
             {
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "Client Method called on a host.");
                 return;
@@ -241,7 +230,7 @@ namespace BedrockFramework.Network
 
         private void Client_Receive_GameObject(NetworkReader reader)
         {
-            if (networkSocket.IsHost || !IsLocalConnection)
+            if (networkSocket.IsHost)
             {
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "Client Method called on a host.");
                 return;
@@ -249,7 +238,7 @@ namespace BedrockFramework.Network
 
             Pool.PoolDefinition poolDefinition = ServiceLocator.SaveService.SavedObjectReferences.GetSavedObject<Pool.PoolDefinition>(reader.ReadInt16());
             NetworkGameObject networkObject = ServiceLocator.PoolService.SpawnDefinition<NetworkGameObject>(poolDefinition);
-            networkObject.Client_ReceiveGameObject(reader);
+            networkObject.Client_ReceiveGameObject(this, reader);
         }
 
         private void NoneOwner_Receive_Update_GameObject(NetworkReader reader)
@@ -264,7 +253,7 @@ namespace BedrockFramework.Network
 
         private void Client_Receive_Ownership_GameObject(NetworkReader reader)
         {
-            if (networkSocket.IsHost || !IsLocalConnection)
+            if (networkSocket.IsHost)
             {
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "Client Method called on a host.");
                 return;
@@ -273,7 +262,7 @@ namespace BedrockFramework.Network
             short networkID = reader.ReadInt16();
             NetworkGameObject networkObject = ServiceLocator.NetworkService.GetNetworkGameObject(networkID);
             if (networkObject != null)
-                networkObject.Client_ReceiveOwnershipChange(reader);
+                networkObject.Client_ReceiveOwnershipChange(this, reader);
             else
                 DevTools.Logger.LogWarning(NetworkService.NetworkLog, "Received NetworkID {} which does not exist.", () => new object[] { networkID });
         }

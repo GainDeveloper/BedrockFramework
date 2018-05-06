@@ -31,8 +31,8 @@ namespace BedrockFramework.Network
             netVarsToUpdate = new bool[observed.parameterCount];
         }
 
-        public void TakenOwnership() { }
-        public void LostOwnership() { }
+        public void TakenOwnership(bool hasReceivedNewUpdates) { }
+        public void LostOwnership(bool hasReceivedNewUpdates) { }
 
 
         // Calculate any specific netvars that need to be updated.
