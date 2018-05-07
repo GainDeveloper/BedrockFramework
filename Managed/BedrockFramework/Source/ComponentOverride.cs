@@ -7,6 +7,7 @@ Referenced by the PoolDefinitions object.
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using BedrockFramework.Network;
 
 namespace BedrockFramework.Pool
 {
@@ -83,6 +84,42 @@ namespace BedrockFramework.Pool
             capsuleCollider.center = center;
             capsuleCollider.radius = radius;
             capsuleCollider.height = height;
+        }
+    }
+
+    [CreateAssetMenu(fileName = "NetworkGameObjectOverride", menuName = "BedrockFramework/Overrides/NetworkGameObject", order = 0)]
+    public class NetworkGameObjectOverride : ComponentOverride
+    {
+        public bool networkTransformEnabled = true;
+        public bool networkRigidbody = true;
+        public bool networkAnimator = true;
+
+
+        public override void OverrideGameObject(GameObject toOverride)
+        {
+            NetworkGameObject network = toOverride.GetComponent<NetworkGameObject>();
+
+            if (network == null)
+                return;
+
+            network.networkTransform.enabled = networkTransformEnabled;
+            network.networkRigidbody.enabled = networkRigidbody;
+            network.networkAnimator.enabled = networkAnimator;
+        }
+    }
+
+    [CreateAssetMenu(fileName = "MaterialOverride", menuName = "BedrockFramework/Overrides/Material", order = 0)]
+    public class MaterialOverride : ComponentOverride
+    {
+        public Material[] materials;
+
+        public override void OverrideGameObject(GameObject toOverride)
+        {
+            Renderer renderer = toOverride.GetComponentInChildren<Renderer>();
+            if (renderer == null)
+                return;
+
+            renderer.sharedMaterials = materials;
         }
     }
 }

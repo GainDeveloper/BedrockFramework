@@ -34,6 +34,7 @@ namespace BedrockFramework.Scenes
 
         void AddSceneObject(int category, object toAdd);
         IEnumerable<T> GetSceneObjectsOfCategory<T>(int ofType);
+        List<T> GetSceneObjectsOfCategoryList<T>(int ofType);
         void RemoveSceneObject(int category, object toRemove);
         event Action<int, object> SceneObjectAdded;
         event Action<int, object> SceneObjectRemoved;
@@ -52,6 +53,7 @@ namespace BedrockFramework.Scenes
 
         public void AddSceneObject(int category, object toAdd) { }
         public IEnumerable<T> GetSceneObjectsOfCategory<T>(int ofType) { yield break; }
+        public List<T> GetSceneObjectsOfCategoryList<T>(int ofType) { return null; }
         public void RemoveSceneObject(int category, object toRemove) { }
         public event Action<int, object> SceneObjectAdded = delegate { };
         public event Action<int, object> SceneObjectRemoved = delegate { };
@@ -237,6 +239,18 @@ namespace BedrockFramework.Scenes
             } else
             {
                 yield break;
+            }
+        }
+
+        public List<T> GetSceneObjectsOfCategoryList<T>(int ofType)
+        {
+            if (sceneObjectsOfCategory.ContainsKey(ofType))
+            {
+                return sceneObjectsOfCategory[ofType].Cast<T>().ToList();
+            }
+            else
+            {
+                return new List<T>();
             }
         }
 

@@ -21,7 +21,7 @@ namespace BedrockFramework.Pool
         void PrePool();
         GameObject SpawnDefinition(PoolDefinition prefab, Transform parent = null, bool subSpawn = false);
         T SpawnDefinition<T>(PoolDefinition prefab, Transform parent = null, bool subSpawn = false, Action<GameObject> OnSpawn = null) where T : Component;
-        T SpawnDefinition<T>(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) where T : Component;
+        T SpawnDefinition<T>(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false, Action<GameObject> OnSpawn = null) where T : Component;
         GameObject SpawnDefinition(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false);
 
         void DeSpawnGameObject(GameObject gameObject, bool despawnChildren = true, bool warnNonePooled = true);
@@ -37,7 +37,7 @@ namespace BedrockFramework.Pool
         public void PrePool() { }
         public GameObject SpawnDefinition(PoolDefinition prefab, Transform parent = null, bool subSpawn = false) { return null; }
         public T SpawnDefinition<T>(PoolDefinition prefab, Transform parent = null, bool subSpawn = false, Action<GameObject> OnSpawn = null) where T : Component { return default(T); }
-        public T SpawnDefinition<T>(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) where T : Component { return default(T); }
+        public T SpawnDefinition<T>(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false, Action<GameObject> OnSpawn = null) where T : Component { return default(T); }
         public GameObject SpawnDefinition(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) { return null; }
 
         public void DeSpawnGameObject(GameObject gameObject, bool despawnChildren = true, bool warnNonePooled = true) { }
@@ -98,10 +98,10 @@ namespace BedrockFramework.Pool
             return (clone != null) ? clone.GetComponent<T>() : null;
         }
 
-        public T SpawnDefinition<T>(PoolDefinition poolDefinition, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false)
+        public T SpawnDefinition<T>(PoolDefinition poolDefinition, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false, Action<GameObject> OnSpawn = null)
             where T : Component
         {
-            GameObject clone = SpawnDefinition(poolDefinition, position, rotation, parent, subSpawn);
+            GameObject clone = SpawnDefinition(poolDefinition, position, rotation, OnSpawn, parent, subSpawn);
             return (clone != null) ? clone.GetComponent<T>() : null;
         }
 
