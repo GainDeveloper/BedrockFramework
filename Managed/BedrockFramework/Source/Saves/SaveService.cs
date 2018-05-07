@@ -167,7 +167,7 @@ namespace BedrockFramework.Saves
             foreach (SavedGameObject savedGameObject in currentGameSave.savedPooledObjects)
             {
                 //TODO: Need to consider how to handle transform parents. Should it be done here or by the SaveableGameObjectComponent.
-                ServiceLocator.PoolService.SpawnDefinition<SaveableGameObject>(savedGameObject.gameObjectPool.ObjectReference).ApplySaveData(savedGameObject);
+                ServiceLocator.PoolService.SpawnDefinition<SaveableGameObject>(savedGameObject.gameObjectPool.ObjectReference, null, false, (x) => x.GetComponent<SaveableGameObject>().ApplySaveData(savedGameObject));
             }
 
             // Tell objects we have loaded the data. 
