@@ -20,7 +20,7 @@ namespace BedrockFramework.Pool
 
         void PrePool();
         GameObject SpawnDefinition(PoolDefinition prefab, Transform parent = null, bool subSpawn = false);
-        T SpawnDefinition<T>(PoolDefinition prefab, Transform parent = null, bool subSpawn = false) where T : Component;
+        T SpawnDefinition<T>(PoolDefinition prefab, Transform parent = null, bool subSpawn = false, Action<GameObject> OnSpawn = null) where T : Component;
         T SpawnDefinition<T>(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) where T : Component;
         GameObject SpawnDefinition(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false);
 
@@ -36,7 +36,7 @@ namespace BedrockFramework.Pool
 
         public void PrePool() { }
         public GameObject SpawnDefinition(PoolDefinition prefab, Transform parent = null, bool subSpawn = false) { return null; }
-        public T SpawnDefinition<T>(PoolDefinition prefab, Transform parent = null, bool subSpawn = false) where T : Component { return default(T); }
+        public T SpawnDefinition<T>(PoolDefinition prefab, Transform parent = null, bool subSpawn = false, Action<GameObject> OnSpawn = null) where T : Component { return default(T); }
         public T SpawnDefinition<T>(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) where T : Component { return default(T); }
         public GameObject SpawnDefinition(PoolDefinition prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false) { return null; }
 
@@ -91,10 +91,10 @@ namespace BedrockFramework.Pool
             return SpawnDefinition(poolDefinition, Vector3.zero, Quaternion.identity, parent, subSpawn);
         }
 
-        public T SpawnDefinition<T>(PoolDefinition poolDefinition, Transform parent = null, bool subSpawn = false)
+        public T SpawnDefinition<T>(PoolDefinition poolDefinition, Transform parent = null, bool subSpawn = false, Action<GameObject> OnSpawn = null)
             where T : Component
         {
-            GameObject clone = SpawnDefinition(poolDefinition, Vector3.zero, Quaternion.identity, parent, subSpawn);
+            GameObject clone = SpawnDefinition(poolDefinition, Vector3.zero, Quaternion.identity, OnSpawn, parent, subSpawn);
             return (clone != null) ? clone.GetComponent<T>() : null;
         }
 
@@ -107,6 +107,11 @@ namespace BedrockFramework.Pool
 
         public GameObject SpawnDefinition(PoolDefinition poolDefinition, Vector3 position, Quaternion rotation, Transform parent = null, bool subSpawn = false)
         {
+            return SpawnDefinition(poolDefinition, position, rotation, null, parent, subSpawn);
+        }
+
+        public GameObject SpawnDefinition(PoolDefinition poolDefinition, Vector3 position, Quaternion rotation, Action<GameObject> OnSpawn, Transform parent = null, bool subSpawn = false)
+        {
             if (!IsGameObjectPrefab(poolDefinition.PooledObject))
             {
                 DevTools.Logger.LogError(PoolServiceLog, "Instanced GameObject {} can not be pooled.", () => new object[] { poolDefinition.name });
@@ -115,7 +120,7 @@ namespace BedrockFramework.Pool
 
             Pool prefabPool = GetPrefabsPool(poolDefinition.PooledObject);
 
-            GameObject spawnedPrefab = prefabPool.SpawnPrefab(poolDefinition, position, rotation, parent, subSpawn, (x) => OnPrefabSpawned(x));
+            GameObject spawnedPrefab = prefabPool.SpawnPrefab(poolDefinition, position, rotation, parent, subSpawn, (x) => OnPrefabSpawned(x), OnSpawn);
             activePooledGameObjects[spawnedPrefab] = prefabPool;
             return spawnedPrefab;
         }
@@ -124,7 +129,7 @@ namespace BedrockFramework.Pool
         {
             if (activePooledGameObjects.ContainsKey(gameObject))
             {
-                activePooledGameObjects[gameObject].DeSpawnGameObject(gameObject, despawnChildren);
+                activePooledGameObjects[gameObject].DeSpawnGameObject(gameObject, true, despawnChildren);
                 activePooledGameObjects.Remove(gameObject);
             } else if (warnNonePooled)
             {

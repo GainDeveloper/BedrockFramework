@@ -23,6 +23,8 @@ namespace BedrockFramework.Network
         private Rigidbody observed;
         private Vector3 lastSentVelocity, lastReceivedVelocity;
 
+        public void OnNetworkInitialized() { }
+
         public void Setup(Rigidbody toObserve)
         {
             this.observed = toObserve;

@@ -31,6 +31,12 @@ namespace BedrockFramework.Scenes
 
         SceneLoadInfo CurrentLoaded { get; }
         SceneLoadingState CurrentState { get; }
+
+        void AddSceneObject(object toAdd);
+        IEnumerable<T> GetSceneObjectsOfType<T>(Type ofType);
+        void RemoveSceneObject(object toRemove);
+        event Action<Type, object> SceneObjectAdded;
+        event Action<Type, object> SceneObjectRemoved;
     }
 
     public class NullSceneService : ISceneService
@@ -43,6 +49,12 @@ namespace BedrockFramework.Scenes
 
         public SceneLoadInfo CurrentLoaded { get { return null; } }
         public SceneLoadingState CurrentState { get { return SceneLoadingState.Loaded; } }
+
+        public void AddSceneObject(object toAdd) { }
+        public IEnumerable<T> GetSceneObjectsOfType<T>(Type ofType) { yield break; }
+        public void RemoveSceneObject(object toRemove) { }
+        public event Action<Type, object> SceneObjectAdded = delegate { };
+        public event Action<Type, object> SceneObjectRemoved = delegate { };
     }
 
     [ProtoContract]
@@ -86,6 +98,10 @@ namespace BedrockFramework.Scenes
         private SceneLoadingState currentState = SceneLoadingState.Loaded;
         public SceneLoadingState CurrentState { get { return currentState; } }
 
+        public Dictionary<Type, List<object>> sceneObjectsOfType = new Dictionary<Type, List<object>>();
+        public event Action<Type, object> SceneObjectAdded = delegate { };
+        public event Action<Type, object> SceneObjectRemoved = delegate { };
+
         public SceneService(MonoBehaviour owner): base(owner)
         {
             ServiceLocator.SaveService.OnPreSave += SaveService_OnPreSave;
@@ -113,6 +129,7 @@ namespace BedrockFramework.Scenes
         public Coroutine LoadScene(SceneLoadInfo sceneToLoad)
         {
             currentState = SceneLoadingState.Loading;
+            sceneObjectsOfType.Clear();
 
             OnLoadScene(sceneToLoad);
 
@@ -179,6 +196,46 @@ namespace BedrockFramework.Scenes
             DevTools.Logger.Log(SceneServiceLog, "Finished Unloading");
 
             yield return LoadActiveAsync(sceneToLoad, LoadSceneMode.Additive);
+        }
+
+        //
+        // Scene Objects
+        //
+
+        public void AddSceneObject(object toAdd)
+        {
+            Type objectType = toAdd.GetType();
+            if (sceneObjectsOfType.ContainsKey(objectType))
+            {
+                sceneObjectsOfType[objectType].Add(toAdd);
+            } else
+            {
+                sceneObjectsOfType[objectType] = new List<object>() { toAdd };
+            }
+
+            SceneObjectAdded(objectType, toAdd);
+        }
+
+        public IEnumerable<T> GetSceneObjectsOfType<T>(Type ofType)
+        {
+            if (sceneObjectsOfType.ContainsKey(ofType))
+            {
+                foreach (object sceneObject in sceneObjectsOfType[ofType])
+                    yield return (T)sceneObject;
+            } else
+            {
+                yield break;
+            }
+        }
+
+        public void RemoveSceneObject(object toRemove)
+        {
+            Type objectType = toRemove.GetType();
+            if (sceneObjectsOfType.ContainsKey(objectType))
+            {
+                SceneObjectRemoved(objectType, toRemove);
+                sceneObjectsOfType[objectType].Remove(toRemove);
+            }
         }
     }
 }

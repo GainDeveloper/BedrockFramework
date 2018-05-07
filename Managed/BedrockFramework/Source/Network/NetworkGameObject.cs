@@ -16,10 +16,11 @@ using BedrockFramework.Utilities;
 
 namespace BedrockFramework.Network
 {
-    interface INetworkComponent
+    public interface INetworkComponent
     {
         int NumNetVars { get; }
         bool[] GetNetVarsToUpdate();
+        void OnNetworkInitialized();
         void WriteUpdatedNetVars(NetworkWriter toWrite, bool forceAll);
         void ReadUpdatedNetVars(NetworkReader reader, bool[] updatedNetVars, int currentPosition, bool forceAll, float sendRate);
         void TakenOwnership(bool hasReceivedNewUpdates);
@@ -46,6 +47,7 @@ namespace BedrockFramework.Network
         private float lastSentTime, lastReceivedTime;
 
         public short NetworkID { get { return networkID; } }
+        public bool OwnedByUs { get { return owner == null; } }
 
         // Pool
         PoolDefinition IPool.PoolDefinition { set { poolDefinition = value; } }
@@ -117,7 +119,6 @@ namespace BedrockFramework.Network
                 DevTools.Logger.LogError(NetworkService.NetworkLog, "None host is trying to handle a connection ready network game object request!");
 
             Host_SendGameObject(new NetworkConnection[] { readyConnection });
-            SetOwner(readyConnection); //TODO: This is just a test. We should remove it soon.
         }
 
         private void OnNetworkConnectionDisconnected(NetworkConnection disconnected)
@@ -144,6 +145,10 @@ namespace BedrockFramework.Network
 
             for (int i = 0; i < receivers.Length; i++)
                 ServiceLocator.NetworkService.ActiveSocket.Writer.Send(receivers[i], () => "NetworkGameObject Init");
+
+            // Let other components know we have sent the gameobject to the network.
+            for (int i = 0; i < activeNetworkComponents.Count; i++)
+                activeNetworkComponents[i].OnNetworkInitialized();
         }
 
         public void Client_ReceiveGameObject(NetworkConnection from, NetworkReader reader)

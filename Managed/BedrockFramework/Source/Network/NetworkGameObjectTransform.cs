@@ -34,6 +34,8 @@ namespace BedrockFramework.Network
             this.observed = toObserve;
         }
 
+        public void OnNetworkInitialized() { }
+
         public void TakenOwnership(bool hasReceivedNewUpdates)
         {
             if (hasReceivedNewUpdates)

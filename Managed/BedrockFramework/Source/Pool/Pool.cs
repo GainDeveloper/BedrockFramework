@@ -25,12 +25,12 @@ namespace BedrockFramework.Pool
             for (int i = 0; i < count; i++)
             {
                 GameObject instance = InstantiateGameObject();
-                DeSpawnGameObject(instance);
+                DeSpawnGameObject(instance, false);
             }
         }
 
         public GameObject SpawnPrefab(PoolDefinition poolDefinition, Vector3 position, Quaternion rotation, Transform parent, 
-            bool callOnSpawn, Action<GameObject> OnSpawn)
+            bool callOnSpawn, Action<GameObject> OnSpawn, Action<GameObject> CustomOnSpawn)
         {
             // Get GameObject
             GameObject clone = null;
@@ -70,6 +70,8 @@ namespace BedrockFramework.Pool
             // Spawn Events
             // Used by other systems to do any changes before OnSpawn is called.
             OnSpawn(clone);
+            if (CustomOnSpawn != null)
+                CustomOnSpawn(clone);
 
             if (!callOnSpawn)
             {
@@ -81,7 +83,7 @@ namespace BedrockFramework.Pool
             return clone;
         }
 
-        public void DeSpawnGameObject(GameObject toDespawn, bool despawnChildren = true)
+        public void DeSpawnGameObject(GameObject toDespawn, bool callOnDeSpawn, bool despawnChildren = true)
         {
             cache.Push(toDespawn);
 
@@ -94,9 +96,13 @@ namespace BedrockFramework.Pool
                 }
             }
 
-            IPool[] pItems = toDespawn.GetComponentsInChildren<IPool>();
-            for (int i = 0; i < pItems.Length; i++)
-                pItems[i].OnDeSpawn();
+            if (callOnDeSpawn) //TODO: BUG: CallOnDespawn will get called multiple times on children if despawnChildren is set to false.
+            {
+                IPool[] pItems = toDespawn.GetComponentsInChildren<IPool>();
+                for (int i = 0; i < pItems.Length; i++)
+                    pItems[i].OnDeSpawn();
+            }
+
 
             toDespawn.transform.SetParent(null, false);
             GameObject.DontDestroyOnLoad(toDespawn);

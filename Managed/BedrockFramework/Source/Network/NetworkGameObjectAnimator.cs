@@ -24,6 +24,8 @@ namespace BedrockFramework.Network
         private AnimatorControllerParameter[] parameters;
         private object[] previousParameterValues;
 
+        public void OnNetworkInitialized() { }
+
         public void Setup(Animator toObserve)
         {
             this.observed = toObserve;
@@ -33,7 +35,6 @@ namespace BedrockFramework.Network
 
         public void TakenOwnership(bool hasReceivedNewUpdates) { }
         public void LostOwnership(bool hasReceivedNewUpdates) { }
-
 
         // Calculate any specific netvars that need to be updated.
         public bool[] GetNetVarsToUpdate()
