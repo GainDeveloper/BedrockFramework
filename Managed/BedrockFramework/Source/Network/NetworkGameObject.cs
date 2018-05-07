@@ -41,6 +41,7 @@ namespace BedrockFramework.Network
         private short networkID = 0;
         [ReadOnly, ShowInInspector, HorizontalGroup("Ownership")]
         private NetworkConnection owner = null;
+        private bool ownerHasBeenSet = false;
 
         private Coroutine activeLoop;
         private List<INetworkComponent> activeNetworkComponents = new List<INetworkComponent>();
@@ -54,6 +55,7 @@ namespace BedrockFramework.Network
 
         void IPool.OnSpawn()
         {
+            ownerHasBeenSet = false;
             activeNetworkComponents = GetComponents<INetworkComponent>().ToList();
 
             if (networkRigidbody.enabled)
@@ -72,14 +74,17 @@ namespace BedrockFramework.Network
                 activeNetworkComponents.Add((INetworkComponent)networkTransform);
 
             ServiceLocator.NetworkService.OnBecomeHost += HostGameObject;
-            if (ServiceLocator.NetworkService.IsActive && ServiceLocator.NetworkService.IsHost)
+            if (ServiceLocator.NetworkService.IsHost)
                 HostGameObject();
+
+            ServiceLocator.NetworkService.OnNetworkConnectionDisconnected += OnNetworkConnectionDisconnected;
         }
 
         void IPool.OnDeSpawn()
         {
+            ServiceLocator.NetworkService.OnNetworkConnectionDisconnected -= OnNetworkConnectionDisconnected;
             ServiceLocator.NetworkService.OnBecomeHost -= HostGameObject;
-            NetworkService_OnStop();
+            NetworkCleanup();
         }
 
         private void HostGameObject()
@@ -93,23 +98,25 @@ namespace BedrockFramework.Network
             ServiceLocator.NetworkService.AddNetworkGameObject(this);
             StartOwning();
 
-            // Tell all active connections about our creation.
             if (ServiceLocator.NetworkService.IsActive)
             {
+                // Tell all active connections about our creation.
                 Host_SendGameObject(ServiceLocator.NetworkService.ActiveSocket.ActiveConnections().Where(x => x.CurrentState == NetworkConnectionState.Ready).ToArray());
+                ServiceLocator.NetworkService.OnNetworkConnectionReady += OnNetworkConnectionReady;
+                ServiceLocator.NetworkService.OnStop += NetworkService_OnStop;
             }
-
-            ServiceLocator.NetworkService.OnNetworkConnectionReady += OnNetworkConnectionReady;
-            ServiceLocator.NetworkService.OnNetworkConnectionDisconnected += OnNetworkConnectionDisconnected;
-            ServiceLocator.NetworkService.OnStop += NetworkService_OnStop;
         }
 
         private void NetworkService_OnStop()
         {
-            StopOwning(null);
+            StartOwning();
+            NetworkCleanup();
+        }
+
+        private void NetworkCleanup()
+        {
             ServiceLocator.NetworkService.RemoveNetworkGameObject(this);
             ServiceLocator.NetworkService.OnNetworkConnectionReady -= OnNetworkConnectionReady;
-            ServiceLocator.NetworkService.OnNetworkConnectionDisconnected -= OnNetworkConnectionDisconnected;
             ServiceLocator.NetworkService.OnStop -= NetworkService_OnStop;
         }
 
@@ -133,7 +140,12 @@ namespace BedrockFramework.Network
 
         void Host_SendGameObject(NetworkConnection[] receivers)
         {
-            NetworkWriter writer = ServiceLocator.NetworkService.ActiveSocket.Writer.Setup(ServiceLocator.NetworkService.ActiveSocket.ReliableChannel, MessageTypes.BRF_Client_Receive_GameObject);
+            if (receivers.Length == 0)
+            {
+                return;
+            }
+
+            NetworkWriter writer = ServiceLocator.NetworkService.ActiveSocket.Writer.Setup(ServiceLocator.NetworkService.ActiveSocket.ReliableSequencedChannel, MessageTypes.BRF_Client_Receive_GameObject);
             writer.Write(ServiceLocator.SaveService.SavedObjectReferences.GetSavedObjectID(poolDefinition));
             writer.Write(networkID);
 
@@ -262,17 +274,30 @@ namespace BedrockFramework.Network
         private void StartOwning()
         {
             DevTools.Logger.Log(NetworkService.NetworkLog, "Taking ownership of {}.", () => new object[] { gameObject.name });
+            bool isDifferentOwner = owner != null;
+
             owner = null;
 
-            for (int i = 0; i < activeNetworkComponents.Count; i++)
-                activeNetworkComponents[i].TakenOwnership(lastReceivedTime > lastSentTime);
+            if (isDifferentOwner || !ownerHasBeenSet)
+            {
+                for (int i = 0; i < activeNetworkComponents.Count; i++)
+                    activeNetworkComponents[i].TakenOwnership(lastReceivedTime > lastSentTime);
+            }
 
-            activeLoop = StartCoroutine(UpdateLoop());
+            if (ServiceLocator.NetworkService.IsActive)
+            {
+                if (activeLoop != null)
+                    Debug.LogAssertion("Starting update coroutine when one already exists!");
+                activeLoop = StartCoroutine(UpdateLoop());
+            }
+
+            ownerHasBeenSet = true;
         }
 
         private void StopOwning(NetworkConnection newOwner)
         {
             DevTools.Logger.Log(NetworkService.NetworkLog, "Discarding ownership of {}. New Owner : {}", () => new object[] {gameObject.name, newOwner != null ? newOwner.ConnectionID : 0});
+            bool isDifferentOwner = newOwner != owner;
 
             if (activeLoop != null)
             {
@@ -282,8 +307,13 @@ namespace BedrockFramework.Network
 
             owner = newOwner;
 
-            for (int i = 0; i < activeNetworkComponents.Count; i++)
-                activeNetworkComponents[i].LostOwnership(lastSentTime > lastReceivedTime);
+            if (isDifferentOwner || !ownerHasBeenSet)
+            {
+                for (int i = 0; i < activeNetworkComponents.Count; i++)
+                    activeNetworkComponents[i].LostOwnership(lastSentTime > lastReceivedTime);
+            }
+
+            ownerHasBeenSet = true;
         }
 
         public void SetOwner(NetworkConnection newOwner)
@@ -330,7 +360,7 @@ namespace BedrockFramework.Network
             if (connection.CurrentState == NetworkConnectionState.Disconnecting)
                 return;
 
-            NetworkWriter writer = ServiceLocator.NetworkService.ActiveSocket.Writer.Setup(ServiceLocator.NetworkService.ActiveSocket.ReliableChannel, MessageTypes.BRF_Client_Ownership_GameObject);
+            NetworkWriter writer = ServiceLocator.NetworkService.ActiveSocket.Writer.Setup(ServiceLocator.NetworkService.ActiveSocket.ReliableSequencedChannel, MessageTypes.BRF_Client_Ownership_GameObject);
             writer.Write(networkID);
             writer.Write(takeOwnership);
             ServiceLocator.NetworkService.ActiveSocket.Writer.Send(connection, () => "NetworkGameObject Ownership");

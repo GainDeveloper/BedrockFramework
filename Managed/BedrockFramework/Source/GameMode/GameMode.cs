@@ -17,6 +17,17 @@ namespace BedrockFramework.GameMode
         public virtual void SetupGameMode(GameModeInfo info)
         {
             this.info = info;
+            ServiceLocator.SceneService.OnLoadScene += SceneService_OnLoadScene;
+        }
+
+        private void SceneService_OnLoadScene(Scenes.SceneLoadInfo newScene)
+        {
+            ShutdownGameMode();
+        }
+
+        public virtual void ShutdownGameMode() // Called when the level changes.
+        {
+
         }
     }
 }

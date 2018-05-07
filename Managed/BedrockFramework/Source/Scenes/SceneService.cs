@@ -32,11 +32,11 @@ namespace BedrockFramework.Scenes
         SceneLoadInfo CurrentLoaded { get; }
         SceneLoadingState CurrentState { get; }
 
-        void AddSceneObject(object toAdd);
-        IEnumerable<T> GetSceneObjectsOfType<T>(Type ofType);
-        void RemoveSceneObject(object toRemove);
-        event Action<Type, object> SceneObjectAdded;
-        event Action<Type, object> SceneObjectRemoved;
+        void AddSceneObject(int category, object toAdd);
+        IEnumerable<T> GetSceneObjectsOfCategory<T>(int ofType);
+        void RemoveSceneObject(int category, object toRemove);
+        event Action<int, object> SceneObjectAdded;
+        event Action<int, object> SceneObjectRemoved;
     }
 
     public class NullSceneService : ISceneService
@@ -50,11 +50,11 @@ namespace BedrockFramework.Scenes
         public SceneLoadInfo CurrentLoaded { get { return null; } }
         public SceneLoadingState CurrentState { get { return SceneLoadingState.Loaded; } }
 
-        public void AddSceneObject(object toAdd) { }
-        public IEnumerable<T> GetSceneObjectsOfType<T>(Type ofType) { yield break; }
-        public void RemoveSceneObject(object toRemove) { }
-        public event Action<Type, object> SceneObjectAdded = delegate { };
-        public event Action<Type, object> SceneObjectRemoved = delegate { };
+        public void AddSceneObject(int category, object toAdd) { }
+        public IEnumerable<T> GetSceneObjectsOfCategory<T>(int ofType) { yield break; }
+        public void RemoveSceneObject(int category, object toRemove) { }
+        public event Action<int, object> SceneObjectAdded = delegate { };
+        public event Action<int, object> SceneObjectRemoved = delegate { };
     }
 
     [ProtoContract]
@@ -98,9 +98,9 @@ namespace BedrockFramework.Scenes
         private SceneLoadingState currentState = SceneLoadingState.Loaded;
         public SceneLoadingState CurrentState { get { return currentState; } }
 
-        public Dictionary<Type, List<object>> sceneObjectsOfType = new Dictionary<Type, List<object>>();
-        public event Action<Type, object> SceneObjectAdded = delegate { };
-        public event Action<Type, object> SceneObjectRemoved = delegate { };
+        public Dictionary<int, List<object>> sceneObjectsOfCategory = new Dictionary<int, List<object>>();
+        public event Action<int, object> SceneObjectAdded = delegate { };
+        public event Action<int, object> SceneObjectRemoved = delegate { };
 
         public SceneService(MonoBehaviour owner): base(owner)
         {
@@ -111,7 +111,20 @@ namespace BedrockFramework.Scenes
             {
                 foreach (SceneDefinition sceneDefinition in ServiceLocator.SaveService.SavedObjectReferences.GetObjectsOfType<SceneDefinition>())
                     DevTools.DebugMenu.AddDebugButton("Scenes", "Load " + sceneDefinition.sceneSettings.SceneTitle, () => { LoadScene(new SceneLoadInfo(sceneDefinition)); });
+
+                DevTools.DebugMenu.AddDebugStats("Scene Stats", SceneStats);
             }
+        }
+
+        IEnumerable<string> SceneStats()
+        {
+            yield return "State: " + currentState;
+            if (currentState != SceneLoadingState.Loaded)
+                yield break;
+            yield return "Current: " + currentlyLoaded.sceneDefinition.ObjectReference.name;
+
+            foreach (KeyValuePair<int, List<object>> entry in sceneObjectsOfCategory)
+                yield return entry.Key + " : " + entry.Value.Count + " items";
         }
 
         private void SaveService_OnPreSave()
@@ -129,7 +142,6 @@ namespace BedrockFramework.Scenes
         public Coroutine LoadScene(SceneLoadInfo sceneToLoad)
         {
             currentState = SceneLoadingState.Loading;
-            sceneObjectsOfType.Clear();
 
             OnLoadScene(sceneToLoad);
 
@@ -193,6 +205,7 @@ namespace BedrockFramework.Scenes
 
             System.GC.Collect();
             OnUnload();
+            sceneObjectsOfCategory.Clear();
             DevTools.Logger.Log(SceneServiceLog, "Finished Unloading");
 
             yield return LoadActiveAsync(sceneToLoad, LoadSceneMode.Additive);
@@ -202,25 +215,24 @@ namespace BedrockFramework.Scenes
         // Scene Objects
         //
 
-        public void AddSceneObject(object toAdd)
+        public void AddSceneObject(int category, object toAdd)
         {
-            Type objectType = toAdd.GetType();
-            if (sceneObjectsOfType.ContainsKey(objectType))
+            if (sceneObjectsOfCategory.ContainsKey(category))
             {
-                sceneObjectsOfType[objectType].Add(toAdd);
+                sceneObjectsOfCategory[category].Add(toAdd);
             } else
             {
-                sceneObjectsOfType[objectType] = new List<object>() { toAdd };
+                sceneObjectsOfCategory[category] = new List<object>() { toAdd };
             }
 
-            SceneObjectAdded(objectType, toAdd);
+            SceneObjectAdded(category, toAdd);
         }
 
-        public IEnumerable<T> GetSceneObjectsOfType<T>(Type ofType)
+        public IEnumerable<T> GetSceneObjectsOfCategory<T>(int ofType)
         {
-            if (sceneObjectsOfType.ContainsKey(ofType))
+            if (sceneObjectsOfCategory.ContainsKey(ofType))
             {
-                foreach (object sceneObject in sceneObjectsOfType[ofType])
+                foreach (object sceneObject in sceneObjectsOfCategory[ofType])
                     yield return (T)sceneObject;
             } else
             {
@@ -228,13 +240,12 @@ namespace BedrockFramework.Scenes
             }
         }
 
-        public void RemoveSceneObject(object toRemove)
+        public void RemoveSceneObject(int category, object toRemove)
         {
-            Type objectType = toRemove.GetType();
-            if (sceneObjectsOfType.ContainsKey(objectType))
+            if (sceneObjectsOfCategory.ContainsKey(category))
             {
-                SceneObjectRemoved(objectType, toRemove);
-                sceneObjectsOfType[objectType].Remove(toRemove);
+                SceneObjectRemoved(category, toRemove);
+                sceneObjectsOfCategory[category].Remove(toRemove);
             }
         }
     }
